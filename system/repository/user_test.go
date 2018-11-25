@@ -26,7 +26,7 @@ func TestUser(t *testing.T) {
 
 	{
 		u1, err := userRepo.Create(user)
-		assert(t, err == nil, "User.Create error: %v", err)
+		assert(t, err == nil, "User.Create error: %+v", err)
 		assert(t, user.ID == u1.ID, "Changes were not stored")
 	}
 
@@ -37,18 +37,18 @@ func TestUser(t *testing.T) {
 
 	{
 		t1, err := teamRepo.Create(team)
-		assert(t, err == nil, "Team.Create error: %v", err)
+		assert(t, err == nil, "Team.Create error: %+v", err)
 		assert(t, team.Name == t1.Name, "Changes were not stored")
 	}
 
 	{
 		err := teamRepo.MemberAddByID(team.ID, user.ID)
-		assert(t, err == nil, "Team.MemberAddByID error: %v", err)
+		assert(t, err == nil, "Team.MemberAddByID error: %+v", err)
 	}
 
 	{
 		users, err := userRepo.Find(&types.UserFilter{Query: ""})
-		assert(t, err == nil, "User.Find error: %v", err)
+		assert(t, err == nil, "User.Find error: %+v", err)
 		assert(t, len(users) > 0, "No user results found")
 		assert(t, len(users[0].Teams) > 0, "No team results found")
 	}
