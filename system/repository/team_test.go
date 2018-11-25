@@ -81,6 +81,12 @@ func TestTeam(t *testing.T) {
 	}
 
 	{
+		teams, err := teamRepo.FindByMemberID(0)
+		assert(t, err == nil, "Team.FindByMemberID error: %v", err)
+		assert(t, len(teams) == 0, "Results found")
+	}
+
+	{
 		err := teamRepo.MemberRemoveByID(team.ID, user.ID)
 		assert(t, err == nil, "Team.MemberRemoveByID error: %v", err)
 	}
