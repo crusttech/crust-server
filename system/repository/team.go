@@ -116,7 +116,7 @@ func (r *team) MemberAddByID(id, userID uint64) error {
 		TeamID: id,
 		UserId: userID,
 	}
-	return r.db().Insert(r.members, mod)
+	return r.db().Replace(r.members, mod)
 }
 
 func (r *team) MemberRemoveByID(id, userID uint64) error {
@@ -124,5 +124,5 @@ func (r *team) MemberRemoveByID(id, userID uint64) error {
 		TeamID: id,
 		UserId: userID,
 	}
-	return r.db().Delete(r.members, mod, "rel_team", "real_user")
+	return r.db().Delete(r.members, mod, "rel_team", "rel_user")
 }
