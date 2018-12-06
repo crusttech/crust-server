@@ -29,6 +29,7 @@ type (
 
 		FindByID(contentID uint64) (*types.Content, error)
 
+		Report(moduleID uint64, params *types.ContentReport) (interface{}, error)
 		Find(moduleID uint64, query string, page int, perPage int, sort string) (*repository.FindResponse, error)
 
 		Create(content *types.Content) (*types.Content, error)
@@ -62,6 +63,10 @@ func (s *content) FindByID(id uint64) (*types.Content, error) {
 		return nil, err
 	}
 	return response, s.preload(response, "page", "user", "fields")
+}
+
+func (s *content) Report(moduleID uint64, params *types.ContentReport) (interface{}, error) {
+	return s.repository.Report(moduleID, params)
 }
 
 func (s *content) Find(moduleID uint64, query string, page int, perPage int, sort string) (*repository.FindResponse, error) {
@@ -100,7 +105,7 @@ func (s *content) Update(content *types.Content) (c *types.Content, err error) {
 		return nil, err
 	}
 
-	return c, s.db.Transaction(func() (err error) {
+	return c, s.db.Tx(func() (err error) {
 		spew.Dump(content)
 		c, err = s.repository.Update(content)
 		return

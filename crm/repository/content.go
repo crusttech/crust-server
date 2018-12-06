@@ -2,14 +2,15 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"encoding/json"
-
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory"
+	"gopkg.in/Masterminds/squirrel.v1"
 
 	"github.com/crusttech/crust/crm/types"
 )
@@ -20,6 +21,7 @@ type (
 
 		FindByID(id uint64) (*types.Content, error)
 
+		Report(moduleID uint64, params *types.ContentReport) (results interface{}, err error)
 		Find(moduleID uint64, query string, page int, perPage int, sort string) (*FindResponse, error)
 
 		Create(mod *types.Content) (*types.Content, error)
@@ -65,6 +67,106 @@ func (r *content) FindByID(id uint64) (*types.Content, error) {
 		return nil, err
 	}
 	return mod, nil
+}
+
+func (r *content) Report(moduleID uint64, params *types.ContentReport) (results interface{}, err error) {
+	const jsonField = `JSON_UNQUOTE(JSON_EXTRACT(json, REPLACE(JSON_UNQUOTE(JSON_SEARCH(json, 'one', ?)), '.name', '.value')))`
+
+	resolveField := func(name string) squirrel.Sqlizer {
+		var col squirrel.Sqlizer
+		switch name {
+		case "created_at", "updated_at":
+			col = squirrel.Expr(name)
+		default:
+			col = squirrel.Expr(jsonField, name)
+		}
+
+		return col
+	}
+
+	fieldAlias := func(col squirrel.Sqlizer, alias, fallback string) (squirrel.Sqlizer, string) {
+		if alias != "" {
+			return squirrel.Alias(col, alias), alias
+		} else {
+			return squirrel.Alias(col, fallback), fallback
+		}
+	}
+
+	wrapInModifiers := func(col squirrel.Sqlizer, mm ...string) squirrel.Sqlizer {
+		for _, m := range mm {
+			switch strings.ToUpper(m) {
+			case "DATE":
+				col = SqlConcatExpr("DATE(", col, ")")
+			case "QUARTER":
+				col = SqlConcatExpr("CONCAT(", "YEAR(", col, "), 'Q', ", "QUARTER(", col, ")", ")")
+			case "MONTH":
+				col = SqlConcatExpr("EXTRACT(YEAR_MONTH FROM ", col, ")")
+			case "YEAR":
+				col = SqlConcatExpr("EXTRACT(YEAR FROM ", col, ")")
+			case "WEEKDAY":
+				col = SqlConcatExpr("DAYOFWEEK(", col, ")")
+			case "WEEK":
+				col = SqlConcatExpr("WEEK(", col, ")")
+			}
+		}
+
+		return col
+	}
+
+	var (
+		report = squirrel.Select().From("crm_content")
+	)
+
+	if params == nil {
+		return nil, errors.New("Can not generate report without parameters")
+	}
+
+	var alias string
+	for i, m := range params.Metrics {
+		// @todo resolve/expend expression so we can support other functions than just COUNT(*)
+		col := resolveField(m.Expression)
+
+		col = SqlConcatExpr("COUNT(", col, ")")
+		col, alias = fieldAlias(col, m.Alias, fmt.Sprintf("metric_%d", i))
+
+		report = report.Column(col)
+	}
+
+	for i, d := range params.Dimensions {
+		col := resolveField(d.Field)
+
+		col = wrapInModifiers(col, d.Modifiers...)
+
+		col, alias = fieldAlias(col, d.Alias, fmt.Sprintf("dimension_%d", i))
+
+		report = report.Column(col)
+		report = report.GroupBy(alias)
+	}
+
+	var result = make([]map[string]interface{}, 0)
+
+	if query, args, err := report.ToSql(); err != nil {
+		return nil, errors.Wrap(err, "Can not generate report query")
+	} else if rows, err := r.db().Query(query, args...); err != nil {
+		return nil, errors.Wrap(err, "Can not execute report query")
+	} else {
+		for rows.Next() {
+			m := map[string]interface{}{}
+			sqlx.MapScan(rows, m)
+
+			for k, v := range m {
+				switch cv := v.(type) {
+				case []uint8:
+					m[k] = string(cv)
+				}
+			}
+
+			result = append(result, m)
+
+		}
+
+		return result, nil
+	}
 }
 
 func (r *content) Find(moduleID uint64, query string, page int, perPage int, sort string) (*FindResponse, error) {
