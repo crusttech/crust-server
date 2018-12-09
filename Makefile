@@ -137,7 +137,7 @@ qa: vet critic test
 
 mocks: $(GOMOCK)
 	# Cleanup all pre-generated
-	rm -f */*/*_mock_test.go
+	rm -f */*/*_mock_test.go */*/mocks/*
 
 	# See https://github.com/golang/mock for details
 	$(MOCKGEN) -package service -source sam/service/attachment.go   -destination sam/service/attachment_mock_test.go
@@ -146,6 +146,10 @@ mocks: $(GOMOCK)
 	$(MOCKGEN) -package service -source system/service/organisation.go -destination system/service/organisation_mock_test.go
 	$(MOCKGEN) -package service -source system/service/team.go         -destination system/service/team_mock_test.go
 	$(MOCKGEN) -package service -source system/service/user.go         -destination system/service/user_mock_test.go
+
+	mkdir -p system/repository/mocks
+	$(MOCKGEN) -package repository -source system/repository/user.go         -destination system/repository/mocks/user.go
+	$(MOCKGEN) -package repository -source system/repository/credentials.go  -destination system/repository/mocks/credentials.go
 
 
 ########################################################################################################################
