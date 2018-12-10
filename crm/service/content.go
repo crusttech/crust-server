@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory"
 
@@ -105,8 +104,7 @@ func (s *content) Update(content *types.Content) (c *types.Content, err error) {
 		return nil, err
 	}
 
-	return c, s.db.Tx(func() (err error) {
-		spew.Dump(content)
+	return c, s.db.Transaction(func() (err error) {
 		c, err = s.repository.Update(content)
 		return
 	})
