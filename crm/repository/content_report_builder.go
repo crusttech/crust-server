@@ -19,7 +19,7 @@ type (
 		jsonField string
 
 		moduleID uint64
-		params   *types.ContentReport
+		params   *types.RecordReport
 	}
 )
 
@@ -27,7 +27,7 @@ var (
 	contentReportExprMatch = regexp.MustCompile(`^\s*(\w+)\((.+)\)\s*$`)
 )
 
-func NewContentReportBuilder(moduleID uint64, params *types.ContentReport) *contentReportBuilder {
+func NewContentReportBuilder(moduleID uint64, params *types.RecordReport) *contentReportBuilder {
 	return &contentReportBuilder{
 		moduleID:  moduleID,
 		params:    params,
