@@ -64,6 +64,9 @@ dep: $(DEP)
 codegen: $(SPEC) dep.codegen
 	@PATH=${PATH}:${GOPATH}/bin ./codegen.sh
 
+mailhog.up:
+	docker run --rm --publish 8025:8025 --publish 1025:1025 mailhog/mailhog
+
 ########################################################################################################################
 # QA
 
@@ -140,6 +143,8 @@ mocks: $(GOMOCK)
 	rm -f */*/*_mock_test.go */*/mocks/*
 
 	# See https://github.com/golang/mock for details
+	$(MOCKGEN) -package service -source crm/service/notification.go -destination crm/service/notification_mock_test.go
+
 	$(MOCKGEN) -package service -source sam/service/attachment.go   -destination sam/service/attachment_mock_test.go
 	$(MOCKGEN) -package service -source sam/service/channel.go      -destination sam/service/channel_mock_test.go
 	$(MOCKGEN) -package service -source sam/service/message.go      -destination sam/service/message_mock_test.go
@@ -150,7 +155,7 @@ mocks: $(GOMOCK)
 	mkdir -p system/repository/mocks
 	$(MOCKGEN) -package repository -source system/repository/user.go         -destination system/repository/mocks/user.go
 	$(MOCKGEN) -package repository -source system/repository/credentials.go  -destination system/repository/mocks/credentials.go
-
+	$(MOCKGEN) -package mail -source internal/mail/mail.go -destination internal/mail/mail_mock_test.go
 
 ########################################################################################################################
 # Toolset
