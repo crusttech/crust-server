@@ -220,6 +220,36 @@ A channel is a representation of a sequence of messages. It has meta data like c
 | replyTo | uint64 | POST | Upload as a reply | N/A | NO |
 | upload | *multipart.FileHeader | POST | File to upload | N/A | YES |
 
+## List created channel webhooks
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/channels/{channelID}/webhook` | HTTP/S | GET | Client ID, Session ID |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| channelID | uint64 | PATH | Channel ID | N/A | YES |
+
+## Attach file to channel
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/channels/{channelID}/webhook` | HTTP/S | POST | Client ID, Session ID |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| channelID | uint64 | PATH | Channel ID | N/A | YES |
+| username | string | POST | Webhook default user name | N/A | NO |
+| avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | YES |
+
 
 
 
@@ -486,3 +516,69 @@ The following event types may be sent with a message event:
 | firstID | uint64 | GET | Paging; return newer messages only (higher id) | N/A | NO |
 | lastID | uint64 | GET | Paging; return older messages only (lower id) | N/A | NO |
 | query | string | GET | Search query | N/A | NO |
+
+
+
+
+# Webhooks
+
+## Get webhook details
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/webhooks/webhook/{webhookID}` | HTTP/S | GET |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| webhookID | uint64 | PATH | Webhook ID | N/A | YES |
+
+## Delete webhook
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/webhooks/webhook/{webhookID}` | HTTP/S | DELETE |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| webhookID | uint64 | PATH | Webhook ID | N/A | YES |
+
+## Delete webhook (public)
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/webhooks/webhook/{webhookID}/{webhookToken}` | HTTP/S | DELETE |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| webhookID | uint64 | PATH | Webhook ID | N/A | YES |
+| webhookToken | string | PATH | Webhook authentication token | N/A | YES |
+
+## Get webhook details
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/webhooks/webhook/{webhookID}/{webhookToken}` | HTTP/S | POST |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| username | string | GET | Custom username for webhook message | N/A | NO |
+| avatar_url | string | GET | Custom avatar picture for webhook message | N/A | NO |
+| content | string | GET | Message contents | N/A | YES |
+| webhookID | uint64 | PATH | Webhook ID | N/A | YES |
+| webhookToken | string | PATH | Webhook authentication token | N/A | YES |
