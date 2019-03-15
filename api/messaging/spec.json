@@ -841,7 +841,7 @@
                             "title": "Custom username for webhook message"
                         },
                         {
-                            "name": "avatar_url",
+                            "name": "avatarURL",
                             "type": "string",
                             "required": false,
                             "title": "Custom avatar picture for webhook message"

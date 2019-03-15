@@ -578,7 +578,7 @@ The following event types may be sent with a message event:
 | Parameter | Type | Method | Description | Default | Required? |
 | --------- | ---- | ------ | ----------- | ------- | --------- |
 | username | string | GET | Custom username for webhook message | N/A | NO |
-| avatar_url | string | GET | Custom avatar picture for webhook message | N/A | NO |
+| avatarURL | string | GET | Custom avatar picture for webhook message | N/A | NO |
 | content | string | GET | Message contents | N/A | YES |
 | webhookID | uint64 | PATH | Webhook ID | N/A | YES |
 | webhookToken | string | PATH | Webhook authentication token | N/A | YES |

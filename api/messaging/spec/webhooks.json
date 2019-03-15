@@ -75,7 +75,7 @@
             "type": "string"
           },
           {
-            "name": "avatar_url",
+            "name": "avatarURL",
             "required": false,
             "title": "Custom avatar picture for webhook message",
             "type": "string"
