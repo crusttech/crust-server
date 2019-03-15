@@ -1,0 +1,107 @@
+{
+  "Title": "Webhooks",
+  "Interface": "Webhooks",
+  "Struct": null,
+  "Parameters": {},
+  "Protocol": "",
+  "Authentication": [],
+  "Path": "/webhooks",
+  "APIs": [
+    {
+      "Name": "webhookGet",
+      "Method": "GET",
+      "Title": "Get webhook details",
+      "Path": "/webhook/{webhookID}",
+      "Parameters": {
+        "path": [
+          {
+            "name": "webhookID",
+            "required": true,
+            "title": "Webhook ID",
+            "type": "uint64"
+          }
+        ]
+      }
+    },
+    {
+      "Name": "webhookDelete",
+      "Method": "DELETE",
+      "Title": "Delete webhook",
+      "Path": "/webhook/{webhookID}",
+      "Parameters": {
+        "path": [
+          {
+            "name": "webhookID",
+            "required": true,
+            "title": "Webhook ID",
+            "type": "uint64"
+          }
+        ]
+      }
+    },
+    {
+      "Name": "webhookDeletePublic",
+      "Method": "DELETE",
+      "Title": "Delete webhook (public)",
+      "Path": "/webhook/{webhookID}/{webhookToken}",
+      "Parameters": {
+        "path": [
+          {
+            "name": "webhookID",
+            "required": true,
+            "title": "Webhook ID",
+            "type": "uint64"
+          },
+          {
+            "name": "webhookToken",
+            "required": true,
+            "title": "Webhook authentication token",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "Name": "webhookPublish",
+      "Method": "POST",
+      "Title": "Get webhook details",
+      "Path": "/webhook/{webhookID}/{webhookToken}",
+      "Parameters": {
+        "get": [
+          {
+            "name": "username",
+            "required": false,
+            "title": "Custom username for webhook message",
+            "type": "string"
+          },
+          {
+            "name": "avatar_url",
+            "required": false,
+            "title": "Custom avatar picture for webhook message",
+            "type": "string"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "title": "Message contents",
+            "type": "string"
+          }
+        ],
+        "path": [
+          {
+            "name": "webhookID",
+            "required": true,
+            "title": "Webhook ID",
+            "type": "uint64"
+          },
+          {
+            "name": "webhookToken",
+            "required": true,
+            "title": "Webhook authentication token",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}

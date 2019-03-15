@@ -17,7 +17,7 @@
       "Title": "List channels",
       "Path": "/",
       "Parameters": {
-        "GET": [
+        "get": [
           {
             "name": "query",
             "required": false,
@@ -292,6 +292,52 @@
             "name": "upload",
             "required": true,
             "title": "File to upload",
+            "type": "*multipart.FileHeader"
+          }
+        ]
+      }
+    },
+    {
+      "Name": "webhookList",
+      "Method": "GET",
+      "Title": "List created channel webhooks",
+      "Path": "/{channelID}/webhook",
+      "Parameters": {
+        "path": [
+          {
+            "name": "channelID",
+            "required": true,
+            "title": "Channel ID",
+            "type": "uint64"
+          }
+        ]
+      }
+    },
+    {
+      "Name": "webhookCreate",
+      "Method": "POST",
+      "Title": "Attach file to channel",
+      "Path": "/{channelID}/webhook",
+      "Parameters": {
+        "path": [
+          {
+            "name": "channelID",
+            "required": true,
+            "title": "Channel ID",
+            "type": "uint64"
+          }
+        ],
+        "post": [
+          {
+            "name": "username",
+            "required": false,
+            "title": "Webhook default user name",
+            "type": "string"
+          },
+          {
+            "name": "avatar",
+            "required": true,
+            "title": "Webhook default avatar",
             "type": "*multipart.FileHeader"
           }
         ]

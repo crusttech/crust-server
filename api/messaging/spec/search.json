@@ -25,7 +25,7 @@
       "Title": "Search for messages",
       "Path": "/messages",
       "Parameters": {
-        "GET": [
+        "get": [
           {
             "name": "inChannel",
             "required": false,
