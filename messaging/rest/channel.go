@@ -8,10 +8,7 @@ import (
 	"github.com/crusttech/crust/messaging/internal/service"
 	"github.com/crusttech/crust/messaging/rest/request"
 	"github.com/crusttech/crust/messaging/types"
-	"github.com/pkg/errors"
 )
-
-var _ = errors.Wrap
 
 type (
 	Channel struct {
@@ -102,6 +99,14 @@ func (ctrl *Channel) Join(ctx context.Context, r *request.ChannelJoin) (interfac
 
 func (ctrl *Channel) Part(ctx context.Context, r *request.ChannelPart) (interface{}, error) {
 	return nil, ctrl.svc.ch.With(ctx).DeleteMember(r.ChannelID, r.UserID)
+}
+
+func (ctrl *Channel) WebhookList(ctx context.Context, r *request.ChannelWebhookList) (interface{}, error) {
+	return ctrl.svc.ch.With(ctx).WebhookList(r.ChannelID)
+}
+func (ctrl *Channel) WebhookCreate(ctx context.Context, r *request.ChannelWebhookCreate) (interface{}, error) {
+	// @todo: process r.Avatar file upload for webhook
+	return ctrl.svc.ch.With(ctx).WebhookCreate(r.ChannelID, r.Username)
 }
 
 func (ctrl *Channel) Attach(ctx context.Context, r *request.ChannelAttach) (interface{}, error) {

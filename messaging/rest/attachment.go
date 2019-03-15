@@ -2,16 +2,14 @@ package rest
 
 import (
 	"context"
+	"io"
+	"time"
+
 	"github.com/crusttech/crust/messaging/internal/service"
 	"github.com/crusttech/crust/messaging/rest/handlers"
 	"github.com/crusttech/crust/messaging/rest/request"
 	"github.com/crusttech/crust/messaging/types"
-	"github.com/pkg/errors"
-	"io"
-	"time"
 )
-
-var _ = errors.Wrap
 
 type (
 	Attachment struct {

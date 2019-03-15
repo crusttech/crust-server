@@ -3,16 +3,12 @@ package rest
 import (
 	"context"
 
-	"github.com/pkg/errors"
-
 	"github.com/crusttech/crust/internal/payload"
 	"github.com/crusttech/crust/internal/payload/outgoing"
 	"github.com/crusttech/crust/messaging/internal/service"
 	"github.com/crusttech/crust/messaging/rest/request"
 	"github.com/crusttech/crust/messaging/types"
 )
-
-var _ = errors.Wrap
 
 type (
 	Message struct {

@@ -28,6 +28,7 @@ type (
 		cmember repository.ChannelMemberRepository
 		unread  repository.UnreadRepository
 		message repository.MessageRepository
+		webhook repository.WebhookRepository
 
 		sysmsgs types.MessageSet
 	}
@@ -54,6 +55,9 @@ type (
 		Delete(ID uint64) (*types.Channel, error)
 		Undelete(ID uint64) (*types.Channel, error)
 		RecordView(userID, channelID, lastMessageID uint64) error
+
+		WebhookList(channelID uint64) (types.WebhookSet, error)
+		WebhookCreate(channelID uint64, username string) (*types.Webhook, error)
 	}
 )
 
@@ -69,7 +73,6 @@ const (
 
 func Channel() ChannelService {
 	return (&channel{
-		usr: systemService.DefaultUser,
 		evl: DefaultEvent,
 		prm: DefaultPermissions,
 	}).With(context.Background())
@@ -89,10 +92,22 @@ func (svc *channel) With(ctx context.Context) ChannelService {
 		cmember: repository.ChannelMember(ctx, db),
 		unread:  repository.Unread(ctx, db),
 		message: repository.Message(ctx, db),
+		webhook: repository.Webhook(ctx, db),
 
 		// System messages should be flushed at the end of each session
 		sysmsgs: types.MessageSet{},
 	}
+}
+
+func (svc *channel) WebhookList(channelID uint64) (types.WebhookSet, error) {
+	return svc.webhook.Find(&types.WebhookFilter{
+		ChannelID: channelID,
+	});
+}
+
+func (svc *channel) WebhookCreate(channelID uint64, username string) (*types.Webhook, error) {
+	// @todo: create bot user, create webhook in db
+	return nil, errors.New("Not implemented")
 }
 
 func (svc *channel) FindByID(ID uint64) (ch *types.Channel, err error) {

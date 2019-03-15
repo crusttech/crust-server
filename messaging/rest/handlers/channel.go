@@ -39,22 +39,26 @@ type ChannelAPI interface {
 	Part(context.Context, *request.ChannelPart) (interface{}, error)
 	Invite(context.Context, *request.ChannelInvite) (interface{}, error)
 	Attach(context.Context, *request.ChannelAttach) (interface{}, error)
+	WebhookList(context.Context, *request.ChannelWebhookList) (interface{}, error)
+	WebhookCreate(context.Context, *request.ChannelWebhookCreate) (interface{}, error)
 }
 
 // HTTP API interface
 type Channel struct {
-	List       func(http.ResponseWriter, *http.Request)
-	Create     func(http.ResponseWriter, *http.Request)
-	Update     func(http.ResponseWriter, *http.Request)
-	State      func(http.ResponseWriter, *http.Request)
-	SetFlag    func(http.ResponseWriter, *http.Request)
-	RemoveFlag func(http.ResponseWriter, *http.Request)
-	Read       func(http.ResponseWriter, *http.Request)
-	Members    func(http.ResponseWriter, *http.Request)
-	Join       func(http.ResponseWriter, *http.Request)
-	Part       func(http.ResponseWriter, *http.Request)
-	Invite     func(http.ResponseWriter, *http.Request)
-	Attach     func(http.ResponseWriter, *http.Request)
+	List          func(http.ResponseWriter, *http.Request)
+	Create        func(http.ResponseWriter, *http.Request)
+	Update        func(http.ResponseWriter, *http.Request)
+	State         func(http.ResponseWriter, *http.Request)
+	SetFlag       func(http.ResponseWriter, *http.Request)
+	RemoveFlag    func(http.ResponseWriter, *http.Request)
+	Read          func(http.ResponseWriter, *http.Request)
+	Members       func(http.ResponseWriter, *http.Request)
+	Join          func(http.ResponseWriter, *http.Request)
+	Part          func(http.ResponseWriter, *http.Request)
+	Invite        func(http.ResponseWriter, *http.Request)
+	Attach        func(http.ResponseWriter, *http.Request)
+	WebhookList   func(http.ResponseWriter, *http.Request)
+	WebhookCreate func(http.ResponseWriter, *http.Request)
 }
 
 func NewChannel(ch ChannelAPI) *Channel {
@@ -143,6 +147,20 @@ func NewChannel(ch ChannelAPI) *Channel {
 				return ch.Attach(r.Context(), params)
 			})
 		},
+		WebhookList: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewChannelWebhookList()
+			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
+				return ch.WebhookList(r.Context(), params)
+			})
+		},
+		WebhookCreate: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewChannelWebhookCreate()
+			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
+				return ch.WebhookCreate(r.Context(), params)
+			})
+		},
 	}
 }
 
@@ -162,6 +180,8 @@ func (ch *Channel) MountRoutes(r chi.Router, middlewares ...func(http.Handler) h
 			r.Delete("/{channelID}/members/{userID}", ch.Part)
 			r.Post("/{channelID}/invite", ch.Invite)
 			r.Post("/{channelID}/attach", ch.Attach)
+			r.Get("/{channelID}/webhook", ch.WebhookList)
+			r.Post("/{channelID}/webhook", ch.WebhookCreate)
 		})
 	})
 }

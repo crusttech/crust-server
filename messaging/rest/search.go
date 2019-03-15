@@ -8,11 +8,7 @@ import (
 	"github.com/crusttech/crust/messaging/internal/service"
 	"github.com/crusttech/crust/messaging/rest/request"
 	"github.com/crusttech/crust/messaging/types"
-
-	"github.com/pkg/errors"
 )
-
-var _ = errors.Wrap
 
 type Search struct {
 	svc struct {

@@ -138,9 +138,10 @@ func (svc *message) Create(in *types.Message) (message *types.Message, err error
 		return nil, errors.Errorf("message length (%d characters) too long (max: %d)", mlen, settingsMessageBodyLength)
 	}
 
-	var currentUserID = auth.GetIdentityFromContext(svc.ctx).Identity()
-
-	in.UserID = currentUserID
+	// keep pre-existing user id set
+	if in.UserID == 0 {
+		in.UserID = auth.GetIdentityFromContext(svc.ctx).Identity()
+	}
 
 	return message, svc.db.Transaction(func() (err error) {
 		// Broadcast queue

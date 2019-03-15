@@ -5,10 +5,7 @@ import (
 
 	"github.com/crusttech/crust/messaging/internal/service"
 	"github.com/crusttech/crust/messaging/rest/request"
-	"github.com/pkg/errors"
 )
-
-var _ = errors.Wrap
 
 type Permissions struct {
 	svc struct {
