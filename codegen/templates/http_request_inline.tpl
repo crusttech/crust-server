@@ -78,7 +78,7 @@ func ({self}Req *{name|expose}{call.name|capitalize}) Fill(r *http.Request) (err
 			return err
 		}
 {else}
-		{self}Req.{param.name|expose} = {if ($param.type !== "string")}{$parsers[$param.type]}(val){else}val{/if}{EOL}
+		{self}Req.{param.name|expose} = {if ($param.type !== "string")}{if isset($parsers[$param.type])}{$parsers[$param.type]}{else}{$param.type}{/if}(val){else}val{/if}{EOL}
 {/if}
 	}{/if}
 {/foreach}
