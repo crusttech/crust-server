@@ -220,36 +220,6 @@ A channel is a representation of a sequence of messages. It has meta data like c
 | replyTo | uint64 | POST | Upload as a reply | N/A | NO |
 | upload | *multipart.FileHeader | POST | File to upload | N/A | YES |
 
-## List created channel webhooks
-
-#### Method
-
-| URI | Protocol | Method | Authentication |
-| --- | -------- | ------ | -------------- |
-| `/channels/{channelID}/webhook` | HTTP/S | GET | Client ID, Session ID |
-
-#### Request parameters
-
-| Parameter | Type | Method | Description | Default | Required? |
-| --------- | ---- | ------ | ----------- | ------- | --------- |
-| channelID | uint64 | PATH | Channel ID | N/A | YES |
-
-## Attach file to channel
-
-#### Method
-
-| URI | Protocol | Method | Authentication |
-| --- | -------- | ------ | -------------- |
-| `/channels/{channelID}/webhook` | HTTP/S | POST | Client ID, Session ID |
-
-#### Request parameters
-
-| Parameter | Type | Method | Description | Default | Required? |
-| --------- | ---- | ------ | ----------- | ------- | --------- |
-| channelID | uint64 | PATH | Channel ID | N/A | YES |
-| username | string | POST | Webhook default user name | N/A | NO |
-| avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | YES |
-
 
 
 
@@ -522,13 +492,46 @@ The following event types may be sent with a message event:
 
 # Webhooks
 
+## List created webhooks
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/webhooks/` | HTTP/S | GET |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| channelID | uint64 | GET | Channel ID | N/A | NO |
+
+## Attach file to channel
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/webhooks/` | HTTP/S | POST |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| channelID | uint64 | POST | Channel ID | N/A | YES |
+| kind | types.WebhookKind | POST | Webhook kind (incoming, outgoing) | N/A | YES |
+| trigger | string | POST | Outgoing webhook: Trigger word | N/A | NO |
+| url | string | POST | Outgoing webhook: POST URL | N/A | NO |
+| username | string | POST | Webhook default user name | N/A | NO |
+| avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | NO |
+
 ## Get webhook details
 
 #### Method
 
 | URI | Protocol | Method | Authentication |
 | --- | -------- | ------ | -------------- |
-| `/webhooks/webhook/{webhookID}` | HTTP/S | GET |  |
+| `/webhooks/{webhookID}` | HTTP/S | GET |  |
 
 #### Request parameters
 
@@ -542,7 +545,7 @@ The following event types may be sent with a message event:
 
 | URI | Protocol | Method | Authentication |
 | --- | -------- | ------ | -------------- |
-| `/webhooks/webhook/{webhookID}` | HTTP/S | DELETE |  |
+| `/webhooks/{webhookID}` | HTTP/S | DELETE |  |
 
 #### Request parameters
 
@@ -556,7 +559,7 @@ The following event types may be sent with a message event:
 
 | URI | Protocol | Method | Authentication |
 | --- | -------- | ------ | -------------- |
-| `/webhooks/webhook/{webhookID}/{webhookToken}` | HTTP/S | DELETE |  |
+| `/webhooks/{webhookID}/{webhookToken}` | HTTP/S | DELETE |  |
 
 #### Request parameters
 
@@ -565,13 +568,13 @@ The following event types may be sent with a message event:
 | webhookID | uint64 | PATH | Webhook ID | N/A | YES |
 | webhookToken | string | PATH | Webhook authentication token | N/A | YES |
 
-## Get webhook details
+## Create a message from a webhook payload
 
 #### Method
 
 | URI | Protocol | Method | Authentication |
 | --- | -------- | ------ | -------------- |
-| `/webhooks/webhook/{webhookID}/{webhookToken}` | HTTP/S | POST |  |
+| `/webhooks/{webhookID}/{webhookToken}` | HTTP/S | POST |  |
 
 #### Request parameters
 
