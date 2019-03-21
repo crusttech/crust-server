@@ -53,7 +53,7 @@ type (
 		Bookmark(messageID uint64) error
 		RemoveBookmark(messageID uint64) error
 
-		Delete(ID uint64) error
+		Delete(messageID uint64) error
 	}
 )
 
@@ -263,7 +263,7 @@ func (svc *message) Update(in *types.Message) (message *types.Message, err error
 	})
 }
 
-func (svc *message) Delete(ID uint64) error {
+func (svc *message) Delete(messageID uint64) error {
 	var currentUserID = auth.GetIdentityFromContext(svc.ctx).Identity()
 
 	_ = currentUserID
@@ -274,7 +274,7 @@ func (svc *message) Delete(ID uint64) error {
 		var deletedMsg, original *types.Message
 		var ch *types.Channel
 
-		deletedMsg, err = svc.message.FindMessageByID(ID)
+		deletedMsg, err = svc.message.FindMessageByID(messageID)
 		if err != nil {
 			return err
 		}
@@ -311,7 +311,7 @@ func (svc *message) Delete(ID uint64) error {
 			bq = append(bq, original)
 		}
 
-		if err = svc.message.DeleteMessageByID(ID); err != nil {
+		if err = svc.message.DeleteMessageByID(messageID); err != nil {
 			return
 		}
 
@@ -322,7 +322,7 @@ func (svc *message) Delete(ID uint64) error {
 			deletedMsg.DeletedAt = timeNowPtr()
 		}
 
-		if err = svc.updateMentions(ID, nil); err != nil {
+		if err = svc.updateMentions(messageID, nil); err != nil {
 			return
 		}
 

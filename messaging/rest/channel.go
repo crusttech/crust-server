@@ -101,14 +101,6 @@ func (ctrl *Channel) Part(ctx context.Context, r *request.ChannelPart) (interfac
 	return nil, ctrl.svc.ch.With(ctx).DeleteMember(r.ChannelID, r.UserID)
 }
 
-func (ctrl *Channel) WebhookList(ctx context.Context, r *request.ChannelWebhookList) (interface{}, error) {
-	return ctrl.svc.ch.With(ctx).WebhookList(r.ChannelID)
-}
-func (ctrl *Channel) WebhookCreate(ctx context.Context, r *request.ChannelWebhookCreate) (interface{}, error) {
-	// @todo: process r.Avatar file upload for webhook
-	return ctrl.svc.ch.With(ctx).WebhookCreate(r.ChannelID, r.Username)
-}
-
 func (ctrl *Channel) Attach(ctx context.Context, r *request.ChannelAttach) (interface{}, error) {
 	file, err := r.Upload.Open()
 	if err != nil {

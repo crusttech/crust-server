@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory"
@@ -13,13 +14,15 @@ type (
 	WebhookRepository interface {
 		With(ctx context.Context, db *factory.DB) WebhookRepository
 
+		Create(*types.Webhook) (*types.Webhook, error)
+
 		Get(webhookID uint64) (*types.Webhook, error)
-		GetWithToken(webhookID uint64, webhookToken string) (*types.Webhook, error)
+		GetByToken(webhookID uint64, webhookToken string) (*types.Webhook, error)
 
 		Find(filter *types.WebhookFilter) (types.WebhookSet, error)
 
 		Delete(webhookID uint64) error
-		DeleteWithToken(webhookID uint64, webhookToken string) error
+		DeleteByToken(webhookID uint64, webhookToken string) error
 	}
 
 	webhook struct {
@@ -40,6 +43,13 @@ func (r *webhook) With(ctx context.Context, db *factory.DB) WebhookRepository {
 	}
 }
 
+func (r *webhook) Create(webhook *types.Webhook) (*types.Webhook, error) {
+	webhook.ID = factory.Sonyflake.NextID()
+	webhook.CreatedAt = time.Now()
+
+	return webhook, r.db().Insert(r.webhook, webhook)
+}
+
 func (r *webhook) Get(webhookID uint64) (*types.Webhook, error) {
 	hook := &types.Webhook{}
 	if err := r.db().Get(&hook, "select * from "+r.webhook+" where id=?", webhookID); err != nil {
@@ -48,7 +58,7 @@ func (r *webhook) Get(webhookID uint64) (*types.Webhook, error) {
 	return hook, nil
 }
 
-func (r *webhook) GetWithToken(webhookID uint64, webhookToken string) (*types.Webhook, error) {
+func (r *webhook) GetByToken(webhookID uint64, webhookToken string) (*types.Webhook, error) {
 	webhook, err := r.Get(webhookID)
 	switch {
 	case err != nil:
@@ -94,8 +104,8 @@ func (r *webhook) Delete(webhookID uint64) error {
 	return err
 }
 
-func (r *webhook) DeleteWithToken(webhookID uint64, webhookToken string) error {
-	_, err := r.GetWithToken(webhookID, webhookToken)
+func (r *webhook) DeleteByToken(webhookID uint64, webhookToken string) error {
+	_, err := r.GetByToken(webhookID, webhookToken)
 	if err != nil {
 		return err
 	}

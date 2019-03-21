@@ -7,6 +7,7 @@ import (
 
 	"github.com/crusttech/crust/messaging/internal/service"
 	"github.com/crusttech/crust/messaging/rest/request"
+	"github.com/crusttech/crust/messaging/types"
 )
 
 var _ = errors.Wrap
@@ -28,9 +29,34 @@ func (ctrl *Webhooks) WebhookDelete(ctx context.Context, r *request.WebhooksWebh
 }
 
 func (ctrl *Webhooks) WebhookDeletePublic(ctx context.Context, r *request.WebhooksWebhookDeletePublic) (interface{}, error) {
-	return nil, ctrl.webhook.DeleteWithToken(r.WebhookID, r.WebhookToken)
+	return nil, ctrl.webhook.DeleteByToken(r.WebhookID, r.WebhookToken)
 }
 
-func (ctrl *Webhooks) WebhookPublish(ctx context.Context, r *request.WebhooksWebhookPublish) (interface{}, error) {
-	return ctrl.webhook.PublishMessage(r.WebhookID, r.WebhookToken, r.Username, r.AvatarURL, r.Content)
+func (ctrl *Webhooks) WebhookMessageCreate(ctx context.Context, r *request.WebhooksWebhookMessageCreate) (interface{}, error) {
+	return ctrl.webhook.Message(r.WebhookID, r.WebhookToken, r.Username, r.AvatarURL, r.Content)
+}
+
+func (ctrl *Webhooks) WebhookList(ctx context.Context, r *request.WebhooksWebhookList) (interface{}, error) {
+	return ctrl.webhook.With(ctx).ListByChannel(r.ChannelID)
+}
+func (ctrl *Webhooks) WebhookCreate(ctx context.Context, r *request.WebhooksWebhookCreate) (interface{}, error) {
+	// Webhooks webhookCreate request parameters
+	/*
+	   ChannelID uint64 `json:",string"`
+	   Kind      types.WebhookKind
+	   Trigger   string
+	   Url       string
+	   Username  string
+	   Avatar    *multipart.FileHeader
+	*/
+
+	// @todo: process r.Avatar file upload for webhook
+
+	switch {
+	case r.Kind == types.IncomingWebhook:
+		return ctrl.webhook.With(ctx).CreateIncoming(r.ChannelID, r.Username, r.Avatar)
+	case r.Kind == types.OutgoingWebhook:
+		return ctrl.webhook.With(ctx).CreateOutgoing(r.ChannelID, r.Username, r.Avatar, r.Trigger, r.Url)
+	}
+	return nil, errors.New("Unknown webhook type")
 }
