@@ -208,15 +208,15 @@ func (mr *MockMessageServiceMockRecorder) RemoveBookmark(messageID interface{}) 
 }
 
 // Delete mocks base method
-func (m *MockMessageService) Delete(ID uint64) error {
+func (m *MockMessageService) Delete(messageID uint64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ID)
+	ret := m.ctrl.Call(m, "Delete", messageID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete
-func (mr *MockMessageServiceMockRecorder) Delete(ID interface{}) *gomock.Call {
+func (mr *MockMessageServiceMockRecorder) Delete(messageID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMessageService)(nil).Delete), ID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMessageService)(nil).Delete), messageID)
 }
