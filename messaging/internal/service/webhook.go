@@ -25,7 +25,7 @@ type (
 
 		Get(webhookID uint64) (*types.Webhook, error)
 
-		ListByChannel(channelID uint64) (types.WebhookSet, error)
+		Find(*types.WebhookFilter) (types.WebhookSet, error)
 
 		Delete(webhookID uint64) error
 		DeleteByToken(webhookID uint64, webhookToken string) error
@@ -67,10 +67,8 @@ func (svc *webhook) Get(webhookID uint64) (*types.Webhook, error) {
 	return svc.webhook.Get(webhookID)
 }
 
-func (svc *webhook) ListByChannel(channelID uint64) (types.WebhookSet, error) {
-	return svc.webhook.Find(&types.WebhookFilter{
-		ChannelID: channelID,
-	})
+func (svc *webhook) Find(filter *types.WebhookFilter) (types.WebhookSet, error) {
+	return svc.webhook.Find(filter)
 }
 
 func (svc *webhook) Delete(webhookID uint64) error {

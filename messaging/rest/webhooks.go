@@ -37,7 +37,10 @@ func (ctrl *Webhooks) WebhookMessageCreate(ctx context.Context, r *request.Webho
 }
 
 func (ctrl *Webhooks) WebhookList(ctx context.Context, r *request.WebhooksWebhookList) (interface{}, error) {
-	return ctrl.webhook.With(ctx).ListByChannel(r.ChannelID)
+	return ctrl.webhook.With(ctx).Find(&types.WebhookFilter{
+		ChannelID: r.ChannelID,
+		OwnerUserID: r.UserID,
+	})
 }
 func (ctrl *Webhooks) WebhookCreate(ctx context.Context, r *request.WebhooksWebhookCreate) (interface{}, error) {
 	// Webhooks webhookCreate request parameters

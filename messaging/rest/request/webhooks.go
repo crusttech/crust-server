@@ -34,6 +34,7 @@ var _ = multipart.FileHeader{}
 // Webhooks webhookList request parameters
 type WebhooksWebhookList struct {
 	ChannelID uint64 `json:",string"`
+	UserID    uint64 `json:",string"`
 }
 
 func NewWebhooksWebhookList() *WebhooksWebhookList {
@@ -70,6 +71,10 @@ func (wReq *WebhooksWebhookList) Fill(r *http.Request) (err error) {
 	if val, ok := get["channelID"]; ok {
 
 		wReq.ChannelID = parseUInt64(val)
+	}
+	if val, ok := get["userID"]; ok {
+
+		wReq.UserID = parseUInt64(val)
 	}
 
 	return err

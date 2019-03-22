@@ -732,6 +732,12 @@
                             "type": "uint64",
                             "required": false,
                             "title": "Channel ID"
+                        },
+                        {
+                            "name": "userID",
+                            "type": "uint64",
+                            "required": false,
+                            "title": "Owner user ID"
                         }
                     ]
                 }

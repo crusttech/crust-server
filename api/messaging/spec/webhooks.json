@@ -25,6 +25,12 @@
             "required": false,
             "title": "Channel ID",
             "type": "uint64"
+          },
+          {
+            "name": "userID",
+            "required": false,
+            "title": "Owner user ID",
+            "type": "uint64"
           }
         ]
       }

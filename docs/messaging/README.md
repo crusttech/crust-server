@@ -505,6 +505,7 @@ The following event types may be sent with a message event:
 | Parameter | Type | Method | Description | Default | Required? |
 | --------- | ---- | ------ | ----------- | ------- | --------- |
 | channelID | uint64 | GET | Channel ID | N/A | NO |
+| userID | uint64 | GET | Owner user ID | N/A | NO |
 
 ## Attach file to channel
 
