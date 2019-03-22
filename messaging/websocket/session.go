@@ -40,9 +40,10 @@ type (
 		user auth.Identifiable
 
 		svc struct {
-			user systemService.UserService
-			ch   service.ChannelService
-			msg  service.MessageService
+			user    systemService.UserService
+			ch      service.ChannelService
+			msg     service.MessageService
+			webhook service.WebhookService
 		}
 	}
 )

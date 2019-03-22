@@ -27,8 +27,13 @@ type (
 	}
 
 	WebhookFilter struct {
-		ChannelID   uint64
-		OwnerUserID uint64
+		ChannelID       uint64
+		OwnerUserID     uint64
+		OutgoingTrigger string
+	}
+
+	WebhookBody struct {
+		Text string `json:"text"`
 	}
 
 	WebhookKind string

@@ -85,6 +85,11 @@ func (r *webhook) Find(filter *types.WebhookFilter) (types.WebhookSet, error) {
 			sql += " AND rel_owner=?"
 			params = append(params, filter.OwnerUserID)
 		}
+		if filter.OutgoingTrigger != "" {
+			// scope: only channel we have access to
+			sql += " AND outgoing_trigger=?"
+			params = append(params, filter.OutgoingTrigger)
+		}
 		if filter.ChannelID > 0 {
 			// scope: only channel we have access to
 			sql += " AND rel_channel=?"

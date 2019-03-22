@@ -2,9 +2,16 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
+	"net/url"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
+	"github.com/titpetric/factory"
 
+	"github.com/crusttech/crust/internal/http"
 	"github.com/crusttech/crust/messaging/internal/repository"
 	"github.com/crusttech/crust/messaging/types"
 	systemService "github.com/crusttech/crust/system/service"
@@ -12,8 +19,9 @@ import (
 
 type (
 	webhook struct {
-		db  db
-		ctx context.Context
+		db     db
+		ctx    context.Context
+		client *http.Client
 
 		users   systemService.UserService
 		webhook repository.WebhookRepository
@@ -34,18 +42,23 @@ type (
 
 		CreateIncoming(channelID uint64, username string, avatar interface{}) (*types.Webhook, error)
 		CreateOutgoing(channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error)
+
+		Do(webhook *types.Webhook, message string) (*types.Message, error)
 	}
 )
 
-func Webhook() WebhookService {
-	return (&webhook{}).With(context.Background())
+func Webhook(client *http.Client) WebhookService {
+	return (&webhook{
+		client: client,
+	}).With(context.Background())
 }
 
 func (svc *webhook) With(ctx context.Context) WebhookService {
 	db := repository.DB(ctx)
 	return &webhook{
-		db:  db,
-		ctx: ctx,
+		db:     db,
+		ctx:    ctx,
+		client: svc.client,
 
 		users: systemService.User(ctx),
 
@@ -90,4 +103,58 @@ func (svc *webhook) Message(webhookID uint64, webhookToken string, username, ava
 		}
 		return svc.message.CreateMessage(message)
 	}
+}
+
+func (svc *webhook) Do(webhook *types.Webhook, message string) (*types.Message, error) {
+	if webhook.Kind != types.OutgoingWebhook {
+		return nil, errors.Errorf("Unsupported webhook type: %s", webhook.Kind)
+	}
+
+	// replace url query %s with message
+	url := strings.Replace(webhook.OutgoingURL, "%s", url.QueryEscape(message), -1)
+
+	// post body contains only `text`
+	requestBody := types.WebhookBody{message}
+	req, err := svc.client.Post(url, requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	// execute outgoing webhook
+	resp, err := svc.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// parse response body
+	responseBody := types.WebhookBody{}
+	switch resp.Header.Get("content-type") {
+	case "text/plain":
+		// keep plain/text as-is
+		if b, err := ioutil.ReadAll(resp.Body); err != nil {
+			return nil, err
+		} else {
+			responseBody.Text = string(b)
+		}
+	default:
+		switch resp.StatusCode {
+		case 200:
+			// assume the response is an expected json structure
+			if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+				return nil, err
+			}
+			if responseBody.Text == "" {
+				return nil, errors.New("Empty webhook response")
+			}
+		default:
+			return nil, http.ToError(resp)
+		}
+	}
+	return &types.Message{
+		ID:        factory.Sonyflake.NextID(),
+		UserID:    webhook.UserID,
+		ChannelID: webhook.ChannelID,
+		CreatedAt: time.Now(),
+	}, nil
 }
