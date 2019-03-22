@@ -3,23 +3,11 @@
 package http
 
 import (
-	"io/ioutil"
-	"net/http"
 	"testing"
-
-	"github.com/pkg/errors"
 
 	"github.com/crusttech/crust/internal/config"
 	"github.com/crusttech/crust/internal/test"
 )
-
-func toError(resp *http.Response) error {
-	body, err := ioutil.ReadAll(resp.Body)
-	if body == nil || err != nil {
-		return errors.Errorf("unexpected response (%d, %s)", resp.StatusCode, err)
-	}
-	return errors.New(string(body))
-}
 
 func TestHTTPClient(t *testing.T) {
 	client, err := New(&config.HTTPClient{
@@ -40,7 +28,7 @@ func TestHTTPClient(t *testing.T) {
 		case 200:
 			return nil
 		default:
-			return toError(resp)
+			return ToError(resp)
 		}
 	}()
 
