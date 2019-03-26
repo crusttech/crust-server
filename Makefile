@@ -128,24 +128,28 @@ qa: vet critic test
 
 mocks: $(GOMOCK)
 	# Cleanup all pre-generated
-	find -name '*_mock_test.go' -path internal/ -delete
+	find -name '*_mock_test.go' -delete
+	rm -rf system/internal/service/mocks && mkdir -p system/internal/service/mocks
+	rm -rf system/internal/repository/mocks && mkdir -p system/internal/repository/mocks
+	rm -rf crm/internal/service/mocks && mkdir -p crm/internal/service/mocks
+	rm -rf messaging/internal/service/mocks && mkdir -p messaging/internal/service/mocks
 
-	# See https://github.com/golang/mock for details
-	$(MOCKGEN) -package service -source crm/internal/service/notification.go -destination crm/internal/service/notification_mock_test.go
-
-	$(MOCKGEN) -package service -source messaging/internal/service/attachment.go   -destination messaging/internal/service/attachment_mock_test.go
-	$(MOCKGEN) -package service -source messaging/internal/service/channel.go      -destination messaging/internal/service/channel_mock_test.go
-	$(MOCKGEN) -package service -source messaging/internal/service/message.go      -destination messaging/internal/service/message_mock_test.go
-	$(MOCKGEN) -package service -source system/internal/service/organisation.go -destination system/internal/service/organisation_mock_test.go
-	$(MOCKGEN) -package service -source system/internal/service/role.go         -destination system/internal/service/role_mock_test.go
-	$(MOCKGEN) -package service -source system/internal/service/user.go         -destination system/internal/service/user_mock_test.go
-
-	$(MOCKGEN) -package mail  -source internal/mail/mail.go        -destination internal/mail/mail_mock_test.go
-	$(MOCKGEN) -package rules -source internal/rules/interfaces.go -destination internal/rules/resources_mock_test.go
-
-	mkdir -p system/internal/repository/mocks
 	$(MOCKGEN) -package repository -source system/internal/repository/user.go         -destination system/internal/repository/mocks/user.go
 	$(MOCKGEN) -package repository -source system/internal/repository/credentials.go  -destination system/internal/repository/mocks/credentials.go
+
+	$(MOCKGEN) -package service -source system/internal/service/organisation.go       -destination system/internal/service/mocks/organisation.go
+	$(MOCKGEN) -package service -source system/internal/service/role.go               -destination system/internal/service/mocks/role.go
+	$(MOCKGEN) -package service -source system/internal/service/user.go               -destination system/internal/service/mocks/user.go
+
+	$(MOCKGEN) -package service -source crm/internal/service/notification.go          -destination crm/internal/service/mocks/notification.go
+
+	$(MOCKGEN) -package service -source messaging/internal/service/attachment.go      -destination messaging/internal/service/mocks/attachment.go
+	$(MOCKGEN) -package service -source messaging/internal/service/channel.go         -destination messaging/internal/service/mocks/channel.go
+	$(MOCKGEN) -package service -source messaging/internal/service/message.go         -destination messaging/internal/service/mocks/message.go
+
+	$(MOCKGEN) -package mail  -source internal/mail/mail.go                           -destination internal/mail/mail_mock_test.go
+	$(MOCKGEN) -package rules -source internal/rules/interfaces.go                    -destination internal/rules/resources_mock_test.go
+
 
 
 ########################################################################################################################

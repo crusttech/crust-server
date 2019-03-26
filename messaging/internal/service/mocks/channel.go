@@ -6,6 +6,7 @@ package service
 
 import (
 	context "context"
+	service "github.com/crusttech/crust/messaging/internal/service"
 	types "github.com/crusttech/crust/messaging/types"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
@@ -35,10 +36,10 @@ func (m *MockChannelService) EXPECT() *MockChannelServiceMockRecorder {
 }
 
 // With mocks base method
-func (m *MockChannelService) With(ctx context.Context) ChannelService {
+func (m *MockChannelService) With(ctx context.Context) service.ChannelService {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "With", ctx)
-	ret0, _ := ret[0].(ChannelService)
+	ret0, _ := ret[0].(service.ChannelService)
 	return ret0
 }
 

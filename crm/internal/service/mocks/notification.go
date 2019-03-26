@@ -6,6 +6,7 @@ package service
 
 import (
 	context "context"
+	service "github.com/crusttech/crust/crm/internal/service"
 	gomock "github.com/golang/mock/gomock"
 	mail_v2 "gopkg.in/mail.v2"
 	reflect "reflect"
@@ -35,10 +36,10 @@ func (m *MockNotificationService) EXPECT() *MockNotificationServiceMockRecorder 
 }
 
 // With mocks base method
-func (m *MockNotificationService) With(ctx context.Context) NotificationService {
+func (m *MockNotificationService) With(ctx context.Context) service.NotificationService {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "With", ctx)
-	ret0, _ := ret[0].(NotificationService)
+	ret0, _ := ret[0].(service.NotificationService)
 	return ret0
 }
 
