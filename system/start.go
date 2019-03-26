@@ -15,6 +15,7 @@ import (
 	"github.com/crusttech/crust/internal/mail"
 	"github.com/crusttech/crust/internal/metrics"
 	migrate "github.com/crusttech/crust/system/db"
+	"github.com/crusttech/crust/system/internal/auth/social"
 	"github.com/crusttech/crust/system/service"
 )
 
@@ -37,6 +38,9 @@ func Init() error {
 		jwtVerifier = jwtAuth.Verifier()
 		jwtAuthenticator = jwtAuth.Authenticator()
 	}
+
+	// Setup goth/social authentication
+	social.Init(flags.social)
 
 	mail.SetupDialer(flags.smtp)
 

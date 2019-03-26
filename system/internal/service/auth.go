@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/markbates/goth"
 	"github.com/pkg/errors"
@@ -52,9 +53,15 @@ func (svc *auth) With(ctx context.Context) AuthService {
 // It does not update user's info
 func (svc *auth) Social(profile goth.User) (u *types.User, err error) {
 	var kind types.CredentialsKind
+	var lastUsedAt = time.Now()
 
 	switch profile.Provider {
-	case "facebook", "gplus", "github", "linkedin":
+	case
+		"facebook",
+		"gplus",
+		"github",
+		"linkedin",
+		"openid-connect":
 		kind = types.CredentialsKind(profile.Provider)
 	default:
 		return nil, errors.New("Unsupported provider")
@@ -119,13 +126,35 @@ func (svc *auth) Social(profile goth.User) (u *types.User, err error) {
 			}
 
 			if u, err = svc.users.Create(u); err != nil {
-				return err
+				return errors.Wrap(err, "could not create user after successful social auth")
 			}
 
+			log.Printf("Created new user after successful social auth (%v, %v)", u.ID, u.Email)
+
+			// Owner created
+			return nil
+		} else if err != nil {
+			return err
+		} else if !u.Valid() {
+			return errors.Errorf(
+				"Social login to an invalid/suspended user (user ID: %v)",
+				u.ID,
+			)
+		} else {
+			log.Printf(
+				"Autheticated user (%v, %v) via %s, existing user",
+				u.ID,
+				u.Email,
+				profile.Provider,
+			)
+		}
+
+		if c == nil {
 			c = &types.Credentials{
 				Kind:        kind,
 				OwnerID:     u.ID,
 				Credentials: profile.UserID,
+				LastUsedAt:  &lastUsedAt,
 			}
 
 			if !profile.ExpiresAt.IsZero() {
@@ -138,30 +167,31 @@ func (svc *auth) Social(profile goth.User) (u *types.User, err error) {
 			}
 
 			log.Printf(
-				"Autheticated user (%v, %v) via %s, created user and credentials (%v)",
+				"Creating new credential entry (%v, %v) for exisintg user (%v, %v)",
+				c.ID,
+				profile.Provider,
 				u.ID,
 				u.Email,
-				profile.Provider,
-				c.ID,
 			)
+		} else {
+			if !profile.ExpiresAt.IsZero() {
+				// Copy expiration date when provided
+				c.ExpiresAt = &profile.ExpiresAt
+			}
 
-			// Owner created
-			return nil
-		} else if err != nil {
-			return err
-		} else if !u.Valid() {
-			return errors.Errorf(
-				"Social login to an invalid/suspended user (user ID: %v)",
+			c.LastUsedAt = &lastUsedAt
+			if c, err = svc.credentials.Update(c); err != nil {
+				return err
+			}
+
+			log.Printf(
+				"Updating credential entry (%v, %v) for exisintg user (%v, %v)",
+				c.ID,
+				profile.Provider,
 				u.ID,
+				u.Email,
 			)
 		}
-
-		log.Printf(
-			"Autheticated user (%v, %v) via %s, existing user",
-			u.ID,
-			u.Email,
-			profile.Provider,
-		)
 
 		// Owner loaded, carry on.
 		return nil

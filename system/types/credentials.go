@@ -14,9 +14,11 @@ type (
 		Kind        CredentialsKind `json:"kind" db:"kind"`
 		Credentials string          `json:"-" db:"credentials"`
 		Meta        types.JSONText  `json:"-" db:"meta"`
-		ExpiresAt   *time.Time      `json:"expiresAt,omitempty" db:"expires_at"`
-		CreatedAt   time.Time       `json:"createdAt,omitempty" db:"created_at"`
-		DeletedAt   *time.Time      `json:"deletedAt,omitempty" db:"deleted_at"`
+		LastUsedAt  *time.Time      `json:"lastUsedAt,omitempty" db:"last_used_at"`
+		ExpiresAt   *time.Time      `json:"expiresAt,omitempty"  db:"expires_at"`
+		CreatedAt   time.Time       `json:"createdAt,omitempty"  db:"created_at"`
+		UpdatedAt   *time.Time      `json:"updatedAt,omitempty"  db:"updated_at"`
+		DeletedAt   *time.Time      `json:"deletedAt,omitempty"  db:"deleted_at"`
 	}
 
 	CredentialsKind string
@@ -31,7 +33,7 @@ const (
 	CredentialsKindGPlus    CredentialsKind = "gplus"
 	CredentialsKindGitHub   CredentialsKind = "github"
 	CredentialsKindLinkedin CredentialsKind = "linkedin"
-	// CredentialsKindSatosa   CredentialsKind = "satosa"
+	CredentialsKindOIDC     CredentialsKind = "openid-connect"
 )
 
 func (u *Credentials) Valid() bool {

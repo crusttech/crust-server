@@ -11,6 +11,9 @@ type (
 	Social struct {
 		Enabled bool
 
+		OidcKey        string
+		OidcSecret     string
+		OidcUrl        string
 		FacebookKey    string
 		FacebookSecret string
 		GPlusKey       string
@@ -58,6 +61,9 @@ func (*Social) Init(prefix ...string) *Social {
 
 	social = new(Social)
 	flag.BoolVar(&social.Enabled, "auth-social-enabled", false, "SocialAuth enabled")
+
+	b("Oidc", &social.OidcKey, &social.OidcSecret)
+	flag.StringVar(&social.OidcUrl, "auth-social-oidc-url", "", "OIDC autodiscovery URL")
 
 	b("Facebook", &social.FacebookKey, &social.FacebookSecret)
 	b("GPlus", &social.GPlusKey, &social.GPlusSecret)

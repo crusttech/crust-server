@@ -5,18 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/facebook"
-	"github.com/markbates/goth/providers/github"
-	"github.com/markbates/goth/providers/gplus"
-	"github.com/markbates/goth/providers/linkedin"
 	"github.com/titpetric/factory/resputil"
 
 	"github.com/crusttech/crust/internal/auth"
@@ -41,43 +35,6 @@ func NewSocial(config *config.Social, jwtEncoder auth.TokenEncoder) *Social {
 }
 
 func (ctrl *Social) MountRoutes(r chi.Router) {
-	store := sessions.NewCookieStore([]byte(ctrl.config.SessionStoreSecret))
-	store.MaxAge(ctrl.config.SessionStoreExpiry)
-	store.Options.Path = "/social"
-	store.Options.HttpOnly = true
-	store.Options.Secure = false // @todo
-	gothic.Store = store
-
-	getProviderConfig := func(provider string) (key, secret string, has bool) {
-		key, keyOk := os.LookupEnv("AUTH_SOCIAL_" + provider + "_KEY")
-		sec, secOk := os.LookupEnv("AUTH_SOCIAL_" + provider + "_SECRET")
-		if keyOk && secOk {
-			return key, sec, true
-		} else {
-			log.Print(
-				"Binding auth endpoints without " + provider + " provider " +
-					"(missing key/secret, check AUTH_" + provider + "_KEY, AUTH_" + provider + "_SECRET)")
-		}
-
-		return "", "", false
-	}
-
-	if key, sec, ok := getProviderConfig("FACEBOOK"); ok {
-		goth.UseProviders(facebook.New(key, sec, ctrl.config.Url+"/social/facebook/callback", "email"))
-	}
-
-	if key, sec, ok := getProviderConfig("GPLUS"); ok {
-		goth.UseProviders(gplus.New(key, sec, ctrl.config.Url+"/social/gplus/callback", "email"))
-	}
-
-	if key, sec, ok := getProviderConfig("GITHUB"); ok {
-		goth.UseProviders(github.New(key, sec, ctrl.config.Url+"/social/gplus/callback", "email"))
-	}
-
-	if key, sec, ok := getProviderConfig("LINKEDIN"); ok {
-		goth.UseProviders(linkedin.New(key, sec, ctrl.config.Url+"/social/linkedin/callback", "email"))
-	}
-
 	// Copy provider from path (Chi URL param) to request context and return it
 	copyProviderToContext := func(r *http.Request) *http.Request {
 		return r.WithContext(context.WithValue(r.Context(), "provider", chi.URLParam(r, "provider")))

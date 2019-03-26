@@ -21,6 +21,7 @@ type (
 		Find() (cc types.CredentialsSet, err error)
 
 		Create(c *types.Credentials) (*types.Credentials, error)
+		Update(c *types.Credentials) (*types.Credentials, error)
 		DeleteByID(id uint64) error
 	}
 
@@ -93,6 +94,12 @@ func (r *credentials) Create(c *types.Credentials) (*types.Credentials, error) {
 	c.ID = factory.Sonyflake.NextID()
 	c.CreatedAt = time.Now()
 	return c, r.db().Insert(r.tblname, c)
+}
+
+func (r *credentials) Update(c *types.Credentials) (*types.Credentials, error) {
+	updatedAt := time.Now()
+	c.UpdatedAt = &updatedAt
+	return c, r.db().Update(r.tblname, c)
 }
 
 func (r *credentials) DeleteByID(id uint64) error {
