@@ -68,12 +68,30 @@ func (svc *webhook) With(ctx context.Context) WebhookService {
 }
 
 func (svc *webhook) CreateIncoming(channelID uint64, username string, avatar interface{}) (*types.Webhook, error) {
-	// @todo: create bot user, create webhook in db
-	return nil, errors.New("Not implemented")
+	var userID = repository.Identity(svc.ctx)
+	// @todo: avatar
+	webhook := &types.Webhook{
+		Kind:        types.IncomingWebhook,
+		AuthToken:   "123", // @todo: JWT
+		OwnerUserID: userID,
+		UserID:      userID, // @todo: create bot user
+		ChannelID:   channelID,
+		CreatedAt:   time.Now(),
+	}
+	return svc.webhook.Create(webhook)
 }
 func (svc *webhook) CreateOutgoing(channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error) {
-	// @todo: create bot user, create webhook in db, check triggers in message(s)
-	return nil, errors.New("Not implemented")
+	var userID = repository.Identity(svc.ctx)
+	// @todo: avatar
+	webhook := &types.Webhook{
+		Kind:            types.OutgoingWebhook,
+		OwnerUserID:     userID,
+		UserID:          userID, // @todo: create bot user
+		ChannelID:       channelID,
+		OutgoingTrigger: trigger,
+		OutgoingURL:     url,
+	}
+	return svc.webhook.Create(webhook)
 }
 
 func (svc *webhook) Get(webhookID uint64) (*types.Webhook, error) {
