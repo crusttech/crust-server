@@ -1,4 +1,4 @@
-.PHONY: help docker docker-push realize dep dep.update test test.messaging test.crm qa critic vet codegen
+.PHONY: help docker docker-push realize dep dep.update test test.messaging test.crm qa critic vet codegen integration
 
 PKG       = "github.com/$(shell cat .project)"
 
@@ -34,13 +34,13 @@ help:
 
 docker: $(IMAGES:%=docker-image.%)
 
-docker-image.%: %
-	@ docker build --no-cache --rm -f Dockerfile.$^ -t crusttech/api-$^:latest .
+docker-image.%: Dockerfile.%
+	@ docker build --no-cache --rm -f Dockerfile.$* -t crusttech/api-$*:latest .
 
 docker-push: $(IMAGES:%=docker-push.%)
 
-docker-push.%: %
-	@ docker push crusttech/api-$^:latest
+docker-push.%: Dockerfile.%
+	@ docker push crusttech/api-$*:latest
 
 
 ########################################################################################################################
@@ -171,3 +171,5 @@ clean:
 	rm -f $(REALIZE) $(GOCRITIC) $(GOTEST)
 
 
+integration:
+	drone exec --pipeline integration
