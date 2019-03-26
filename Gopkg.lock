@@ -395,14 +395,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:867c2915fb252b272b86235c13cffb60627ecc35e1f334c77aaf7f154fbba352"
-  name = "github.com/titpetric/dockertest"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "3cd6aeb62a5fe526e54b1af7c05c5c9a2eac16dd"
-
-[[projects]]
-  branch = "master"
   digest = "1:8a90d635c58170aff3184be7da859c76ad941d7d11fa37edb28943a133cae186"
   name = "github.com/titpetric/factory"
   packages = [
@@ -575,7 +567,6 @@
     "github.com/rakyll/statik/fs",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",
-    "github.com/titpetric/dockertest",
     "github.com/titpetric/factory",
     "github.com/titpetric/factory/resputil",
     "github.com/titpetric/statik/fs",
