@@ -50,7 +50,7 @@ realize: $(REALIZE)
 	$(REALIZE) start
 
 dep.codegen:
-	go install github.com/titpetric/statik
+	go install github.com/goware/statik
 
 dep.update: $(DEP)
 	$(DEP) ensure -update -v
