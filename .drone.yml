@@ -7,16 +7,13 @@ name: crust
 
 steps:
 - name: build
-  image: golang:1.11-alpine
+  image: crusttech/api-builder
   environment:
     CGO_ENABLED: 0
     GOOS: linux
     GOARCH: amd64
   commands:
-  - apk add --no-cache git make
   - go fmt ./cmd/... ./internal/... ./crm/... ./messaging/... ./system/...
-  - go get -u github.com/golang/mock/gomock
-  - go get -u github.com/golang/mock/mockgen
   - make mocks
   - go build -ldflags "-X github.com/crusttech/crust/internal/version.BuildTime=`date +%FT%T%z` -X github.com/crusttech/crust/internal/version.Version=`git describe --always --tags`" -o build/crust-$GOOS-$GOARCH cmd/crust/*.go
   - go build -ldflags "-X github.com/crusttech/crust/internal/version.BuildTime=`date +%FT%T%z` -X github.com/crusttech/crust/internal/version.Version=`git describe --always --tags`" -o build/crm-$GOOS-$GOARCH cmd/crm/*.go
@@ -40,12 +37,24 @@ name: integration
 
 steps:
 - name: build
-  image: golang:1.11-alpine
+  image: crusttech/api-builder
   environment:
     CGO_ENABLED: 0
     GOOS: linux
     GOARCH: amd64
   commands:
+  - wait-for-it.sh -t 60 --strict crust-db:3306 -- echo "Crust DB1 is up"
   - go test -v --tags=integration ./internal/http/...
+
+services:
+- name: crust-db
+  image: percona:8.0
+  ports:
+    - 3306
+  environment:
+    MYSQL_ROOT_PASSWORD: bRxJ37sJ6Qu4
+    MYSQL_DATABASE: crust
+    MYSQL_USER: crust
+    MYSQL_PASSWORD: crust
 
 trigger:
