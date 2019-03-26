@@ -8,8 +8,8 @@ CREATE TABLE `messaging_webhook` (
  `outgoing_trigger` varchar(32) NOT NULL COMMENT 'Outgoing command trigger',
  `outgoing_url` varchar(255) NOT NULL COMMENT 'URL for POST request',
  `created_at` datetime NOT NULL,
- `updated_at` datetime NOT NULL,
- `deleted_at` datetime NOT NULL,
+ `updated_at` datetime     NULL,
+ `deleted_at` datetime     NULL,
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

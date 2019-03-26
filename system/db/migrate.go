@@ -9,9 +9,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goware/statik/fs"
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory"
-	"github.com/goware/statik/fs"
 
 	"github.com/crusttech/crust/system/db/mysql"
 )
