@@ -1,3 +1,5 @@
+// +build unit
+
 package service
 
 // func TestUser(t *testing.T) {

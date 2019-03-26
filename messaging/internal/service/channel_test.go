@@ -1,3 +1,5 @@
+// +build unit
+
 package service
 
 import (
@@ -6,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/crusttech/crust/internal/auth"
+	"github.com/crusttech/crust/internal/test"
 	"github.com/crusttech/crust/messaging/types"
 	systemTypes "github.com/crusttech/crust/system/types"
 )
@@ -40,6 +43,6 @@ func TestChannelNameTooShort(t *testing.T) {
 
 	longName := strings.Repeat("X", settingsChannelNameLength+1)
 
-	assert(t, e(svc.Create(&types.Channel{})) != nil, "Should not allow to create unnamed channels")
-	assert(t, e(svc.Create(&types.Channel{Name: longName})) != nil, "Should not allow to create channel with really long name")
+	test.Assert(t, e(svc.Create(&types.Channel{})) != nil, "Should not allow to create unnamed channels")
+	test.Assert(t, e(svc.Create(&types.Channel{Name: longName})) != nil, "Should not allow to create channel with really long name")
 }

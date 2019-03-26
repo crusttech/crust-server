@@ -1,3 +1,5 @@
+// +build integration
+
 package service
 
 import (
@@ -6,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/crusttech/crust/internal/auth"
+	"github.com/crusttech/crust/internal/test"
 	"github.com/crusttech/crust/messaging/types"
 	systemTypes "github.com/crusttech/crust/system/types"
 )
@@ -40,8 +43,8 @@ func TestMessageLength(t *testing.T) {
 
 	longText := strings.Repeat("X", settingsMessageBodyLength+1)
 
-	assert(t, e(svc.Create(&types.Message{})) != nil, "Should not allow to create unnamed channels")
-	assert(t, e(svc.Create(&types.Message{Message: longText})) != nil, "Should not allow to create channel with really long name")
+	test.Assert(t, e(svc.Create(&types.Message{})) != nil, "Should not allow to create unnamed channels")
+	test.Assert(t, e(svc.Create(&types.Message{Message: longText})) != nil, "Should not allow to create channel with really long name")
 }
 
 func TestMentionsExtraction(t *testing.T) {
@@ -72,10 +75,10 @@ func TestMentionsExtraction(t *testing.T) {
 	for _, c := range cases {
 		mm = svc.extractMentions(&types.Message{Message: c.text})
 
-		assert(t, len(mm) == len(c.ids), "Number of extracted (%d) and expected (%d) user IDs do not match (%s)", len(mm), len(c.ids), c.text)
+		test.Assert(t, len(mm) == len(c.ids), "Number of extracted (%d) and expected (%d) user IDs do not match (%s)", len(mm), len(c.ids), c.text)
 
 		for _, id := range c.ids {
-			assert(t, len(mm.FindByUserID(id)) == 1, "Owner ID (%d) was not extracted (%s)", id, c.text)
+			test.Assert(t, len(mm.FindByUserID(id)) == 1, "Owner ID (%d) was not extracted (%s)", id, c.text)
 		}
 	}
 }

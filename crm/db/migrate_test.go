@@ -1,4 +1,4 @@
-// +build integration
+// +build migrations
 
 package db
 
@@ -24,9 +24,7 @@ func TestMigrations(t *testing.T) {
 	factory.Database.Add("system", dsn)
 
 	db := factory.Database.MustGet()
-	db.Profiler = &factory.Database.ProfilerStdout
-
 	if err := Migrate(db); err != nil {
-		t.Fatalf("Unexpected error: %#v", err)
+		t.Fatalf("Unexpected error: %+v", err)
 	}
 }

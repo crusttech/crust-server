@@ -14,7 +14,7 @@ import (
 	systemService "github.com/crusttech/crust/system/service"
 )
 
-func (s *Session) execCommand(ctx context.Context, c *incoming.ExecCommand) error {
+func (s *Session) execCommand(ctx context.Context, c *incoming.ExecCommand) (*outgoing.Message, error) {
 	// @todo: check access / can we join this channel (should be done by service layer)
 
 	log.Printf("Received command '%s(%v)", c.Command, c.Params)
@@ -22,21 +22,19 @@ func (s *Session) execCommand(ctx context.Context, c *incoming.ExecCommand) erro
 	switch c.Command {
 	case "echo":
 		if c.Input != "" {
-			user, err := systemService.User(ctx).FindByID(s.user.Identity())
-			if err != nil {
-				return err
+			if user, err := systemService.User(ctx).FindByID(s.user.Identity()); err != nil {
+				return nil, err
+			} else {
+				return &outgoing.Message{
+					ID:        factory.Sonyflake.NextID(),
+					User:      payload.User(user),
+					CreatedAt: time.Now(),
+					Type:      "hallucination",
+					ChannelID: c.ChannelID,
+					Message:   c.Input,
+				}, nil
 			}
-
-			return s.sendReply(&outgoing.Message{
-				ID:        factory.Sonyflake.NextID(),
-				User:      payload.User(user),
-				CreatedAt: time.Now(),
-				Type:      "hallucination",
-				ChannelID: c.ChannelID,
-				Message:   c.Input,
-			})
 		}
-
 	case "shrug":
 		msg := &types.Message{
 			ChannelID: payload.ParseUInt64(c.ChannelID),
@@ -47,37 +45,35 @@ func (s *Session) execCommand(ctx context.Context, c *incoming.ExecCommand) erro
 			msg.Message = c.Input + " " + msg.Message
 		}
 		_, err := s.svc.msg.With(ctx).Create(msg)
-
-		return err
+		return nil, err
 	default:
 		user, err := systemService.User(ctx).FindByID(s.user.Identity())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		webhooks, err := s.svc.webhook.Find(&types.WebhookFilter{
 			OutgoingTrigger: c.Command,
 		})
 		if err != nil || len(webhooks) == 0 {
-			// @todo: list available commands, webhook triggers
-			return nil
+			// @todo: list available commands, webhook triggers?
+			return nil, nil
 		}
 		message, err := s.svc.webhook.Do(webhooks[0], c.Input)
 		if err != nil {
-			return s.sendReply(&outgoing.Message{
+			return &outgoing.Message{
 				ID:        factory.Sonyflake.NextID(),
 				User:      payload.User(user),
 				CreatedAt: time.Now(),
 				Type:      "hallucination",
 				ChannelID: c.ChannelID,
 				Message:   "Error running webhook: " + err.Error(),
-			})
+			}, nil
 		}
 		if message != nil {
 			_, err := s.svc.msg.With(ctx).Create(message)
-			return err
+			return nil, err
 		}
 	}
-
-	return nil
+	return nil, nil
 }

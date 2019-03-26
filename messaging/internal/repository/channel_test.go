@@ -1,12 +1,14 @@
+// +build integration
+
 package repository
 
 import (
 	"context"
+	"testing"
 
 	"github.com/titpetric/factory"
 
-	"testing"
-
+	"github.com/crusttech/crust/internal/test"
 	"github.com/crusttech/crust/messaging/types"
 )
 
@@ -28,47 +30,47 @@ func TestChannel(t *testing.T) {
 	{
 		chn.Name = name1
 		chn, err = rpo.CreateChannel(chn)
-		assert(t, err == nil, "CreateChannel error: %v", err)
-		assert(t, chn.Name == name1, "Changes were not stored")
+		test.Assert(t, err == nil, "CreateChannel error: %+v", err)
+		test.Assert(t, chn.Name == name1, "Changes were not stored")
 
 		{
 			chn.Name = name2
 
 			chn, err = rpo.UpdateChannel(chn)
-			assert(t, err == nil, "UpdateChannel error: %v", err)
-			assert(t, chn.Name == name2, "Changes were not stored")
+			test.Assert(t, err == nil, "UpdateChannel error: %+v", err)
+			test.Assert(t, chn.Name == name2, "Changes were not stored")
 		}
 
 		{
 			chn, err = rpo.FindChannelByID(chn.ID)
-			assert(t, err == nil, "FindChannelByID error: %v", err)
-			assert(t, chn.Name == name2, "Changes were not stored")
+			test.Assert(t, err == nil, "FindChannelByID error: %+v", err)
+			test.Assert(t, chn.Name == name2, "Changes were not stored")
 		}
 
 		{
 			cc, err = rpo.FindChannels(&types.ChannelFilter{Query: name2})
-			assert(t, err == nil, "FindChannels error: %v", err)
-			assert(t, len(cc) > 0, "No results found")
+			test.Assert(t, err == nil, "FindChannels error: %+v", err)
+			test.Assert(t, len(cc) > 0, "No results found")
 		}
 
 		{
 			err = rpo.ArchiveChannelByID(chn.ID)
-			assert(t, err == nil, "ArchiveChannelByID error: %v", err)
+			test.Assert(t, err == nil, "ArchiveChannelByID error: %+v", err)
 		}
 
 		{
 			err = rpo.UnarchiveChannelByID(chn.ID)
-			assert(t, err == nil, "UnarchiveChannelByID error: %v", err)
+			test.Assert(t, err == nil, "UnarchiveChannelByID error: %+v", err)
 		}
 
 		{
 			err = rpo.DeleteChannelByID(chn.ID)
-			assert(t, err == nil, "DeleteChannelByID error: %v", err)
+			test.Assert(t, err == nil, "DeleteChannelByID error: %+v", err)
 		}
 
 		{
 			err = rpo.UndeleteChannelByID(chn.ID)
-			assert(t, err == nil, "UndeleteChannelByID error: %v", err)
+			test.Assert(t, err == nil, "UndeleteChannelByID error: %+v", err)
 		}
 	}
 }

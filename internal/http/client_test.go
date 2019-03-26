@@ -1,4 +1,4 @@
-// +build integrationExternal
+// +build integration,external
 
 package http
 

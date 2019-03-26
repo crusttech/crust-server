@@ -51,7 +51,11 @@ func (s *Session) dispatch(raw []byte) error {
 		return s.userList(ctx, p.Users)
 
 	case p.ExecCommand != nil:
-		return s.execCommand(ctx, p.ExecCommand)
+		if message, err := s.execCommand(ctx, p.ExecCommand); err != nil {
+			return err
+		} else if message != nil {
+			return s.sendReply(message)
+		}
 	}
 
 	return nil
