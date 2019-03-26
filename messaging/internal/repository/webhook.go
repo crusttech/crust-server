@@ -47,13 +47,13 @@ func (r *webhook) Create(webhook *types.Webhook) (*types.Webhook, error) {
 	webhook.ID = factory.Sonyflake.NextID()
 	webhook.CreatedAt = time.Now()
 
-	return webhook, r.db().Insert(r.webhook, webhook)
+	return webhook, errors.WithStack(r.db().Insert(r.webhook, webhook))
 }
 
 func (r *webhook) Get(webhookID uint64) (*types.Webhook, error) {
 	hook := &types.Webhook{}
 	if err := r.db().Get(&hook, "select * from "+r.webhook+" where id=?", webhookID); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return hook, nil
 }
@@ -62,7 +62,7 @@ func (r *webhook) GetByToken(webhookID uint64, webhookToken string) (*types.Webh
 	webhook, err := r.Get(webhookID)
 	switch {
 	case err != nil:
-		return nil, err
+		return nil, errors.WithStack(err)
 	case webhook.AuthToken == webhookToken:
 		return webhook, nil
 	default:
@@ -97,23 +97,21 @@ func (r *webhook) Find(filter *types.WebhookFilter) (types.WebhookSet, error) {
 		}
 	}
 
-	return vv, r.db().Select(&vv, sql, params...)
+	return vv, errors.WithStack(r.db().Select(&vv, sql, params...))
 }
 
 func (r *webhook) Delete(webhookID uint64) error {
-	_, err := r.Get(webhookID)
-	if err != nil {
+	if _, err := r.Get(webhookID); err != nil {
 		return err
 	}
-	_, err = r.db().Exec("delete from "+r.webhook+" where id=?", webhookID)
-	return err
+	_, err := r.db().Exec("delete from "+r.webhook+" where id=?", webhookID)
+	return errors.WithStack(err)
 }
 
 func (r *webhook) DeleteByToken(webhookID uint64, webhookToken string) error {
-	_, err := r.GetByToken(webhookID, webhookToken)
-	if err != nil {
+	if _, err := r.GetByToken(webhookID, webhookToken); err != nil {
 		return err
 	}
-	_, err = r.db().Exec("delete from "+r.webhook+" where id=?", webhookID)
-	return err
+	_, err := r.db().Exec("delete from "+r.webhook+" where id=?", webhookID)
+	return errors.WithStack(err)
 }

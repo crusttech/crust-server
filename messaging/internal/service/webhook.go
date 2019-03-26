@@ -147,11 +147,12 @@ func (svc *webhook) Do(webhook *types.Webhook, message string) (*types.Message, 
 
 	// parse response body
 	responseBody := types.WebhookBody{}
-	switch resp.Header.Get("content-type") {
-	case "text/plain":
+	contentType := resp.Header.Get("Content-Type")
+	switch {
+	case strings.Contains(contentType, "text/plain"):
 		// keep plain/text as-is
 		if b, err := ioutil.ReadAll(resp.Body); err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		} else {
 			responseBody.Text = string(b)
 		}
@@ -160,7 +161,7 @@ func (svc *webhook) Do(webhook *types.Webhook, message string) (*types.Message, 
 		case 200:
 			// assume the response is an expected json structure
 			if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-				return nil, err
+				return nil, errors.WithStack(err)
 			}
 			if responseBody.Text == "" {
 				return nil, errors.New("Empty webhook response")
@@ -174,5 +175,6 @@ func (svc *webhook) Do(webhook *types.Webhook, message string) (*types.Message, 
 		UserID:    webhook.UserID,
 		ChannelID: webhook.ChannelID,
 		CreatedAt: time.Now(),
+		Message:   responseBody.Text,
 	}, nil
 }
