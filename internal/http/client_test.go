@@ -11,7 +11,7 @@ import (
 
 func TestHTTPClient(t *testing.T) {
 	client, err := New(&config.HTTPClient{
-		Timeout: 5,
+		Timeout: 10,
 	})
 	test.Assert(t, err == nil, "%+v", err)
 	client.Debug(FULL)

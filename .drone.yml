@@ -1,13 +1,13 @@
 workspace:
-  base: /go
-  path: src/github.com/crusttech/crust
+  base: /go/src
+  path: github.com/crusttech/crust
 
 kind: pipeline
 name: crust
 
 steps:
 - name: build
-  image: crusttech/api-builder
+  image: crusttech/api-builder:latest
   environment:
     CGO_ENABLED: 0
     GOOS: linux
@@ -29,25 +29,26 @@ trigger:
 
 ---
 workspace:
-  base: /go
-  path: src/github.com/crusttech/crust
+  base: /go/src
+  path: github.com/crusttech/crust
 
 kind: pipeline
 name: integration
 
 steps:
 - name: build
-  image: crusttech/api-builder
+  image: crusttech/api-builder:latest
   environment:
     CGO_ENABLED: 0
     GOOS: linux
     GOARCH: amd64
+    CI: circleci
   commands:
   - wait-for-it.sh -t 60 --strict crust-db:3306 -- echo "Crust DB1 is up"
-  - go test -v --tags=integrationExternal ./internal/http/...
-  - go test -v --tags=integration ./system/db/...
-  - go test -v --tags=integration ./messaging/db/...
-  - go test -v --tags=integration ./crm/db/...
+  - gotest -v --tags=integrationExternal ./internal/http/...
+  - gotest -v --tags=integration ./system/db/...
+  - gotest -v --tags=integration ./messaging/db/...
+  - gotest -v --tags=integration ./crm/db/...
 
 services:
 - name: crust-db
