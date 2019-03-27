@@ -40,6 +40,11 @@ func (ctrl *Social) MountRoutes(r chi.Router) {
 		return r.WithContext(context.WithValue(r.Context(), "provider", chi.URLParam(r, "provider")))
 	}
 
+	// Make sure we're backwards compatible and redirect /oidc to /social/openid-connect-didmos2
+	r.Get("/oidc", func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, "/social/openid-connect-didmos2", http.StatusMovedPermanently)
+	})
+
 	r.Route("/social/{provider}", func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			r = copyProviderToContext(r)
