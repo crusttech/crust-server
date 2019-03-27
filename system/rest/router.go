@@ -8,30 +8,9 @@ import (
 	"github.com/crusttech/crust/system/rest/handlers"
 )
 
-func MountRoutes(oidcConfig *config.OIDC, socialConfig *config.Social, jwtEncoder auth.TokenEncoder) func(chi.Router) {
-	// var err error
-	// var userSvc = service.User()
-	// var ctx = context.Background()
-	// var oidc *openIdConnect
-	//
-	// if oidcConfig.Enabled {
-	// 	oidc, err = OpenIdConnect(ctx, oidcConfig, userSvc, jwtEncoder, repository.NewSettings(ctx, repository.DB(ctx)))
-	// 	if err != nil {
-	// 		log.Println("Could not initialize OIDC:", err.Error())
-	// 	}
-	// } else {
-	// 	log.Println("OIDC is disabled")
-	// }
-
+func MountRoutes(socialConfig *config.Social, jwtEncoder auth.TokenEncoder) func(chi.Router) {
 	// Initialize handers & controllers.
 	return func(r chi.Router) {
-		// if oidcConfig.Enabled && oidc != nil {
-		// 	r.Route("/oidc", func(r chi.Router) {
-		// 		r.Get("/", oidc.HandleRedirect)
-		// 		r.Get("/callback", oidc.HandleOAuth2Callback)
-		// 	})
-		// }
-
 		NewSocial(socialConfig, jwtEncoder).MountRoutes(r)
 
 		// Provide raw `/auth` handlers
