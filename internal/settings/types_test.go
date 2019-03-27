@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx/types"
+
+	"github.com/crusttech/crust/internal/test"
 )
 
 func TestKV_Bool(t *testing.T) {
@@ -48,4 +50,13 @@ func TestKV_Bool(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSettingValueAsString(t *testing.T) {
+	test.NoError(t, (&Value{}).SetValueAsString(`"string"`), "unable to set value as string")
+	test.NoError(t, (&Value{}).SetValueAsString(`false`), "unable to set value as string")
+	test.NoError(t, (&Value{}).SetValueAsString(`null`), "unable to set value as string")
+	test.NoError(t, (&Value{}).SetValueAsString(`42`), "unable to set value as string")
+	test.NoError(t, (&Value{}).SetValueAsString(`3.14`), "unable to set value as string")
+	test.Error(t, (&Value{}).SetValueAsString(`error`), "expecting error when not setting JSON")
 }
