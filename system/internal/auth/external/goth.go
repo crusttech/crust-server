@@ -1,4 +1,4 @@
-package social
+package external
 
 import (
 	"fmt"
@@ -26,22 +26,22 @@ func setupGoth(c *config.Social, settings settings.Finder) {
 	}
 
 	if c == nil {
-		log.Println("Skipping social login setup")
+		log.Println("Skipping external auth setup")
 		return
 	}
 
-	log.Println("Initializing social login providers")
+	log.Println("Initializing external auth providers")
 
 	// var defScopes = []string{"email"}
 
 	store := sessions.NewCookieStore([]byte(c.SessionStoreSecret))
 	store.MaxAge(c.SessionStoreExpiry)
-	store.Options.Path = "/social"
+	store.Options.Path = "/external"
 	store.Options.HttpOnly = true
 	store.Options.Secure = false // @todo, make this dependable on config somehow
 	gothic.Store = store
 
-	setupGothProviders(c.Url+"/social/%s/callback", s)
+	setupGothProviders(c.Url+"/external/%s/callback", s)
 
 	for p := range goth.GetProviders() {
 		log.Printf("Social login initialized with %s provider", p)

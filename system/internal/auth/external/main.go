@@ -1,4 +1,4 @@
-package social
+package external
 
 import (
 	"github.com/crusttech/crust/internal/config"

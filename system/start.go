@@ -16,7 +16,7 @@ import (
 	"github.com/crusttech/crust/internal/metrics"
 	"github.com/crusttech/crust/internal/settings"
 	migrate "github.com/crusttech/crust/system/db"
-	"github.com/crusttech/crust/system/internal/auth/social"
+	"github.com/crusttech/crust/system/internal/auth/external"
 	"github.com/crusttech/crust/system/internal/repository"
 	"github.com/crusttech/crust/system/service"
 )
@@ -69,7 +69,7 @@ func Init() error {
 	service.Init()
 
 	// Setup goth/social authentication
-	social.Init(flags.social, settingService.With(ctx))
+	external.Init(flags.social, settingService.With(ctx))
 
 	return nil
 }

@@ -19,33 +19,38 @@ import (
 )
 
 type (
-	Social struct {
+	ExternalAuth struct {
 		auth       service.AuthService
 		config     *config.Social
 		jwtEncoder auth.TokenEncoder
 	}
 )
 
-func NewSocial(config *config.Social, jwtEncoder auth.TokenEncoder) *Social {
-	return &Social{
+const (
+	externalAuthBaseUrl = "/auth/external"
+)
+
+func NewSocial(config *config.Social, jwtEncoder auth.TokenEncoder) *ExternalAuth {
+	return &ExternalAuth{
 		auth:       service.DefaultAuth,
 		config:     config,
 		jwtEncoder: jwtEncoder,
 	}
 }
 
-func (ctrl *Social) MountRoutes(r chi.Router) {
+func (ctrl *ExternalAuth) MountRoutes(r chi.Router) {
+
+	// Make sure we're backwards compatible and redirect /oidc to /auth/external/openid-connect-didmos2
+	r.Get("/oidc", func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, externalAuthBaseUrl+"/openid-connect-didmos2", http.StatusMovedPermanently)
+	})
+
 	// Copy provider from path (Chi URL param) to request context and return it
 	copyProviderToContext := func(r *http.Request) *http.Request {
 		return r.WithContext(context.WithValue(r.Context(), "provider", chi.URLParam(r, "provider")))
 	}
 
-	// Make sure we're backwards compatible and redirect /oidc to /social/openid-connect-didmos2
-	r.Get("/oidc", func(w http.ResponseWriter, req *http.Request) {
-		http.Redirect(w, req, "/social/openid-connect-didmos2", http.StatusMovedPermanently)
-	})
-
-	r.Route("/social/{provider}", func(r chi.Router) {
+	r.Route(externalAuthBaseUrl+"/{provider}", func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			r = copyProviderToContext(r)
 
@@ -74,7 +79,7 @@ func (ctrl *Social) MountRoutes(r chi.Router) {
 
 		r.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
 			if err := gothic.Logout(w, r); err != nil {
-				log.Printf("Failed to social logout: %v", err)
+				log.Printf("Failed to external logout: %v", err)
 			}
 
 			w.Header().Set("Location", "/")
@@ -83,12 +88,12 @@ func (ctrl *Social) MountRoutes(r chi.Router) {
 	})
 }
 
-func (ctrl *Social) handleFailedCallback(w http.ResponseWriter, r *http.Request, err error) {
+func (ctrl *ExternalAuth) handleFailedCallback(w http.ResponseWriter, r *http.Request, err error) {
 	provider := chi.URLParam(r, "provider")
 
 	if strings.Contains(err.Error(), "Error processing your OAuth request: Invalid oauth_verifier parameter") {
 		// Just take user through the same loop again
-		w.Header().Set("Location", "/social/"+provider)
+		w.Header().Set("Location", externalAuthBaseUrl+"/"+provider)
 		w.WriteHeader(http.StatusSeeOther)
 		return
 	}
@@ -100,10 +105,10 @@ func (ctrl *Social) handleFailedCallback(w http.ResponseWriter, r *http.Request,
 // Handles authentication via external auth providers of
 // unknown an user + appending authentication on external providers
 // to a current user
-func (ctrl *Social) handleSuccessfulAuth(w http.ResponseWriter, r *http.Request, cred goth.User) {
-	log.Printf("Successful social login: %v", cred)
+func (ctrl *ExternalAuth) handleSuccessfulAuth(w http.ResponseWriter, r *http.Request, cred goth.User) {
+	log.Printf("Successful external login: %v", cred)
 
-	if u, err := ctrl.auth.With(r.Context()).Social(cred); err != nil {
+	if u, err := ctrl.auth.With(r.Context()).External(cred); err != nil {
 		resputil.JSON(w, err)
 	} else {
 		ctrl.jwtEncoder.SetCookie(w, r, u)
@@ -120,13 +125,13 @@ func (ctrl *Social) handleSuccessfulAuth(w http.ResponseWriter, r *http.Request,
 }
 
 // Extracts and authenticates JWT from context, validates claims
-func (ctrl *Social) setCookie(w http.ResponseWriter, r *http.Request, name, value string) {
+func (ctrl *ExternalAuth) setCookie(w http.ResponseWriter, r *http.Request, name, value string) {
 	cookie := &http.Cookie{
 		Name:    name,
 		Expires: time.Now().Add(time.Duration(ctrl.config.SessionStoreExpiry) * time.Second),
 		Secure:  r.URL.Scheme == "https",
 		Domain:  r.URL.Hostname(),
-		Path:    "/social",
+		Path:    externalAuthBaseUrl,
 	}
 
 	if value == "" {

@@ -24,7 +24,7 @@ type (
 	AuthService interface {
 		With(ctx context.Context) AuthService
 
-		Social(profile goth.User) (*types.User, error)
+		External(profile goth.User) (*types.User, error)
 
 		CheckPassword(username, password string) (*types.User, error)
 		ChangePassword(user *types.User, password string) error
@@ -51,7 +51,7 @@ func (svc *auth) With(ctx context.Context) AuthService {
 // Social user verifies existance by using email value from social profile and creates user if needed
 //
 // It does not update user's info
-func (svc *auth) Social(profile goth.User) (u *types.User, err error) {
+func (svc *auth) External(profile goth.User) (u *types.User, err error) {
 	var kind types.CredentialsKind
 	var lastUsedAt = time.Now()
 
