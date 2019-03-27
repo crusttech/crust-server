@@ -1,0 +1,55 @@
+{
+  "Title": "Settings",
+  "Interface": "Settings",
+  "Struct": null,
+  "Parameters": null,
+  "Protocol": "",
+  "Authentication": [],
+  "Path": "/settings",
+  "APIs": [
+    {
+      "Name": "list",
+      "Method": "GET",
+      "Title": "Check JWT token",
+      "Path": "/",
+      "Parameters": {
+        "get": [
+          {
+            "name": "prefix",
+            "title": "Key prefix",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "Name": "get",
+      "Method": "GET",
+      "Title": "Check JWT token",
+      "Path": "/{key}",
+      "Parameters": {}
+    },
+    {
+      "Name": "set",
+      "Method": "PUT",
+      "Title": "Set a value for a key",
+      "Path": "/{key}",
+      "Parameters": {
+        "post": [
+          {
+            "name": "key",
+            "required": true,
+            "title": "Setting key",
+            "type": "string"
+          },
+          {
+            "name": "value",
+            "required": true,
+            "title": "Setting value",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}

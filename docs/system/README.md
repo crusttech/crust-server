@@ -460,6 +460,53 @@ An organisation may have many roles. Roles may have many channels available. Acc
 
 
 
+# Settings
+
+## Check JWT token
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/settings/` | HTTP/S | GET |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| prefix | string | GET | Key prefix | N/A | NO |
+
+## Check JWT token
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/settings/{key}` | HTTP/S | GET |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+
+## Set a value for a key
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/settings/{key}` | HTTP/S | PUT |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| key | string | POST | Setting key | N/A | YES |
+| value | string | POST | Setting value | N/A | YES |
+
+
+
+
 # Users
 
 ## Search users (Directory)

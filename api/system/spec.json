@@ -44,6 +44,58 @@
     ]
   },
   {
+    "title": "Settings",
+    "path": "/settings",
+    "entrypoint": "settings",
+    "authentication": [],
+    "apis": [
+      {
+        "name": "list",
+        "method": "GET",
+        "title": "Check JWT token",
+        "path": "/",
+        "parameters": {
+          "get": [
+            {
+              "name": "prefix",
+              "type": "string",
+              "title": "Key prefix"
+            }
+          ]
+        }
+      },
+      {
+        "name": "get",
+        "method": "GET",
+        "title": "Check JWT token",
+        "path": "/{key}",
+        "parameters": {}
+      },
+      {
+        "name": "set",
+        "method": "PUT",
+        "title": "Set a value for a key",
+        "path": "/{key}",
+        "parameters": {
+          "post": [
+            {
+              "name": "key",
+              "type": "string",
+              "required": true,
+              "title": "Setting key"
+            },
+            {
+              "name": "value",
+              "type": "string",
+              "required": true,
+              "title": "Setting value"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
     "title": "Organisations",
     "description": "Organisations represent a top-level grouping entity. There may be many organisations defined in a single deployment.",
     "path": "/organisations",
