@@ -13,8 +13,6 @@ steps:
     GOOS: linux
     GOARCH: amd64
   commands:
-  - go fmt ./cmd/... ./internal/... ./crm/... ./messaging/... ./system/...
-  - make mocks
   - go build -ldflags "-X github.com/crusttech/crust/internal/version.BuildTime=`date +%FT%T%z` -X github.com/crusttech/crust/internal/version.Version=`git describe --always --tags`" -o build/crust-$GOOS-$GOARCH cmd/crust/*.go
   - go build -ldflags "-X github.com/crusttech/crust/internal/version.BuildTime=`date +%FT%T%z` -X github.com/crusttech/crust/internal/version.Version=`git describe --always --tags`" -o build/crm-$GOOS-$GOARCH cmd/crm/*.go
   - go build -ldflags "-X github.com/crusttech/crust/internal/version.BuildTime=`date +%FT%T%z` -X github.com/crusttech/crust/internal/version.Version=`git describe --always --tags`" -o build/messaging-$GOOS-$GOARCH cmd/messaging/*.go
