@@ -13,6 +13,10 @@ type (
 		With(ctx context.Context) Service
 
 		FindByPrefix(prefix string) (kv KV, err error)
+		Set(v *Value) (err error)
+		Get(name string, ownedBy uint64) (out *Value, err error)
+		GetGlobalString(name string) (out string, err error)
+		GetGlobalBool(name string) (out bool, err error)
 	}
 
 	Service interface {
@@ -40,4 +44,34 @@ func (s service) FindByPrefix(prefix string) (KV, error) {
 	} else {
 		return vv.KV(), nil
 	}
+}
+
+func (s service) Set(v *Value) (err error) {
+	return s.repository.Set(v)
+}
+
+func (s service) Get(name string, ownedBy uint64) (out *Value, err error) {
+	return s.repository.Get(name, ownedBy)
+}
+
+func (s service) GetGlobalString(name string) (out string, err error) {
+	const global = 0
+	var v *Value
+
+	if v, err = s.repository.Get(name, global); err == nil {
+		err = v.Value.Unmarshal(&out)
+	}
+
+	return
+}
+
+func (s service) GetGlobalBool(name string) (out bool, err error) {
+	const global = 0
+	var v *Value
+
+	if v, err = s.repository.Get(name, global); err == nil {
+		err = v.Value.Unmarshal(&out)
+	}
+
+	return
 }

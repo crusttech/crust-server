@@ -2,7 +2,7 @@ package settings
 
 import (
 	"context"
-	"encoding/json"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory"
@@ -22,8 +22,8 @@ type (
 
 		Find(filter Filter) (ss ValueSet, err error)
 
-		Get(name string, value interface{}) (bool, error)
-		Set(name string, value interface{}) error
+		Get(name string, ownedBy uint64) (value *Value, err error)
+		Set(value *Value) error
 	}
 )
 
@@ -49,21 +49,20 @@ func (r *repository) Find(f Filter) (ss ValueSet, err error) {
 	f.Normalize()
 	lookup := squirrel.
 		Select("name", "value", "rel_owner", "updated_at", "updated_by").
-		From(r.dbTable)
-
-	// Always filter by owner
-	lookup.Where("rel_owner = ?", f.OwnedBy)
+		From(r.dbTable).
+		// Always filter by owner
+		Where("rel_owner = ?", f.OwnedBy)
 
 	if len(f.Prefix) > 0 {
-		lookup.Where("name LIKE ?", f.Prefix+"%")
+		lookup = lookup.Where("name LIKE ?", f.Prefix+"%")
 	}
 
 	if f.Page > 0 {
-		lookup.Offset(f.PerPage * f.Page)
+		lookup = lookup.Offset(f.PerPage * f.Page)
 	}
 
 	if f.PerPage > 0 {
-		lookup.Limit(f.PerPage)
+		lookup = lookup.Limit(f.PerPage)
 	}
 
 	if query, args, err := lookup.ToSql(); err != nil {
@@ -75,29 +74,26 @@ func (r *repository) Find(f Filter) (ss ValueSet, err error) {
 	}
 }
 
-func (r *repository) Set(name string, value interface{}) error {
-	if jsonValue, err := json.Marshal(value); err != nil {
-		return errors.Wrap(err, "Error marshaling settings value")
-	} else {
-		return r.db().Replace(r.dbTable, struct {
-			Key string          `db:"name"`
-			Val json.RawMessage `db:"value"`
-		}{name, jsonValue})
-	}
+func (r *repository) Set(value *Value) error {
+	value.UpdatedAt = time.Now()
+	return r.db().Replace(r.dbTable, value)
 }
 
-func (r *repository) Get(name string, value interface{}) (bool, error) {
-	sql := "SELECT value FROM " + r.dbTable + " WHERE name = ?"
+func (r *repository) Get(name string, ownedBy uint64) (value *Value, err error) {
+	lookup := squirrel.
+		Select("value").
+		From(r.dbTable).
+		Where("rel_owner = ?", ownedBy).
+		Where("name = ?", name)
 
-	var stored json.RawMessage
+	value = &Value{}
 
-	if err := r.db().Get(&stored, sql, name); err != nil {
-		return false, errors.Wrap(err, "Error reading settings from the database")
-	} else if stored == nil {
-		return false, nil
-	} else if err := json.Unmarshal(stored, value); err != nil {
-		return false, errors.Wrap(err, "Error unmarshaling settings value")
+	if query, args, err := lookup.ToSql(); err != nil {
+		return nil, errors.Wrap(err, "could not build lookup query for settings")
+	} else if err = r.db().Get(value, query, args...); err != nil {
+		return nil, errors.Wrap(err, "could not get settings")
+	} else {
+		return value, nil
 	}
 
-	return true, nil
 }

@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -39,6 +40,17 @@ func (f *Filter) Normalize() {
 	if f.PerPage > settingsFilterPerPageMax {
 		f.PerPage = settingsFilterPerPageMax
 	}
+}
+
+func (v *Value) SetValueAsString(str string) error {
+	var dummy interface{}
+	// Test input to be sure we can save it...
+	if err := json.Unmarshal([]byte(str), &dummy); err != nil {
+		return err
+	}
+
+	v.Value = types.JSONText(str)
+	return nil
 }
 
 func (ss ValueSet) KV() KV {
