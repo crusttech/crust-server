@@ -24,6 +24,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
+
+	sqlxTypes "github.com/jmoiron/sqlx/types"
 )
 
 var _ = chi.URLParam
@@ -75,8 +77,58 @@ func (seReq *SettingsList) Fill(r *http.Request) (err error) {
 
 var _ RequestFiller = NewSettingsList()
 
+// Settings update request parameters
+type SettingsUpdate struct {
+	Values sqlxTypes.JSONText
+}
+
+func NewSettingsUpdate() *SettingsUpdate {
+	return &SettingsUpdate{}
+}
+
+func (seReq *SettingsUpdate) Fill(r *http.Request) (err error) {
+	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
+		err = json.NewDecoder(r.Body).Decode(seReq)
+
+		switch {
+		case err == io.EOF:
+			err = nil
+		case err != nil:
+			return errors.Wrap(err, "error parsing http request body")
+		}
+	}
+
+	if err = r.ParseForm(); err != nil {
+		return err
+	}
+
+	get := map[string]string{}
+	post := map[string]string{}
+	urlQuery := r.URL.Query()
+	for name, param := range urlQuery {
+		get[name] = string(param[0])
+	}
+	postVars := r.Form
+	for name, param := range postVars {
+		post[name] = string(param[0])
+	}
+
+	if val, ok := post["values"]; ok {
+
+		if seReq.Values, err = parseJSONTextWithErr(val); err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
+var _ RequestFiller = NewSettingsUpdate()
+
 // Settings get request parameters
 type SettingsGet struct {
+	OwnerID uint64 `json:",string"`
+	Key     string
 }
 
 func NewSettingsGet() *SettingsGet {
@@ -110,6 +162,12 @@ func (seReq *SettingsGet) Fill(r *http.Request) (err error) {
 		post[name] = string(param[0])
 	}
 
+	if val, ok := get["ownerID"]; ok {
+
+		seReq.OwnerID = parseUInt64(val)
+	}
+	seReq.Key = chi.URLParam(r, "key")
+
 	return err
 }
 
@@ -117,8 +175,9 @@ var _ RequestFiller = NewSettingsGet()
 
 // Settings set request parameters
 type SettingsSet struct {
-	Key   string
-	Value string
+	Key     string
+	OwnerID uint64 `json:",string"`
+	Value   sqlxTypes.JSONText
 }
 
 func NewSettingsSet() *SettingsSet {
@@ -152,13 +211,16 @@ func (seReq *SettingsSet) Fill(r *http.Request) (err error) {
 		post[name] = string(param[0])
 	}
 
-	if val, ok := post["key"]; ok {
+	seReq.Key = chi.URLParam(r, "key")
+	if val, ok := post["ownerID"]; ok {
 
-		seReq.Key = val
+		seReq.OwnerID = parseUInt64(val)
 	}
 	if val, ok := post["value"]; ok {
 
-		seReq.Value = val
+		if seReq.Value, err = parseJSONTextWithErr(val); err != nil {
+			return err
+		}
 	}
 
 	return err

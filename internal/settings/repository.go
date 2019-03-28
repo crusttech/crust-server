@@ -38,6 +38,16 @@ func (r *repository) db() *factory.DB {
 	return r.dbh
 }
 
+func (r repository) columns() []string {
+	return []string{
+		"name",
+		"value",
+		"rel_owner",
+		"updated_at",
+		"updated_by",
+	}
+}
+
 func (r *repository) With(ctx context.Context) Repository {
 	return &repository{
 		dbTable: r.dbTable,
@@ -48,7 +58,7 @@ func (r *repository) With(ctx context.Context) Repository {
 func (r *repository) Find(f Filter) (ss ValueSet, err error) {
 	f.Normalize()
 	lookup := squirrel.
-		Select("name", "value", "rel_owner", "updated_at", "updated_by").
+		Select(r.columns()...).
 		From(r.dbTable).
 		// Always filter by owner
 		Where("rel_owner = ?", f.OwnedBy)
@@ -81,7 +91,7 @@ func (r *repository) Set(value *Value) error {
 
 func (r *repository) Get(name string, ownedBy uint64) (value *Value, err error) {
 	lookup := squirrel.
-		Select("value").
+		Select(r.columns()...).
 		From(r.dbTable).
 		Where("rel_owner = ?", ownedBy).
 		Where("name = ?", name)
@@ -92,6 +102,8 @@ func (r *repository) Get(name string, ownedBy uint64) (value *Value, err error) 
 		return nil, errors.Wrap(err, "could not build lookup query for settings")
 	} else if err = r.db().Get(value, query, args...); err != nil {
 		return nil, errors.Wrap(err, "could not get settings")
+	} else if value.Name == "" {
+		return nil, nil
 	} else {
 		return value, nil
 	}

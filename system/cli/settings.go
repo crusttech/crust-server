@@ -48,9 +48,10 @@ func Settings(rootCmd *cobra.Command, service settings.Service) {
 		Run: func(cmd *cobra.Command, args []string) {
 			if v, err := service.Get(args[0], 0); err != nil {
 				exit(err)
-			} else {
+			} else if v != nil {
 				cmd.Printf("%v\n", v.Value)
 			}
+			exit(nil)
 		},
 	}
 

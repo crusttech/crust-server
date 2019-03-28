@@ -462,7 +462,7 @@ An organisation may have many roles. Roles may have many channels available. Acc
 
 # Settings
 
-## Check JWT token
+## List settings
 
 #### Method
 
@@ -476,6 +476,20 @@ An organisation may have many roles. Roles may have many channels available. Acc
 | --------- | ---- | ------ | ----------- | ------- | --------- |
 | prefix | string | GET | Key prefix | N/A | NO |
 
+## Update settings
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/settings/` | HTTP/S | PATCH |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| values | sqlxTypes.JSONText | POST | Array of new settings: `[{ name: ..., value: ... }]`. Omit value to remove setting | N/A | YES |
+
 ## Check JWT token
 
 #### Method
@@ -488,6 +502,8 @@ An organisation may have many roles. Roles may have many channels available. Acc
 
 | Parameter | Type | Method | Description | Default | Required? |
 | --------- | ---- | ------ | ----------- | ------- | --------- |
+| ownerID | uint64 | GET | Owner ID | N/A | NO |
+| key | string | PATH | Setting key | N/A | YES |
 
 ## Set a value for a key
 
@@ -501,8 +517,9 @@ An organisation may have many roles. Roles may have many channels available. Acc
 
 | Parameter | Type | Method | Description | Default | Required? |
 | --------- | ---- | ------ | ----------- | ------- | --------- |
-| key | string | POST | Setting key | N/A | YES |
-| value | string | POST | Setting value | N/A | YES |
+| key | string | PATH | Setting key | N/A | YES |
+| ownerID | uint64 | POST | Owner | N/A | NO |
+| value | sqlxTypes.JSONText | POST | Setting value | N/A | YES |
 
 
 

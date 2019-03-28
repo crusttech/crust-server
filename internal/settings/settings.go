@@ -12,7 +12,7 @@ type (
 	Finder interface {
 		With(ctx context.Context) Service
 
-		FindByPrefix(prefix string) (kv KV, err error)
+		FindByPrefix(prefix string) (vv ValueSet, err error)
 		Set(v *Value) (err error)
 		Get(name string, ownedBy uint64) (out *Value, err error)
 		GetGlobalString(name string) (out string, err error)
@@ -38,11 +38,11 @@ func (s service) With(ctx context.Context) Service {
 	}
 }
 
-func (s service) FindByPrefix(prefix string) (KV, error) {
+func (s service) FindByPrefix(prefix string) (ValueSet, error) {
 	if vv, err := s.repository.Find(Filter{Prefix: prefix}); err != nil {
 		return nil, err
 	} else {
-		return vv.KV(), nil
+		return vv, nil
 	}
 }
 

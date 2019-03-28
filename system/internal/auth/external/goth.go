@@ -41,7 +41,7 @@ func setupGoth(c *config.Social, settings settings.Finder) {
 	store.Options.Secure = false // @todo, make this dependable on config somehow
 	gothic.Store = store
 
-	setupGothProviders(c.Url+"/external/%s/callback", s)
+	setupGothProviders(c.Url+"/external/%s/callback", s.KV())
 
 	for p := range goth.GetProviders() {
 		log.Printf("Social login initialized with %s provider", p)

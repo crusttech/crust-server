@@ -28,15 +28,17 @@ import (
 // Internal API interface
 type SettingsAPI interface {
 	List(context.Context, *request.SettingsList) (interface{}, error)
+	Update(context.Context, *request.SettingsUpdate) (interface{}, error)
 	Get(context.Context, *request.SettingsGet) (interface{}, error)
 	Set(context.Context, *request.SettingsSet) (interface{}, error)
 }
 
 // HTTP API interface
 type Settings struct {
-	List func(http.ResponseWriter, *http.Request)
-	Get  func(http.ResponseWriter, *http.Request)
-	Set  func(http.ResponseWriter, *http.Request)
+	List   func(http.ResponseWriter, *http.Request)
+	Update func(http.ResponseWriter, *http.Request)
+	Get    func(http.ResponseWriter, *http.Request)
+	Set    func(http.ResponseWriter, *http.Request)
 }
 
 func NewSettings(sh SettingsAPI) *Settings {
@@ -46,6 +48,13 @@ func NewSettings(sh SettingsAPI) *Settings {
 			params := request.NewSettingsList()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
 				return sh.List(r.Context(), params)
+			})
+		},
+		Update: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewSettingsUpdate()
+			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
+				return sh.Update(r.Context(), params)
 			})
 		},
 		Get: func(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +79,7 @@ func (sh *Settings) MountRoutes(r chi.Router, middlewares ...func(http.Handler) 
 		r.Use(middlewares...)
 		r.Route("/settings", func(r chi.Router) {
 			r.Get("/", sh.List)
+			r.Patch("/", sh.Update)
 			r.Get("/{key}", sh.Get)
 			r.Put("/{key}", sh.Set)
 		})

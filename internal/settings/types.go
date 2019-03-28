@@ -14,7 +14,7 @@ type (
 		Value types.JSONText `json:"value" db:"value"`
 
 		// Setting owner, 0 for global settings
-		OwnedBy uint64 `json:"ownedBy" db:"rel_owner"`
+		OwnedBy uint64 `json:"-" db:"rel_owner"`
 
 		// Who updated & when
 		UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`

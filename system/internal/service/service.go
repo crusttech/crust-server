@@ -12,6 +12,7 @@ type (
 
 var (
 	o                   sync.Once
+	DefaultSettings     SettingsService
 	DefaultAuth         AuthService
 	DefaultUser         UserService
 	DefaultRole         RoleService
@@ -24,6 +25,7 @@ var (
 func Init() {
 	o.Do(func() {
 		DefaultRules = Rules()
+		DefaultSettings = Settings()
 		DefaultPermissions = Permissions()
 		DefaultAuth = Auth()
 		DefaultUser = User()
