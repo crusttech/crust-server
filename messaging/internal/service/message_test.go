@@ -35,8 +35,8 @@ func TestMessageLength(t *testing.T) {
 	// mockCtrl := gomock.NewController(t)
 	// defer mockCtrl.Finish()
 
-	ctx := context.TODO()
-	auth.SetIdentityToContext(ctx, &systemTypes.User{})
+	ctx := context.Background()
+	ctx = auth.SetIdentityToContext(ctx, &systemTypes.User{})
 
 	svc := message{db: &mockDB{}, ctx: ctx}
 	e := func(out *types.Message, err error) error { return err }

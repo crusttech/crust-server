@@ -26,6 +26,7 @@ type (
 		users   systemService.UserService
 		webhook repository.WebhookRepository
 		message repository.MessageRepository
+		perms   PermissionsService
 	}
 
 	WebhookService interface {
@@ -47,10 +48,10 @@ type (
 	}
 )
 
-func Webhook(client *http.Client) WebhookService {
+func Webhook(ctx context.Context, client *http.Client) WebhookService {
 	return (&webhook{
 		client: client,
-	}).With(context.Background())
+	}).With(ctx)
 }
 
 func (svc *webhook) With(ctx context.Context) WebhookService {
@@ -60,10 +61,10 @@ func (svc *webhook) With(ctx context.Context) WebhookService {
 		ctx:    ctx,
 		client: svc.client,
 
-		users: systemService.User(ctx),
-
+		users:   systemService.User(ctx),
 		webhook: repository.Webhook(ctx, db),
 		message: repository.Message(ctx, db),
+		perms:   Permissions(ctx),
 	}
 }
 
@@ -78,7 +79,10 @@ func (svc *webhook) CreateIncoming(channelID uint64, username string, avatar int
 		ChannelID:   channelID,
 		CreatedAt:   time.Now(),
 	}
-	return svc.webhook.Create(webhook)
+	if svc.perms.CanManageWebhooks(webhook) || svc.perms.CanManageOwnWebhooks(webhook) {
+		return svc.webhook.Create(webhook)
+	}
+	return nil, errors.WithStack(ErrNoPermissions)
 }
 func (svc *webhook) CreateOutgoing(channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error) {
 	var userID = repository.Identity(svc.ctx)
@@ -91,7 +95,10 @@ func (svc *webhook) CreateOutgoing(channelID uint64, username string, avatar int
 		OutgoingTrigger: trigger,
 		OutgoingURL:     url,
 	}
-	return svc.webhook.Create(webhook)
+	if svc.perms.CanManageWebhooks(webhook) || svc.perms.CanManageOwnWebhooks(webhook) {
+		return svc.webhook.Create(webhook)
+	}
+	return nil, errors.WithStack(ErrNoPermissions)
 }
 
 func (svc *webhook) Get(webhookID uint64) (*types.Webhook, error) {
@@ -103,7 +110,18 @@ func (svc *webhook) Find(filter *types.WebhookFilter) (types.WebhookSet, error) 
 }
 
 func (svc *webhook) Delete(webhookID uint64) error {
-	return svc.webhook.Delete(webhookID)
+	webhook, err := svc.Get(webhookID)
+	if err != nil {
+		return err
+	}
+	if svc.perms.CanManageWebhooks(webhook) {
+		return svc.webhook.Delete(webhookID)
+	}
+	var userID = repository.Identity(svc.ctx)
+	if webhook.OwnerUserID == userID && svc.perms.CanManageOwnWebhooks(webhook) {
+		return svc.webhook.Delete(webhookID)
+	}
+	return errors.WithStack(ErrNoPermissions)
 }
 
 func (svc *webhook) DeleteByToken(webhookID uint64, webhookToken string) error {
@@ -123,6 +141,7 @@ func (svc *webhook) Message(webhookID uint64, webhookToken string, username, ava
 	}
 }
 
+// Do executes an outgoing HTTP webhook request
 func (svc *webhook) Do(webhook *types.Webhook, message string) (*types.Message, error) {
 	if webhook.Kind != types.OutgoingWebhook {
 		return nil, errors.Errorf("Unsupported webhook type: %s", webhook.Kind)

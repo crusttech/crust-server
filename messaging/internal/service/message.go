@@ -28,9 +28,9 @@ type (
 		mflag      repository.MessageFlagRepository
 		mentions   repository.MentionRepository
 
-		usr systemService.UserService
-		evl EventService
-		prm PermissionsService
+		usr   systemService.UserService
+		event EventService
+		prm   PermissionsService
 	}
 
 	MessageService interface {
@@ -66,12 +66,8 @@ var (
 	mentionsFinder = regexp.MustCompile(mentionRE)
 )
 
-func Message() MessageService {
-	return &message{
-		usr: systemService.DefaultUser,
-		evl: DefaultEvent,
-		prm: DefaultPermissions,
-	}
+func Message(ctx context.Context) MessageService {
+	return (&message{}).With(ctx)
 }
 
 func (svc *message) With(ctx context.Context) MessageService {
@@ -80,9 +76,9 @@ func (svc *message) With(ctx context.Context) MessageService {
 		db:  db,
 		ctx: ctx,
 
-		usr: systemService.User(ctx),
-		evl: svc.evl.With(ctx),
-		prm: svc.prm.With(ctx),
+		usr:   systemService.User(ctx),
+		event: Event(ctx),
+		prm:   Permissions(ctx),
 
 		attachment: repository.Attachment(ctx, db),
 		channel:    repository.Channel(ctx, db),
@@ -98,7 +94,7 @@ func (svc *message) Find(filter *types.MessageFilter) (mm types.MessageSet, err 
 	filter.CurrentUserID = auth.GetIdentityFromContext(svc.ctx).Identity()
 
 	if filter.ChannelID > 0 && !svc.prm.CanReadChannelByID(filter.ChannelID) {
-		return nil, errors.New("not allowed to access channel")
+		return nil, errors.WithStack(ErrNoPermissions)
 	}
 
 	mm, err = svc.message.FindMessages(filter)
@@ -113,7 +109,7 @@ func (svc *message) FindThreads(filter *types.MessageFilter) (mm types.MessageSe
 	filter.CurrentUserID = auth.GetIdentityFromContext(svc.ctx).Identity()
 
 	if filter.ChannelID > 0 && !svc.prm.CanReadChannelByID(filter.ChannelID) {
-		return nil, errors.New("not allowed to access channel")
+		return nil, errors.WithStack(ErrNoPermissions)
 	}
 
 	mm, err = svc.message.FindThreads(filter)
@@ -184,12 +180,15 @@ func (svc *message) Create(in *types.Message) (message *types.Message, err error
 
 		if in.ChannelID == 0 {
 			return errors.New("channelID missing")
-		} else if ch, err = svc.channel.FindChannelByID(in.ChannelID); err != nil {
+		}
+		if ch, err = svc.channel.FindChannelByID(in.ChannelID); err != nil {
 			return
-		} else if in.ReplyTo > 0 && !svc.prm.CanReplyMessage(ch) {
-			return errors.New("not allowed to reply in this channel")
-		} else if !svc.prm.CanSendMessage(ch) {
-			return errors.New("not allowed to send messages in this channel")
+		}
+		if in.ReplyTo > 0 && !svc.prm.CanReplyMessage(ch) {
+			return errors.WithStack(ErrNoPermissions)
+		}
+		if !svc.prm.CanSendMessage(ch) {
+			return errors.WithStack(ErrNoPermissions)
 		}
 
 		if message, err = svc.message.CreateMessage(in); err != nil {
@@ -226,7 +225,7 @@ func (svc *message) Update(in *types.Message) (message *types.Message, err error
 	var ch *types.Channel
 
 	if !svc.prm.CanReadChannelByID(in.ChannelID) {
-		return nil, errors.New("not allowed to access channel")
+		return nil, errors.WithStack(ErrNoPermissions)
 	}
 
 	return message, svc.db.Transaction(func() (err error) {
@@ -242,10 +241,12 @@ func (svc *message) Update(in *types.Message) (message *types.Message, err error
 
 		if ch, err = svc.channel.FindChannelByID(message.ChannelID); err != nil {
 			return
-		} else if message.UserID == currentUserID && !svc.prm.CanUpdateOwnMessages(ch) {
-			return errors.New("not allowed to edit your messages in this channel")
-		} else if !svc.prm.CanUpdateMessages(ch) {
-			return errors.New("not allowed to edit messages in this channel")
+		}
+		if message.UserID == currentUserID && !svc.prm.CanUpdateOwnMessages(ch) {
+			return errors.WithStack(ErrNoPermissions)
+		}
+		if !svc.prm.CanUpdateMessages(ch) {
+			return errors.WithStack(ErrNoPermissions)
 		}
 
 		// Allow message content to be changed
@@ -280,7 +281,7 @@ func (svc *message) Delete(messageID uint64) error {
 		}
 
 		if !svc.prm.CanReadChannelByID(deletedMsg.ChannelID) {
-			return errors.New("not allowed to access channel")
+			return errors.WithStack(ErrNoPermissions)
 		}
 
 		if deletedMsg.ReplyTo > 0 {
@@ -291,10 +292,12 @@ func (svc *message) Delete(messageID uint64) error {
 
 			if ch, err = svc.channel.FindChannelByID(original.ChannelID); err != nil {
 				return
-			} else if original.UserID == currentUserID && !svc.prm.CanUpdateOwnMessages(ch) {
-				return errors.New("not allowed to delete your messages in this channel")
-			} else if !svc.prm.CanUpdateMessages(ch) {
-				return errors.New("not allowed to delete messages in this channel")
+			}
+			if original.UserID == currentUserID && !svc.prm.CanUpdateOwnMessages(ch) {
+				return errors.WithStack(ErrNoPermissions)
+			}
+			if !svc.prm.CanUpdateMessages(ch) {
+				return errors.WithStack(ErrNoPermissions)
 			}
 
 			// This is a reply to another message, decrease reply counter on the original, on struct and in the
@@ -434,22 +437,27 @@ func (svc *message) flag(messageID uint64, flag string, remove bool) error {
 		if f.ID == 0 && remove {
 			// Skip removing, flag does not exists
 			return nil
-		} else if f.ID > 0 && !remove {
+		}
+		if f.ID > 0 && !remove {
 			// Skip adding, flag already exists
 			return nil
-		} else if err != nil && err != repository.ErrMessageFlagNotFound {
+		}
+		if err != nil && err != repository.ErrMessageFlagNotFound {
 			// Other errors, exit
 			return
 		}
 
 		if msg, err = svc.message.FindMessageByID(messageID); err != nil {
 			return
-		} else if ch, err = svc.channel.FindChannelByID(msg.ChannelID); err != nil {
+		}
+		if ch, err = svc.channel.FindChannelByID(msg.ChannelID); err != nil {
 			return
-		} else if !svc.prm.CanReadChannel(ch) {
-			return errors.New("not allowed to access channel")
-		} else if f.IsReaction() && !svc.prm.CanReactMessage(ch) {
-			return errors.New("not allowed to react on channels")
+		}
+		if !svc.prm.CanReadChannel(ch) {
+			return errors.WithStack(ErrNoPermissions)
+		}
+		if f.IsReaction() && !svc.prm.CanReactMessage(ch) {
+			return errors.WithStack(ErrNoPermissions)
 		}
 
 		if remove {
@@ -465,9 +473,10 @@ func (svc *message) flag(messageID uint64, flag string, remove bool) error {
 		}
 
 		if err != nil {
-			return err
+			return
 		}
 
+		// @todo: log possible error
 		svc.sendFlagEvent(f)
 
 		return
@@ -596,7 +605,7 @@ func (svc *message) sendEvent(mm ...*types.Message) (err error) {
 			msg.User, _ = svc.usr.FindByID(msg.UserID)
 		}
 
-		if err = svc.evl.Message(msg); err != nil {
+		if err = svc.event.Message(msg); err != nil {
 			return
 		}
 	}
@@ -607,7 +616,7 @@ func (svc *message) sendEvent(mm ...*types.Message) (err error) {
 // Sends message to event loop
 func (svc *message) sendFlagEvent(ff ...*types.MessageFlag) (err error) {
 	for _, f := range ff {
-		if err = svc.evl.MessageFlag(f); err != nil {
+		if err = svc.event.MessageFlag(f); err != nil {
 			return
 		}
 	}

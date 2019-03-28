@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"time"
 
 	"github.com/crusttech/crust/internal/config"
@@ -37,13 +38,15 @@ func Init() error {
 		return err
 	}
 
-	DefaultPermissions = Permissions()
-	DefaultEvent = Event()
-	DefaultAttachment = Attachment(fs)
-	DefaultMessage = Message()
-	DefaultChannel = Channel()
+	ctx := context.Background()
+
+	DefaultPermissions = Permissions(ctx)
+	DefaultEvent = Event(ctx)
+	DefaultAttachment = Attachment(ctx, fs)
+	DefaultMessage = Message(ctx)
+	DefaultChannel = Channel(ctx)
 	DefaultPubSub = PubSub()
-	DefaultWebhook = Webhook(client)
+	DefaultWebhook = Webhook(ctx, client)
 
 	return nil
 }

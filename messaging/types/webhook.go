@@ -2,6 +2,8 @@ package types
 
 import (
 	"time"
+
+	"github.com/crusttech/crust/internal/rules"
 )
 
 type (
@@ -43,3 +45,8 @@ const (
 	IncomingWebhook WebhookKind = "incoming"
 	OutgoingWebhook             = "outgoing"
 )
+
+// Resource returns a system resource ID for this type
+func (wh Webhook) PermissionResource() rules.Resource {
+	return WebhookPermissionResource.AppendID(wh.ID)
+}

@@ -5,5 +5,9 @@ type (
 )
 
 func (e serviceError) Error() string {
-	return "crust.messaging.service." + string(e)
+	return string(e)
 }
+
+const (
+	ErrNoPermissions serviceError = "You don't have permissions for this operation"
+)

@@ -19,8 +19,8 @@ func TestOutgoingWebhook(t *testing.T) {
 	var user = &systemTypes.User{ID: 1}
 	var channel = &types.Channel{ID: 1}
 
-	ctx := context.Background()
-	auth.SetIdentityToContext(ctx, user)
+	ctx := context.WithValue(context.Background(), "testing", true)
+	ctx = auth.SetIdentityToContext(ctx, user)
 
 	client, err := http.New(&config.HTTPClient{
 		Timeout: 10,
@@ -28,7 +28,7 @@ func TestOutgoingWebhook(t *testing.T) {
 	test.Assert(t, err == nil, "Error creating HTTP client: %+v", err)
 
 	/* create outgoing webhook */
-	svc := Webhook(client).With(ctx)
+	svc := Webhook(ctx, client)
 	webhook, err := svc.CreateOutgoing(channel.ID, "test-webhook", "", "fortune", "https://api.scene-si.org/fortune.php")
 	test.Assert(t, err == nil, "Error when creating webhook: %+v", err)
 
