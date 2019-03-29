@@ -29,7 +29,7 @@ func TestOutgoingWebhook(t *testing.T) {
 
 	/* create outgoing webhook */
 	svc := Webhook(ctx, client)
-	webhook, err := svc.CreateOutgoing(channel.ID, "test-webhook", "", "fortune", "https://api.scene-si.org/fortune.php")
+	webhook, err := svc.Create(types.OutgoingWebhook, channel.ID, "test-webhook", "", "fortune", "https://api.scene-si.org/fortune.php")
 	test.Assert(t, err == nil, "Error when creating webhook: %+v", err)
 
 	/* find outgoing webhook */
