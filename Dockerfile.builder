@@ -1,4 +1,4 @@
-FROM golang:1.11-alpine
+FROM golang:1.12-alpine
 
 RUN	apk add --no-cache git make bash && \
 	go get -u github.com/golang/mock/gomock && \

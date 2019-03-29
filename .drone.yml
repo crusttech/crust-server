@@ -8,6 +8,7 @@ name: crust
 steps:
 - name: build
   image: crusttech/api-builder:latest
+  pull: always
   environment:
     CGO_ENABLED: 0
     GOOS: linux
@@ -36,6 +37,7 @@ name: integration
 steps:
 - name: build
   image: crusttech/api-builder:latest
+  pull: always
   environment:
     CGO_ENABLED: 0
     GOOS: linux
@@ -46,9 +48,13 @@ steps:
   commands:
   - go fmt ./cmd/... ./internal/... ./crm/... ./messaging/... ./system/...
   - make mocks
+  # check all tests are able to build
+  - go test -run=^$ --tags="migrations unit integration external" ./cmd/... ./internal/... ./crm/... ./messaging/... ./system/...
   - wait-for-it.sh -t 60 --strict crust-db:3306 -- echo "Crust DB1 is up"
-  - gotest -v --tags="migrations" ./system/db/... ./crm/db/... ./messaging/db/...
-  - gotest --coverprofile=coverage.txt -v --tags="unit integration external" ./internal/... ./system/... ./crm/... ./messaging/...
+  - gotest -v --tags="migrations" ./system/db/...
+  - gotest -v --tags="migrations" ./crm/db/...
+  - gotest -v --tags="migrations" ./messaging/db/...
+  - gotest -failfast --coverprofile=coverage.txt -v --tags="unit integration external" ./internal/... ./system/... ./crm/... ./messaging/...
 - name: coverage
   image: plugins/codecov
   settings:
@@ -58,6 +64,7 @@ steps:
 
 services:
 - name: crust-db
+  pull: always
   image: percona:8.0
   ports:
     - 3306
