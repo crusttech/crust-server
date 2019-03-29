@@ -1,6 +1,7 @@
 /*.iml
 /.env*
 /.cover*
+/coverage.txt
 /public_html
 /build
 /var

@@ -48,7 +48,13 @@ steps:
   - make mocks
   - wait-for-it.sh -t 60 --strict crust-db:3306 -- echo "Crust DB1 is up"
   - gotest -v --tags="migrations" ./system/db/... ./crm/db/... ./messaging/db/...
-  - gotest -v --tags="unit integration external" ./internal/... ./system/... ./crm/... ./messaging/...
+  - gotest --coverprofile=coverage.txt -v --tags="unit integration external" ./internal/... ./system/... ./crm/... ./messaging/...
+- name: coverage
+  image: plugins/codecov
+  settings:
+    token: ac2e49d3-b29d-42c9-a2e1-9c8f286e4c24
+    files:
+     - coverage.txt
 
 services:
 - name: crust-db
