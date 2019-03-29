@@ -648,7 +648,6 @@
         ]
     },
     {
-        "name": "search",
         "entrypoint": "search",
         "authentication": [
             "Client ID",
@@ -705,7 +704,6 @@
         ]
     },
     {
-        "name": "webhooks",
         "entrypoint": "webhooks",
         "authentication": [],
         "path": "/webhooks",
@@ -819,12 +817,22 @@
                         }
                     ]
                 }
-            },
+            }
+        ]
+    },
+    {
+        "entrypoint": "webhooks_public",
+        "authentication": [],
+        "path": "/webhooks",
+        "method": "GET",
+        "title": "Webhooks (Public)",
+        "parameters": {},
+        "apis": [
             {
                 "method": "DELETE",
-                "name": "webhookDeletePublic",
+                "name": "webhookDelete",
                 "path": "/{webhookID}/{webhookToken}",
-                "title": "Delete webhook (public)",
+                "title": "Delete webhook",
                 "parameters": {
                     "path": [
                         {

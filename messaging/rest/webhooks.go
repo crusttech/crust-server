@@ -28,14 +28,6 @@ func (ctrl *Webhooks) WebhookDelete(ctx context.Context, r *request.WebhooksWebh
 	return nil, ctrl.webhook.Delete(r.WebhookID)
 }
 
-func (ctrl *Webhooks) WebhookDeletePublic(ctx context.Context, r *request.WebhooksWebhookDeletePublic) (interface{}, error) {
-	return nil, ctrl.webhook.DeleteByToken(r.WebhookID, r.WebhookToken)
-}
-
-func (ctrl *Webhooks) WebhookMessageCreate(ctx context.Context, r *request.WebhooksWebhookMessageCreate) (interface{}, error) {
-	return ctrl.webhook.Message(r.WebhookID, r.WebhookToken, r.Username, r.AvatarURL, r.Content)
-}
-
 func (ctrl *Webhooks) WebhookList(ctx context.Context, r *request.WebhooksWebhookList) (interface{}, error) {
 	return ctrl.webhook.With(ctx).Find(&types.WebhookFilter{
 		ChannelID:   r.ChannelID,

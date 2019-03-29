@@ -17,6 +17,7 @@ func MountRoutes() func(chi.Router) {
 
 		r.Group(func(r chi.Router) {
 			handlers.NewPermissions(Permissions{}.New()).MountRoutes(r)
+			handlers.NewWebhooksPublic(WebhooksPublic{}.New()).MountRoutes(r)
 		})
 
 		// Protect all _private_ routes
@@ -27,6 +28,7 @@ func MountRoutes() func(chi.Router) {
 			handlers.NewChannel(Channel{}.New()).MountRoutes(r)
 			handlers.NewMessage(Message{}.New()).MountRoutes(r)
 			handlers.NewSearch(Search{}.New()).MountRoutes(r)
+			handlers.NewWebhooks(Webhooks{}.New()).MountRoutes(r)
 		})
 	}
 }

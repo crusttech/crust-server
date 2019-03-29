@@ -554,7 +554,12 @@ The following event types may be sent with a message event:
 | --------- | ---- | ------ | ----------- | ------- | --------- |
 | webhookID | uint64 | PATH | Webhook ID | N/A | YES |
 
-## Delete webhook (public)
+
+
+
+# Webhooks (Public)
+
+## Delete webhook
 
 #### Method
 
