@@ -41,8 +41,8 @@ type (
 
 		Message(webhookID uint64, webhookToken string, username, avatar, message string) (interface{}, error)
 
-		CreateIncoming(channelID uint64, username string, avatar interface{}) (*types.Webhook, error)
-		CreateOutgoing(channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error)
+		Create(kind types.WebhookKind, channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error)
+		Update(webhookID uint64, kind types.WebhookKind, channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error)
 
 		Do(webhook *types.Webhook, message string) (*types.Message, error)
 	}
@@ -68,27 +68,11 @@ func (svc *webhook) With(ctx context.Context) WebhookService {
 	}
 }
 
-func (svc *webhook) CreateIncoming(channelID uint64, username string, avatar interface{}) (*types.Webhook, error) {
+func (svc *webhook) Create(kind types.WebhookKind, channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error) {
 	var userID = repository.Identity(svc.ctx)
 	// @todo: avatar
 	webhook := &types.Webhook{
-		Kind:        types.IncomingWebhook,
-		AuthToken:   "123", // @todo: JWT
-		OwnerUserID: userID,
-		UserID:      userID, // @todo: create bot user
-		ChannelID:   channelID,
-		CreatedAt:   time.Now(),
-	}
-	if svc.perms.CanManageWebhooks(webhook) || svc.perms.CanManageOwnWebhooks(webhook) {
-		return svc.webhook.Create(webhook)
-	}
-	return nil, errors.WithStack(ErrNoPermissions)
-}
-func (svc *webhook) CreateOutgoing(channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error) {
-	var userID = repository.Identity(svc.ctx)
-	// @todo: avatar
-	webhook := &types.Webhook{
-		Kind:            types.OutgoingWebhook,
+		Kind:            kind,
 		OwnerUserID:     userID,
 		UserID:          userID, // @todo: create bot user
 		ChannelID:       channelID,
@@ -97,6 +81,29 @@ func (svc *webhook) CreateOutgoing(channelID uint64, username string, avatar int
 	}
 	if svc.perms.CanManageWebhooks(webhook) || svc.perms.CanManageOwnWebhooks(webhook) {
 		return svc.webhook.Create(webhook)
+	}
+	return nil, errors.WithStack(ErrNoPermissions)
+}
+
+func (svc *webhook) Update(webhookID uint64, kind types.WebhookKind, channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error) {
+	var userID = repository.Identity(svc.ctx)
+	webhook, err := svc.Get(webhookID)
+	if err != nil {
+		return nil, err
+	}
+	// @todo: avatar
+	// @todo: update bot user
+	// webhook.UserID = userID,
+	webhook.Kind = kind
+	webhook.ChannelID = channelID
+	webhook.OutgoingTrigger = trigger
+	webhook.OutgoingURL = url
+
+	if svc.perms.CanManageWebhooks(webhook) {
+		return svc.webhook.Update(webhook)
+	}
+	if webhook.OwnerUserID == userID && svc.perms.CanManageOwnWebhooks(webhook) {
+		return svc.webhook.Update(webhook)
 	}
 	return nil, errors.WithStack(ErrNoPermissions)
 }

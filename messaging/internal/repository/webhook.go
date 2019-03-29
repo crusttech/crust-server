@@ -15,6 +15,7 @@ type (
 		With(ctx context.Context, db *factory.DB) WebhookRepository
 
 		Create(*types.Webhook) (*types.Webhook, error)
+		Update(*types.Webhook) (*types.Webhook, error)
 
 		Get(webhookID uint64) (*types.Webhook, error)
 		GetByToken(webhookID uint64, webhookToken string) (*types.Webhook, error)
@@ -46,6 +47,12 @@ func (r *webhook) With(ctx context.Context, db *factory.DB) WebhookRepository {
 func (r *webhook) Create(webhook *types.Webhook) (*types.Webhook, error) {
 	webhook.ID = factory.Sonyflake.NextID()
 	webhook.CreatedAt = time.Now()
+
+	return webhook, errors.WithStack(r.db().Insert(r.webhook, webhook))
+}
+
+func (r *webhook) Update(webhook *types.Webhook) (*types.Webhook, error) {
+	webhook.UpdatedAt = timeNowPtr()
 
 	return webhook, errors.WithStack(r.db().Insert(r.webhook, webhook))
 }

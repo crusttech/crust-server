@@ -787,6 +787,60 @@
                 }
             },
             {
+                "name": "webhookUpdate",
+                "path": "/{webhookID}",
+                "method": "POST",
+                "title": "Attach file to channel",
+                "parameters": {
+                    "path": [
+                        {
+                            "name": "webhookID",
+                            "type": "uint64",
+                            "required": true,
+                            "title": "Webhook ID"
+                        }
+                    ],
+                    "post": [
+                        {
+                            "name": "channelID",
+                            "type": "uint64",
+                            "required": true,
+                            "title": "Channel ID"
+                        },
+                        {
+                            "name": "kind",
+                            "type": "types.WebhookKind",
+                            "required": true,
+                            "title": "Webhook kind (incoming, outgoing)"
+                        },
+                        {
+                            "name": "trigger",
+                            "type": "string",
+                            "required": false,
+                            "title": "Outgoing webhook: Trigger word"
+                        },
+                        {
+                            "name": "url",
+                            "type": "string",
+                            "required": false,
+                            "title": "Outgoing webhook: POST URL"
+                        },
+                        {
+                            "name": "username",
+                            "type": "string",
+                            "required": false,
+                            "title": "Webhook default user name"
+                        },
+                        {
+                            "name": "avatar",
+                            "type": "*multipart.FileHeader",
+                            "required": false,
+                            "title": "Webhook default avatar"
+                        }
+                    ]
+                }
+            },
+            {
                 "method": "GET",
                 "name": "webhookGet",
                 "path": "/{webhookID}",

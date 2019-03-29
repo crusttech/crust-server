@@ -21,11 +21,11 @@ func (Webhooks) New() *Webhooks {
 }
 
 func (ctrl *Webhooks) WebhookGet(ctx context.Context, r *request.WebhooksWebhookGet) (interface{}, error) {
-	return ctrl.webhook.Get(r.WebhookID)
+	return ctrl.webhook.With(ctx).Get(r.WebhookID)
 }
 
 func (ctrl *Webhooks) WebhookDelete(ctx context.Context, r *request.WebhooksWebhookDelete) (interface{}, error) {
-	return nil, ctrl.webhook.Delete(r.WebhookID)
+	return nil, ctrl.webhook.With(ctx).Delete(r.WebhookID)
 }
 
 func (ctrl *Webhooks) WebhookList(ctx context.Context, r *request.WebhooksWebhookList) (interface{}, error) {
@@ -34,6 +34,7 @@ func (ctrl *Webhooks) WebhookList(ctx context.Context, r *request.WebhooksWebhoo
 		OwnerUserID: r.UserID,
 	})
 }
+
 func (ctrl *Webhooks) WebhookCreate(ctx context.Context, r *request.WebhooksWebhookCreate) (interface{}, error) {
 	// Webhooks webhookCreate request parameters
 	/*
@@ -46,12 +47,20 @@ func (ctrl *Webhooks) WebhookCreate(ctx context.Context, r *request.WebhooksWebh
 	*/
 
 	// @todo: process r.Avatar file upload for webhook
+	return ctrl.webhook.With(ctx).Create(r.Kind, r.ChannelID, r.Username, r.Avatar, r.Trigger, r.Url)
+}
 
-	switch {
-	case r.Kind == types.IncomingWebhook:
-		return ctrl.webhook.With(ctx).CreateIncoming(r.ChannelID, r.Username, r.Avatar)
-	case r.Kind == types.OutgoingWebhook:
-		return ctrl.webhook.With(ctx).CreateOutgoing(r.ChannelID, r.Username, r.Avatar, r.Trigger, r.Url)
-	}
-	return nil, errors.New("Unknown webhook type")
+func (ctrl *Webhooks) WebhookUpdate(ctx context.Context, r *request.WebhooksWebhookUpdate) (interface{}, error) {
+	// Webhooks webhookCreate request parameters
+	/*
+	   ChannelID uint64 `json:",string"`
+	   Kind      types.WebhookKind
+	   Trigger   string
+	   Url       string
+	   Username  string
+	   Avatar    *multipart.FileHeader
+	*/
+
+	// @todo: process r.Avatar file upload for webhook
+	return ctrl.webhook.With(ctx).Update(r.WebhookID, r.Kind, r.ChannelID, r.Username, r.Avatar, r.Trigger, r.Url)
 }

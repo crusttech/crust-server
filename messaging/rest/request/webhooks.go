@@ -153,6 +153,78 @@ func (wReq *WebhooksWebhookCreate) Fill(r *http.Request) (err error) {
 
 var _ RequestFiller = NewWebhooksWebhookCreate()
 
+// Webhooks webhookUpdate request parameters
+type WebhooksWebhookUpdate struct {
+	WebhookID uint64 `json:",string"`
+	ChannelID uint64 `json:",string"`
+	Kind      types.WebhookKind
+	Trigger   string
+	Url       string
+	Username  string
+	Avatar    *multipart.FileHeader
+}
+
+func NewWebhooksWebhookUpdate() *WebhooksWebhookUpdate {
+	return &WebhooksWebhookUpdate{}
+}
+
+func (wReq *WebhooksWebhookUpdate) Fill(r *http.Request) (err error) {
+	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
+		err = json.NewDecoder(r.Body).Decode(wReq)
+
+		switch {
+		case err == io.EOF:
+			err = nil
+		case err != nil:
+			return errors.Wrap(err, "error parsing http request body")
+		}
+	}
+
+	if err = r.ParseMultipartForm(32 << 20); err != nil {
+		return err
+	}
+
+	get := map[string]string{}
+	post := map[string]string{}
+	urlQuery := r.URL.Query()
+	for name, param := range urlQuery {
+		get[name] = string(param[0])
+	}
+	postVars := r.Form
+	for name, param := range postVars {
+		post[name] = string(param[0])
+	}
+
+	wReq.WebhookID = parseUInt64(chi.URLParam(r, "webhookID"))
+	if val, ok := post["channelID"]; ok {
+
+		wReq.ChannelID = parseUInt64(val)
+	}
+	if val, ok := post["kind"]; ok {
+
+		wReq.Kind = types.WebhookKind(val)
+	}
+	if val, ok := post["trigger"]; ok {
+
+		wReq.Trigger = val
+	}
+	if val, ok := post["url"]; ok {
+
+		wReq.Url = val
+	}
+	if val, ok := post["username"]; ok {
+
+		wReq.Username = val
+	}
+	if _, wReq.Avatar, err = r.FormFile("avatar"); err != nil {
+		return errors.Wrap(err, "error procesing uploaded file")
+	}
+
+	return err
+}
+
+var _ RequestFiller = NewWebhooksWebhookUpdate()
+
 // Webhooks webhookGet request parameters
 type WebhooksWebhookGet struct {
 	WebhookID uint64 `json:",string"`

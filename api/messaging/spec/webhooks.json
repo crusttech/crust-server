@@ -82,6 +82,60 @@
       }
     },
     {
+      "Name": "webhookUpdate",
+      "Method": "POST",
+      "Title": "Attach file to channel",
+      "Path": "/{webhookID}",
+      "Parameters": {
+        "path": [
+          {
+            "name": "webhookID",
+            "required": true,
+            "title": "Webhook ID",
+            "type": "uint64"
+          }
+        ],
+        "post": [
+          {
+            "name": "channelID",
+            "required": true,
+            "title": "Channel ID",
+            "type": "uint64"
+          },
+          {
+            "name": "kind",
+            "required": true,
+            "title": "Webhook kind (incoming, outgoing)",
+            "type": "types.WebhookKind"
+          },
+          {
+            "name": "trigger",
+            "required": false,
+            "title": "Outgoing webhook: Trigger word",
+            "type": "string"
+          },
+          {
+            "name": "url",
+            "required": false,
+            "title": "Outgoing webhook: POST URL",
+            "type": "string"
+          },
+          {
+            "name": "username",
+            "required": false,
+            "title": "Webhook default user name",
+            "type": "string"
+          },
+          {
+            "name": "avatar",
+            "required": false,
+            "title": "Webhook default avatar",
+            "type": "*multipart.FileHeader"
+          }
+        ]
+      }
+    },
+    {
       "Name": "webhookGet",
       "Method": "GET",
       "Title": "Get webhook details",

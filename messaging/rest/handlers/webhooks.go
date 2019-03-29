@@ -30,6 +30,7 @@ import (
 type WebhooksAPI interface {
 	WebhookList(context.Context, *request.WebhooksWebhookList) (interface{}, error)
 	WebhookCreate(context.Context, *request.WebhooksWebhookCreate) (interface{}, error)
+	WebhookUpdate(context.Context, *request.WebhooksWebhookUpdate) (interface{}, error)
 	WebhookGet(context.Context, *request.WebhooksWebhookGet) (interface{}, error)
 	WebhookDelete(context.Context, *request.WebhooksWebhookDelete) (interface{}, error)
 }
@@ -38,6 +39,7 @@ type WebhooksAPI interface {
 type Webhooks struct {
 	WebhookList   func(http.ResponseWriter, *http.Request)
 	WebhookCreate func(http.ResponseWriter, *http.Request)
+	WebhookUpdate func(http.ResponseWriter, *http.Request)
 	WebhookGet    func(http.ResponseWriter, *http.Request)
 	WebhookDelete func(http.ResponseWriter, *http.Request)
 }
@@ -56,6 +58,13 @@ func NewWebhooks(wh WebhooksAPI) *Webhooks {
 			params := request.NewWebhooksWebhookCreate()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
 				return wh.WebhookCreate(r.Context(), params)
+			})
+		},
+		WebhookUpdate: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewWebhooksWebhookUpdate()
+			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
+				return wh.WebhookUpdate(r.Context(), params)
 			})
 		},
 		WebhookGet: func(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +90,7 @@ func (wh *Webhooks) MountRoutes(r chi.Router, middlewares ...func(http.Handler) 
 		r.Route("/webhooks", func(r chi.Router) {
 			r.Get("/", wh.WebhookList)
 			r.Post("/", wh.WebhookCreate)
+			r.Post("/{webhookID}", wh.WebhookUpdate)
 			r.Get("/{webhookID}", wh.WebhookGet)
 			r.Delete("/{webhookID}", wh.WebhookDelete)
 		})

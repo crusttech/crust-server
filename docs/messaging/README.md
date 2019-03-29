@@ -526,6 +526,26 @@ The following event types may be sent with a message event:
 | username | string | POST | Webhook default user name | N/A | NO |
 | avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | NO |
 
+## Attach file to channel
+
+#### Method
+
+| URI | Protocol | Method | Authentication |
+| --- | -------- | ------ | -------------- |
+| `/webhooks/{webhookID}` | HTTP/S | POST |  |
+
+#### Request parameters
+
+| Parameter | Type | Method | Description | Default | Required? |
+| --------- | ---- | ------ | ----------- | ------- | --------- |
+| webhookID | uint64 | PATH | Webhook ID | N/A | YES |
+| channelID | uint64 | POST | Channel ID | N/A | YES |
+| kind | types.WebhookKind | POST | Webhook kind (incoming, outgoing) | N/A | YES |
+| trigger | string | POST | Outgoing webhook: Trigger word | N/A | NO |
+| url | string | POST | Outgoing webhook: POST URL | N/A | NO |
+| username | string | POST | Webhook default user name | N/A | NO |
+| avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | NO |
+
 ## Get webhook details
 
 #### Method
