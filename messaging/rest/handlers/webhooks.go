@@ -17,9 +17,10 @@ package handlers
 
 import (
 	"context"
-	"github.com/go-chi/chi"
+
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/titpetric/factory/resputil"
 
 	"github.com/crusttech/crust/messaging/rest/request"
@@ -31,18 +32,14 @@ type WebhooksAPI interface {
 	WebhookCreate(context.Context, *request.WebhooksWebhookCreate) (interface{}, error)
 	WebhookGet(context.Context, *request.WebhooksWebhookGet) (interface{}, error)
 	WebhookDelete(context.Context, *request.WebhooksWebhookDelete) (interface{}, error)
-	WebhookDeletePublic(context.Context, *request.WebhooksWebhookDeletePublic) (interface{}, error)
-	WebhookMessageCreate(context.Context, *request.WebhooksWebhookMessageCreate) (interface{}, error)
 }
 
 // HTTP API interface
 type Webhooks struct {
-	WebhookList          func(http.ResponseWriter, *http.Request)
-	WebhookCreate        func(http.ResponseWriter, *http.Request)
-	WebhookGet           func(http.ResponseWriter, *http.Request)
-	WebhookDelete        func(http.ResponseWriter, *http.Request)
-	WebhookDeletePublic  func(http.ResponseWriter, *http.Request)
-	WebhookMessageCreate func(http.ResponseWriter, *http.Request)
+	WebhookList   func(http.ResponseWriter, *http.Request)
+	WebhookCreate func(http.ResponseWriter, *http.Request)
+	WebhookGet    func(http.ResponseWriter, *http.Request)
+	WebhookDelete func(http.ResponseWriter, *http.Request)
 }
 
 func NewWebhooks(wh WebhooksAPI) *Webhooks {
@@ -75,20 +72,6 @@ func NewWebhooks(wh WebhooksAPI) *Webhooks {
 				return wh.WebhookDelete(r.Context(), params)
 			})
 		},
-		WebhookDeletePublic: func(w http.ResponseWriter, r *http.Request) {
-			defer r.Body.Close()
-			params := request.NewWebhooksWebhookDeletePublic()
-			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookDeletePublic(r.Context(), params)
-			})
-		},
-		WebhookMessageCreate: func(w http.ResponseWriter, r *http.Request) {
-			defer r.Body.Close()
-			params := request.NewWebhooksWebhookMessageCreate()
-			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookMessageCreate(r.Context(), params)
-			})
-		},
 	}
 }
 
@@ -100,8 +83,6 @@ func (wh *Webhooks) MountRoutes(r chi.Router, middlewares ...func(http.Handler) 
 			r.Post("/", wh.WebhookCreate)
 			r.Get("/{webhookID}", wh.WebhookGet)
 			r.Delete("/{webhookID}", wh.WebhookDelete)
-			r.Delete("/{webhookID}/{webhookToken}", wh.WebhookDeletePublic)
-			r.Post("/{webhookID}/{webhookToken}", wh.WebhookMessageCreate)
 		})
 	})
 }

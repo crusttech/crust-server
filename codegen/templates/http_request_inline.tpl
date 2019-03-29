@@ -4,10 +4,11 @@ package {package}
 
 import (
 	"io"
+	"strings"
+
 	"net/http"
 	"encoding/json"
 	"mime/multipart"
-	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
@@ -20,7 +21,7 @@ var _ = chi.URLParam
 var _ = multipart.FileHeader{}
 
 {foreach $calls as $call}
-// {name} {call.name} request parameters
+// {name|expose} {call.name} request parameters
 type {name|expose}{call.name|capitalize} struct {
 {foreach $call.parameters as $params}
 {foreach $params as $method => $param}

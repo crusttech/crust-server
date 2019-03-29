@@ -10,8 +10,8 @@ package request
 	1. run [spec](https://github.com/titpetric/spec) in the same folder,
 	2. run `./_gen.php` in this folder.
 
-	You may edit `auth.go`, `auth.util.go` or `auth_test.go` to
-	implement your API calls, helper functions and tests. The file `auth.go`
+	You may edit `webhooks_public.go`, `webhooks_public.util.go` or `webhooks_public_test.go` to
+	implement your API calls, helper functions and tests. The file `webhooks_public.go`
 	is only generated the first time, and will not be overwritten if it exists.
 */
 
@@ -30,17 +30,19 @@ import (
 var _ = chi.URLParam
 var _ = multipart.FileHeader{}
 
-// Auth check request parameters
-type AuthCheck struct {
+// WebhooksPublic webhookDelete request parameters
+type WebhooksPublicWebhookDelete struct {
+	WebhookID    uint64 `json:",string"`
+	WebhookToken string
 }
 
-func NewAuthCheck() *AuthCheck {
-	return &AuthCheck{}
+func NewWebhooksPublicWebhookDelete() *WebhooksPublicWebhookDelete {
+	return &WebhooksPublicWebhookDelete{}
 }
 
-func (auReq *AuthCheck) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksPublicWebhookDelete) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
-		err = json.NewDecoder(r.Body).Decode(auReq)
+		err = json.NewDecoder(r.Body).Decode(wReq)
 
 		switch {
 		case err == io.EOF:
@@ -65,24 +67,30 @@ func (auReq *AuthCheck) Fill(r *http.Request) (err error) {
 		post[name] = string(param[0])
 	}
 
+	wReq.WebhookID = parseUInt64(chi.URLParam(r, "webhookID"))
+	wReq.WebhookToken = chi.URLParam(r, "webhookToken")
+
 	return err
 }
 
-var _ RequestFiller = NewAuthCheck()
+var _ RequestFiller = NewWebhooksPublicWebhookDelete()
 
-// Auth login request parameters
-type AuthLogin struct {
-	Username string
-	Password string
+// WebhooksPublic webhookMessageCreate request parameters
+type WebhooksPublicWebhookMessageCreate struct {
+	Username     string
+	AvatarURL    string
+	Content      string
+	WebhookID    uint64 `json:",string"`
+	WebhookToken string
 }
 
-func NewAuthLogin() *AuthLogin {
-	return &AuthLogin{}
+func NewWebhooksPublicWebhookMessageCreate() *WebhooksPublicWebhookMessageCreate {
+	return &WebhooksPublicWebhookMessageCreate{}
 }
 
-func (auReq *AuthLogin) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksPublicWebhookMessageCreate) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
-		err = json.NewDecoder(r.Body).Decode(auReq)
+		err = json.NewDecoder(r.Body).Decode(wReq)
 
 		switch {
 		case err == io.EOF:
@@ -107,56 +115,22 @@ func (auReq *AuthLogin) Fill(r *http.Request) (err error) {
 		post[name] = string(param[0])
 	}
 
-	if val, ok := post["username"]; ok {
+	if val, ok := get["username"]; ok {
 
-		auReq.Username = val
+		wReq.Username = val
 	}
-	if val, ok := post["password"]; ok {
+	if val, ok := get["avatarURL"]; ok {
 
-		auReq.Password = val
+		wReq.AvatarURL = val
 	}
+	if val, ok := get["content"]; ok {
+
+		wReq.Content = val
+	}
+	wReq.WebhookID = parseUInt64(chi.URLParam(r, "webhookID"))
+	wReq.WebhookToken = chi.URLParam(r, "webhookToken")
 
 	return err
 }
 
-var _ RequestFiller = NewAuthLogin()
-
-// Auth logout request parameters
-type AuthLogout struct {
-}
-
-func NewAuthLogout() *AuthLogout {
-	return &AuthLogout{}
-}
-
-func (auReq *AuthLogout) Fill(r *http.Request) (err error) {
-	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
-		err = json.NewDecoder(r.Body).Decode(auReq)
-
-		switch {
-		case err == io.EOF:
-			err = nil
-		case err != nil:
-			return errors.Wrap(err, "error parsing http request body")
-		}
-	}
-
-	if err = r.ParseForm(); err != nil {
-		return err
-	}
-
-	get := map[string]string{}
-	post := map[string]string{}
-	urlQuery := r.URL.Query()
-	for name, param := range urlQuery {
-		get[name] = string(param[0])
-	}
-	postVars := r.Form
-	for name, param := range postVars {
-		post[name] = string(param[0])
-	}
-
-	return err
-}
-
-var _ RequestFiller = NewAuthLogout()
+var _ RequestFiller = NewWebhooksPublicWebhookMessageCreate()

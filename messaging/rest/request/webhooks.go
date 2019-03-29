@@ -16,11 +16,12 @@ package request
 */
 
 import (
-	"encoding/json"
 	"io"
+	"strings"
+
+	"encoding/json"
 	"mime/multipart"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
@@ -237,108 +238,3 @@ func (wReq *WebhooksWebhookDelete) Fill(r *http.Request) (err error) {
 }
 
 var _ RequestFiller = NewWebhooksWebhookDelete()
-
-// Webhooks webhookDeletePublic request parameters
-type WebhooksWebhookDeletePublic struct {
-	WebhookID    uint64 `json:",string"`
-	WebhookToken string
-}
-
-func NewWebhooksWebhookDeletePublic() *WebhooksWebhookDeletePublic {
-	return &WebhooksWebhookDeletePublic{}
-}
-
-func (wReq *WebhooksWebhookDeletePublic) Fill(r *http.Request) (err error) {
-	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
-		err = json.NewDecoder(r.Body).Decode(wReq)
-
-		switch {
-		case err == io.EOF:
-			err = nil
-		case err != nil:
-			return errors.Wrap(err, "error parsing http request body")
-		}
-	}
-
-	if err = r.ParseForm(); err != nil {
-		return err
-	}
-
-	get := map[string]string{}
-	post := map[string]string{}
-	urlQuery := r.URL.Query()
-	for name, param := range urlQuery {
-		get[name] = string(param[0])
-	}
-	postVars := r.Form
-	for name, param := range postVars {
-		post[name] = string(param[0])
-	}
-
-	wReq.WebhookID = parseUInt64(chi.URLParam(r, "webhookID"))
-	wReq.WebhookToken = chi.URLParam(r, "webhookToken")
-
-	return err
-}
-
-var _ RequestFiller = NewWebhooksWebhookDeletePublic()
-
-// Webhooks webhookMessageCreate request parameters
-type WebhooksWebhookMessageCreate struct {
-	Username     string
-	AvatarURL    string
-	Content      string
-	WebhookID    uint64 `json:",string"`
-	WebhookToken string
-}
-
-func NewWebhooksWebhookMessageCreate() *WebhooksWebhookMessageCreate {
-	return &WebhooksWebhookMessageCreate{}
-}
-
-func (wReq *WebhooksWebhookMessageCreate) Fill(r *http.Request) (err error) {
-	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
-		err = json.NewDecoder(r.Body).Decode(wReq)
-
-		switch {
-		case err == io.EOF:
-			err = nil
-		case err != nil:
-			return errors.Wrap(err, "error parsing http request body")
-		}
-	}
-
-	if err = r.ParseForm(); err != nil {
-		return err
-	}
-
-	get := map[string]string{}
-	post := map[string]string{}
-	urlQuery := r.URL.Query()
-	for name, param := range urlQuery {
-		get[name] = string(param[0])
-	}
-	postVars := r.Form
-	for name, param := range postVars {
-		post[name] = string(param[0])
-	}
-
-	if val, ok := get["username"]; ok {
-
-		wReq.Username = val
-	}
-	if val, ok := get["avatarURL"]; ok {
-
-		wReq.AvatarURL = val
-	}
-	if val, ok := get["content"]; ok {
-
-		wReq.Content = val
-	}
-	wReq.WebhookID = parseUInt64(chi.URLParam(r, "webhookID"))
-	wReq.WebhookToken = chi.URLParam(r, "webhookToken")
-
-	return err
-}
-
-var _ RequestFiller = NewWebhooksWebhookMessageCreate()
