@@ -54,12 +54,12 @@ func (r *webhook) Create(webhook *types.Webhook) (*types.Webhook, error) {
 func (r *webhook) Update(webhook *types.Webhook) (*types.Webhook, error) {
 	webhook.UpdatedAt = timeNowPtr()
 
-	return webhook, errors.WithStack(r.db().Insert(r.webhook, webhook))
+	return webhook, errors.WithStack(r.db().Replace(r.webhook, webhook))
 }
 
 func (r *webhook) Get(webhookID uint64) (*types.Webhook, error) {
 	hook := &types.Webhook{}
-	if err := r.db().Get(&hook, "select * from "+r.webhook+" where id=?", webhookID); err != nil {
+	if err := r.db().Get(hook, "select * from "+r.webhook+" where id=?", webhookID); err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return hook, nil

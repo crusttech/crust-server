@@ -175,19 +175,19 @@ func (mr *MockUserRepositoryMockRecorder) Update(mod interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), mod)
 }
 
-// UpdateAvatar mocks base method
-func (m *MockUserRepository) UpdateAvatar(user *types.User, avatar io.Reader) (*types.User, error) {
+// BindAvatar mocks base method
+func (m *MockUserRepository) BindAvatar(user *types.User, avatar io.Reader) (*types.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAvatar", user, avatar)
+	ret := m.ctrl.Call(m, "BindAvatar", user, avatar)
 	ret0, _ := ret[0].(*types.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateAvatar indicates an expected call of UpdateAvatar
-func (mr *MockUserRepositoryMockRecorder) UpdateAvatar(user, avatar interface{}) *gomock.Call {
+// BindAvatar indicates an expected call of BindAvatar
+func (mr *MockUserRepositoryMockRecorder) BindAvatar(user, avatar interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAvatar", reflect.TypeOf((*MockUserRepository)(nil).UpdateAvatar), user, avatar)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BindAvatar", reflect.TypeOf((*MockUserRepository)(nil).BindAvatar), user, avatar)
 }
 
 // SuspendByID mocks base method

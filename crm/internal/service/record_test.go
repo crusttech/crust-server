@@ -27,7 +27,7 @@ func TestRecord(t *testing.T) {
 
 	{
 		userSvc := systemService.TestUser(t, ctx)
-		_, err := userSvc.Create(user)
+		_, err := userSvc.Create(user, nil, "")
 		test.NoError(t, err, "expected no error creating user, got %v", err)
 	}
 

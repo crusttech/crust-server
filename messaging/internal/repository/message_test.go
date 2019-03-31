@@ -29,7 +29,7 @@ func TestMessage(t *testing.T) {
 
 	tx(t, func() error {
 		ch := &types.Channel{}
-		ch, err = chRpo.CreateChannel(ch)
+		ch, err = chRpo.Create(ch)
 		ch.Type = types.ChannelTypePublic
 
 		msg := &types.Message{ChannelID: ch.ID}
@@ -82,7 +82,7 @@ func TestReplies(t *testing.T) {
 
 	tx(t, func() error {
 		ch := &types.Channel{}
-		ch, err = chRpo.CreateChannel(ch)
+		ch, err = chRpo.Create(ch)
 		ch.Type = types.ChannelTypePublic
 
 		msg := &types.Message{ChannelID: ch.ID}

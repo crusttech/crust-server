@@ -76,17 +76,20 @@ func (u *User) GeneratePassword(password string) error {
 	return nil
 }
 
-func (mm *UserMeta) Scan(value interface{}) error {
-	if value == nil {
+func (meta *UserMeta) Scan(value interface{}) error {
+	switch value.(type) {
+	case nil:
+		*meta = UserMeta{}
+		return nil
+	case []uint8:
+		if err := json.Unmarshal(value.([]byte), meta); err != nil {
+			return errors.Wrapf(err, "Can not scan '%v' into User.Meta", value)
+		}
 		return nil
 	}
-	str, ok := value.(string)
-	if !ok {
-		return errors.Errorf("User.Meta must be a string, got %T instead", value)
-	}
-	return json.Unmarshal([]byte(str), mm)
+	return errors.Errorf("User.Meta: unknown type %T, expected []uint8", value)
 }
 
-func (mm *UserMeta) Value() (driver.Value, error) {
-	return json.Marshal(mm)
+func (meta *UserMeta) Value() (driver.Value, error) {
+	return json.Marshal(meta)
 }

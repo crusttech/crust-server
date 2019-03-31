@@ -145,17 +145,20 @@ func (m Message) PermissionResource() rules.Resource {
 	return ChannelPermissionResource.AppendID(m.ChannelID)
 }
 
-func (mm *MessageMeta) Scan(value interface{}) error {
-	if value == nil {
+func (meta *MessageMeta) Scan(value interface{}) error {
+	switch value.(type) {
+	case nil:
+		*meta = MessageMeta{}
+		return nil
+	case []uint8:
+		if err := json.Unmarshal(value.([]byte), meta); err != nil {
+			return errors.Wrapf(err, "Can not scan '%v' into Message.Meta", value)
+		}
 		return nil
 	}
-	str, ok := value.(string)
-	if !ok {
-		return errors.Errorf("Message.Meta must be a string, got %T instead", value)
-	}
-	return json.Unmarshal([]byte(str), mm)
+	return errors.Errorf("Message.Meta: unknown type %T, expected []uint8", value)
 }
 
-func (mm *MessageMeta) Value() (driver.Value, error) {
-	return json.Marshal(mm)
+func (meta *MessageMeta) Value() (driver.Value, error) {
+	return json.Marshal(meta)
 }
