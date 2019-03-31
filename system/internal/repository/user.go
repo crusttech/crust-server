@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -24,6 +25,8 @@ type (
 
 		Create(mod *types.User) (*types.User, error)
 		Update(mod *types.User) (*types.User, error)
+
+		UpdateAvatar(user *types.User, avatar io.Reader) (*types.User, error)
 
 		SuspendByID(id uint64) error
 		UnsuspendByID(id uint64) error
@@ -164,6 +167,11 @@ func (r *user) Create(mod *types.User) (*types.User, error) {
 func (r *user) Update(mod *types.User) (*types.User, error) {
 	mod.UpdatedAt = timeNowPtr()
 	return mod, r.db().Replace(r.users, mod)
+}
+
+func (r *user) UpdateAvatar(user *types.User, avatar io.Reader) (*types.User, error) {
+	// @todo: IMPORTANT: implement avatar uploading
+	return user, nil
 }
 
 func (r *user) SuspendByID(id uint64) error {

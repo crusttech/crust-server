@@ -782,6 +782,12 @@
                             "type": "*multipart.FileHeader",
                             "required": false,
                             "title": "Webhook default avatar"
+                        },
+                        {
+                            "name": "avatarURL",
+                            "type": "string",
+                            "required": false,
+                            "title": "Webhook default avatar (from URL)"
                         }
                     ]
                 }
@@ -836,6 +842,12 @@
                             "type": "*multipart.FileHeader",
                             "required": false,
                             "title": "Webhook default avatar"
+                        },
+                        {
+                            "name": "avatarURL",
+                            "type": "string",
+                            "required": false,
+                            "title": "Webhook default avatar (from URL)"
                         }
                     ]
                 }

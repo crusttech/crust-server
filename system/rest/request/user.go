@@ -25,6 +25,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
+
+	"github.com/crusttech/crust/system/types"
 )
 
 var _ = chi.URLParam
@@ -88,10 +90,12 @@ var _ RequestFiller = NewUserList()
 
 // User create request parameters
 type UserCreate struct {
-	Email  string
-	Name   string
-	Handle string
-	Kind   string
+	Email     string
+	Name      string
+	Handle    string
+	Kind      types.UserKind
+	Avatar    *multipart.FileHeader
+	AvatarURL string
 }
 
 func NewUserCreate() *UserCreate {
@@ -110,7 +114,7 @@ func (usReq *UserCreate) Fill(r *http.Request) (err error) {
 		}
 	}
 
-	if err = r.ParseForm(); err != nil {
+	if err = r.ParseMultipartForm(32 << 20); err != nil {
 		return err
 	}
 
@@ -139,7 +143,15 @@ func (usReq *UserCreate) Fill(r *http.Request) (err error) {
 	}
 	if val, ok := post["kind"]; ok {
 
-		usReq.Kind = val
+		usReq.Kind = types.UserKind(val)
+	}
+	if _, usReq.Avatar, err = r.FormFile("avatar"); err != nil {
+		return errors.Wrap(err, "error procesing uploaded file")
+	}
+
+	if val, ok := post["avatarURL"]; ok {
+
+		usReq.AvatarURL = val
 	}
 
 	return err
@@ -149,11 +161,13 @@ var _ RequestFiller = NewUserCreate()
 
 // User update request parameters
 type UserUpdate struct {
-	UserID uint64 `json:",string"`
-	Email  string
-	Name   string
-	Handle string
-	Kind   string
+	UserID    uint64 `json:",string"`
+	Email     string
+	Name      string
+	Handle    string
+	Kind      types.UserKind
+	Avatar    *multipart.FileHeader
+	AvatarURL string
 }
 
 func NewUserUpdate() *UserUpdate {
@@ -172,7 +186,7 @@ func (usReq *UserUpdate) Fill(r *http.Request) (err error) {
 		}
 	}
 
-	if err = r.ParseForm(); err != nil {
+	if err = r.ParseMultipartForm(32 << 20); err != nil {
 		return err
 	}
 
@@ -202,7 +216,15 @@ func (usReq *UserUpdate) Fill(r *http.Request) (err error) {
 	}
 	if val, ok := post["kind"]; ok {
 
-		usReq.Kind = val
+		usReq.Kind = types.UserKind(val)
+	}
+	if _, usReq.Avatar, err = r.FormFile("avatar"); err != nil {
+		return errors.Wrap(err, "error procesing uploaded file")
+	}
+
+	if val, ok := post["avatarURL"]; ok {
+
+		usReq.AvatarURL = val
 	}
 
 	return err

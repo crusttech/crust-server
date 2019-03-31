@@ -587,6 +587,7 @@ The following event types may be sent with a message event:
 | url | string | POST | Outgoing webhook: POST URL | N/A | NO |
 | username | string | POST | Webhook default user name | N/A | NO |
 | avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | NO |
+| avatarURL | string | POST | Webhook default avatar (from URL) | N/A | NO |
 
 ## Attach file to channel
 
@@ -607,6 +608,7 @@ The following event types may be sent with a message event:
 | url | string | POST | Outgoing webhook: POST URL | N/A | NO |
 | username | string | POST | Webhook default user name | N/A | NO |
 | avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | NO |
+| avatarURL | string | POST | Webhook default avatar (from URL) | N/A | NO |
 
 ## Get webhook details
 

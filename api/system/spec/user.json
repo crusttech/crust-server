@@ -1,7 +1,13 @@
 {
   "Title": "Users",
   "Interface": "User",
-  "Struct": null,
+  "Struct": [
+    {
+      "imports": [
+        "github.com/crusttech/crust/system/types"
+      ]
+    }
+  ],
   "Parameters": null,
   "Protocol": "",
   "Authentication": [
@@ -66,7 +72,19 @@
           {
             "name": "kind",
             "required": false,
-            "title": "Kind (normal, bot)",
+            "title": "Kind (not provided/empty string or `bot`)",
+            "type": "types.UserKind"
+          },
+          {
+            "name": "avatar",
+            "required": false,
+            "title": "Webhook default avatar",
+            "type": "*multipart.FileHeader"
+          },
+          {
+            "name": "avatarURL",
+            "required": false,
+            "title": "Webhook default avatar (from URL)",
             "type": "string"
           }
         ]
@@ -108,7 +126,19 @@
           {
             "name": "kind",
             "required": false,
-            "title": "Kind (normal, bot)",
+            "title": "Kind (not provided/empty string or `bot`)",
+            "type": "types.UserKind"
+          },
+          {
+            "name": "avatar",
+            "required": false,
+            "title": "Webhook default avatar",
+            "type": "*multipart.FileHeader"
+          },
+          {
+            "name": "avatarURL",
+            "required": false,
+            "title": "Webhook default avatar (from URL)",
             "type": "string"
           }
         ]

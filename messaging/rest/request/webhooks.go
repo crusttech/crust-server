@@ -91,6 +91,7 @@ type WebhooksWebhookCreate struct {
 	Url       string
 	Username  string
 	Avatar    *multipart.FileHeader
+	AvatarURL string
 }
 
 func NewWebhooksWebhookCreate() *WebhooksWebhookCreate {
@@ -148,6 +149,11 @@ func (wReq *WebhooksWebhookCreate) Fill(r *http.Request) (err error) {
 		return errors.Wrap(err, "error procesing uploaded file")
 	}
 
+	if val, ok := post["avatarURL"]; ok {
+
+		wReq.AvatarURL = val
+	}
+
 	return err
 }
 
@@ -162,6 +168,7 @@ type WebhooksWebhookUpdate struct {
 	Url       string
 	Username  string
 	Avatar    *multipart.FileHeader
+	AvatarURL string
 }
 
 func NewWebhooksWebhookUpdate() *WebhooksWebhookUpdate {
@@ -218,6 +225,11 @@ func (wReq *WebhooksWebhookUpdate) Fill(r *http.Request) (err error) {
 	}
 	if _, wReq.Avatar, err = r.FormFile("avatar"); err != nil {
 		return errors.Wrap(err, "error procesing uploaded file")
+	}
+
+	if val, ok := post["avatarURL"]; ok {
+
+		wReq.AvatarURL = val
 	}
 
 	return err

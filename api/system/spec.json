@@ -403,6 +403,13 @@
             "Client ID",
             "Session ID"
         ],
+        "struct": [
+            {
+                "imports": [
+                    "github.com/crusttech/crust/system/types"
+                ]
+            }
+        ],
         "apis": [
             {
                 "name": "list",
@@ -459,9 +466,21 @@
                         },
                         {
                             "name": "kind",
+                            "type": "types.UserKind",
+                            "required": false,
+                            "title": "Kind (not provided/empty string or `bot`)"
+                        },
+                        {
+                            "name": "avatar",
+                            "type": "*multipart.FileHeader",
+                            "required": false,
+                            "title": "Webhook default avatar"
+                        },
+                        {
+                            "name": "avatarURL",
                             "type": "string",
                             "required": false,
-                            "title": "Kind (normal, bot)"
+                            "title": "Webhook default avatar (from URL)"
                         }
                     ]
                 }
@@ -501,9 +520,21 @@
                         },
                         {
                             "name": "kind",
+                            "type": "types.UserKind",
+                            "required": false,
+                            "title": "Kind (not provided/empty string or `bot`)"
+                        },
+                        {
+                            "name": "avatar",
+                            "type": "*multipart.FileHeader",
+                            "required": false,
+                            "title": "Webhook default avatar"
+                        },
+                        {
+                            "name": "avatarURL",
                             "type": "string",
                             "required": false,
-                            "title": "Kind (normal, bot)"
+                            "title": "Webhook default avatar (from URL)"
                         }
                     ]
                 }
