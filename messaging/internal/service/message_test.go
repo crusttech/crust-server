@@ -1,4 +1,4 @@
-// +build integration
+// +build unit
 
 package service
 
@@ -13,28 +13,7 @@ import (
 	systemTypes "github.com/crusttech/crust/system/types"
 )
 
-// func TestChannelCreation(t *testing.T) {
-// 	mockCtrl := gomock.NewController(t)
-// 	defer mockCtrl.Finish()
-//
-// 	chRpoMock := NewMockRepository(mockCtrl)
-// 	chRpoMock.EXPECT().WithCtx(gomock.Any()).AnyTimes().Return(chRpoMock)
-// 	chRpoMock.EXPECT().
-// 		FindUserByID(usr.ID).
-// 		Times(1).
-// 		Return(usr, nil)
-//
-// 	svc := channel{
-// 		channel:
-// 	}
-//
-// 	svc.Create()
-// }
-
 func TestMessageLength(t *testing.T) {
-	// mockCtrl := gomock.NewController(t)
-	// defer mockCtrl.Finish()
-
 	ctx := context.Background()
 	ctx = auth.SetIdentityToContext(ctx, &systemTypes.User{})
 
@@ -43,8 +22,8 @@ func TestMessageLength(t *testing.T) {
 
 	longText := strings.Repeat("X", settingsMessageBodyLength+1)
 
-	test.Assert(t, e(svc.Create(&types.Message{})) != nil, "Should not allow to create unnamed channels")
-	test.Assert(t, e(svc.Create(&types.Message{Message: longText})) != nil, "Should not allow to create channel with really long name")
+	test.Assert(t, e(svc.Create(&types.Message{})) != nil, "Should not allow to create empty message")
+	test.Assert(t, e(svc.Create(&types.Message{Message: longText})) != nil, "Should not allow to create message with really long text")
 }
 
 func TestMentionsExtraction(t *testing.T) {

@@ -13,28 +13,7 @@ import (
 	systemTypes "github.com/crusttech/crust/system/types"
 )
 
-// func TestChannelCreation(t *testing.T) {
-// 	mockCtrl := gomock.NewController(t)
-// 	defer mockCtrl.Finish()
-//
-// 	chRpoMock := NewMockRepository(mockCtrl)
-// 	chRpoMock.EXPECT().WithCtx(gomock.Any()).AnyTimes().Return(chRpoMock)
-// 	chRpoMock.EXPECT().
-// 		FindUserByID(usr.ID).
-// 		Times(1).
-// 		Return(usr, nil)
-//
-// 	svc := channel{
-// 		channel:
-// 	}
-//
-// 	svc.Create()
-// }
-
 func TestChannelNameTooShort(t *testing.T) {
-	// mockCtrl := gomock.NewController(t)
-	// defer mockCtrl.Finish()
-
 	ctx := context.Background()
 	ctx = auth.SetIdentityToContext(ctx, &systemTypes.User{})
 
