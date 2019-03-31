@@ -3,6 +3,8 @@ package types
 import (
 	"time"
 
+	"mime/multipart"
+
 	"github.com/crusttech/crust/internal/rules"
 )
 
@@ -28,6 +30,16 @@ type (
 		DeletedAt *time.Time `json:"deletedAt,omitempty" db:"deleted_at"`
 	}
 
+	WebhookRequest struct {
+		Username string
+
+		Avatar    *multipart.FileHeader
+		AvatarURL string
+
+		OutgoingTrigger string
+		OutgoingURL     string
+	}
+
 	WebhookFilter struct {
 		ChannelID       uint64
 		OwnerUserID     uint64
@@ -35,7 +47,9 @@ type (
 	}
 
 	WebhookBody struct {
-		Text string `json:"text"`
+		Text     string `json:"text"`
+		Avatar   string `json:"avatar,omitempty"`
+		Username string `json:"username,omitempty"`
 	}
 
 	WebhookKind string

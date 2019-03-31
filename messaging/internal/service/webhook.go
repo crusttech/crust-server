@@ -12,9 +12,11 @@ import (
 	"github.com/titpetric/factory"
 
 	"github.com/crusttech/crust/internal/http"
+	"github.com/crusttech/crust/internal/store"
 	"github.com/crusttech/crust/messaging/internal/repository"
 	"github.com/crusttech/crust/messaging/types"
 	systemService "github.com/crusttech/crust/system/service"
+	systemTypes "github.com/crusttech/crust/system/types"
 )
 
 type (
@@ -41,8 +43,8 @@ type (
 
 		Message(webhookID uint64, webhookToken string, username, avatar, message string) (interface{}, error)
 
-		Create(kind types.WebhookKind, channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error)
-		Update(webhookID uint64, kind types.WebhookKind, channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error)
+		Create(kind types.WebhookKind, channelID uint64, params types.WebhookRequest) (*types.Webhook, error)
+		Update(webhookID uint64, kind types.WebhookKind, channelID uint64, params types.WebhookRequest) (*types.Webhook, error)
 
 		Do(webhook *types.Webhook, message string) (*types.Message, error)
 	}
@@ -68,44 +70,70 @@ func (svc *webhook) With(ctx context.Context) WebhookService {
 	}
 }
 
-func (svc *webhook) Create(kind types.WebhookKind, channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error) {
+func (svc *webhook) Create(kind types.WebhookKind, channelID uint64, params types.WebhookRequest) (*types.Webhook, error) {
 	var userID = repository.Identity(svc.ctx)
-	// @todo: avatar
+
 	webhook := &types.Webhook{
 		Kind:            kind,
 		OwnerUserID:     userID,
-		UserID:          userID, // @todo: create bot user
 		ChannelID:       channelID,
-		OutgoingTrigger: trigger,
-		OutgoingURL:     url,
+		OutgoingTrigger: params.OutgoingTrigger,
+		OutgoingURL:     params.OutgoingURL,
 	}
-	if svc.perms.CanManageWebhooks(webhook) || svc.perms.CanManageOwnWebhooks(webhook) {
-		return svc.webhook.Create(webhook)
+
+	if !svc.perms.CanManageWebhooks(webhook) && !svc.perms.CanManageOwnWebhooks(webhook) {
+		return nil, errors.WithStack(ErrNoPermissions)
 	}
-	return nil, errors.WithStack(ErrNoPermissions)
+
+	botUser := &systemTypes.User{
+		Username:      params.Username,
+		Name:          params.Username,
+		Handle:        params.Username,
+		Kind:          systemTypes.BotUser,
+		RelatedUserID: userID,
+	}
+
+	user, err := svc.users.Create(botUser, params.Avatar, params.AvatarURL)
+	if err != nil {
+		return nil, err
+	}
+	webhook.UserID = user.ID
+
+	wh, err := svc.webhook.Create(webhook)
+	if err != nil {
+		// cross service rollback (delete user)
+		svc.users.Delete(user.ID)
+		return nil, err
+	}
+	return wh, err
 }
 
-func (svc *webhook) Update(webhookID uint64, kind types.WebhookKind, channelID uint64, username string, avatar interface{}, trigger string, url string) (*types.Webhook, error) {
+func (svc *webhook) Update(webhookID uint64, kind types.WebhookKind, channelID uint64, params types.WebhookRequest) (*types.Webhook, error) {
 	var userID = repository.Identity(svc.ctx)
 	webhook, err := svc.Get(webhookID)
 	if err != nil {
 		return nil, err
 	}
-	// @todo: avatar
-	// @todo: update bot user
-	// webhook.UserID = userID,
+
+	if !svc.perms.CanManageWebhooks(webhook) && !(webhook.OwnerUserID == userID && svc.perms.CanManageOwnWebhooks(webhook)) {
+		return nil, errors.WithStack(ErrNoPermissions)
+	}
+
+	botUser, err := svc.users.FindByID(webhook.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := svc.users.Update(botUser, params.Avatar, params.AvatarURL); err != nil {
+		return nil, err
+	}
+
 	webhook.Kind = kind
 	webhook.ChannelID = channelID
-	webhook.OutgoingTrigger = trigger
-	webhook.OutgoingURL = url
+	webhook.OutgoingTrigger = params.OutgoingTrigger
+	webhook.OutgoingURL = params.OutgoingURL
 
-	if svc.perms.CanManageWebhooks(webhook) {
-		return svc.webhook.Update(webhook)
-	}
-	if webhook.OwnerUserID == userID && svc.perms.CanManageOwnWebhooks(webhook) {
-		return svc.webhook.Update(webhook)
-	}
-	return nil, errors.WithStack(ErrNoPermissions)
+	return svc.webhook.Update(webhook)
 }
 
 func (svc *webhook) Get(webhookID uint64) (*types.Webhook, error) {
@@ -139,12 +167,23 @@ func (svc *webhook) Message(webhookID uint64, webhookToken string, username, ava
 	if webhook, err := svc.webhook.GetByToken(webhookID, webhookToken); err != nil {
 		return nil, err
 	} else {
-		message := &types.Message{
+		msg := &types.Message{
 			ChannelID: webhook.ChannelID,
 			UserID:    webhook.UserID,
 			Message:   message,
+			Meta: &types.MessageMeta{
+				Username: username,
+			},
 		}
-		return svc.message.CreateMessage(message)
+		reader, err := store.FromURL(avatar)
+		if err != nil {
+			// creates message without avatar
+			return svc.message.Create(msg)
+		}
+		defer reader.Close()
+
+		svc.message.BindAvatar(msg, reader)
+		return svc.message.Create(msg)
 	}
 }
 
@@ -158,7 +197,9 @@ func (svc *webhook) Do(webhook *types.Webhook, message string) (*types.Message, 
 	url := strings.Replace(webhook.OutgoingURL, "%s", url.QueryEscape(message), -1)
 
 	// post body contains only `text`
-	requestBody := types.WebhookBody{message}
+	requestBody := types.WebhookBody{
+		Text: message,
+	}
 	req, err := svc.client.Post(url, requestBody)
 	if err != nil {
 		return nil, err
@@ -196,11 +237,22 @@ func (svc *webhook) Do(webhook *types.Webhook, message string) (*types.Message, 
 			return nil, http.ToError(resp)
 		}
 	}
-	return &types.Message{
+
+	msg := &types.Message{
 		ID:        factory.Sonyflake.NextID(),
 		UserID:    webhook.UserID,
 		ChannelID: webhook.ChannelID,
 		CreatedAt: time.Now(),
 		Message:   responseBody.Text,
-	}, nil
+		Meta: &types.MessageMeta{
+			Username: responseBody.Username,
+		},
+	}
+
+	reader, err := store.FromURL(responseBody.Avatar)
+	if err != nil {
+		return msg, nil
+	}
+	defer reader.Close()
+	return svc.message.BindAvatar(msg, reader)
 }

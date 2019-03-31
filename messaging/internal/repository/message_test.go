@@ -35,31 +35,31 @@ func TestMessage(t *testing.T) {
 		msg := &types.Message{ChannelID: ch.ID}
 
 		msg.Message = msg1
-		msg, err = msgRpo.CreateMessage(msg)
+		msg, err = msgRpo.Create(msg)
 		test.Assert(t, err == nil, "CreateMessage error: %+v", err)
 		test.Assert(t, msg.Message == msg1, "Changes were not stored")
 
 		{
 			msg.Message = msg2
-			msg, err = msgRpo.UpdateMessage(msg)
+			msg, err = msgRpo.Update(msg)
 			test.Assert(t, err == nil, "UpdateMessage error: %+v", err)
 			test.Assert(t, msg.Message == msg2, "Changes were not stored")
 		}
 
 		{
-			msg, err = msgRpo.FindMessageByID(msg.ID)
+			msg, err = msgRpo.FindByID(msg.ID)
 			test.Assert(t, err == nil, "FindMessageByID error: %+v", err)
 			test.Assert(t, msg.Message == msg2, "Changes were not stored")
 		}
 
 		{
-			mm, err = msgRpo.FindMessages(&types.MessageFilter{Query: msg2})
+			mm, err = msgRpo.Find(&types.MessageFilter{Query: msg2})
 			test.Assert(t, err == nil, "FindMessages error: %+v", err)
 			test.Assert(t, len(mm) > 0, "No results found")
 		}
 
 		{
-			err = msgRpo.DeleteMessageByID(msg.ID)
+			err = msgRpo.DeleteByID(msg.ID)
 			test.Assert(t, err == nil, "DeleteMessageByID error: %+v", err)
 		}
 
@@ -88,12 +88,12 @@ func TestReplies(t *testing.T) {
 		msg := &types.Message{ChannelID: ch.ID}
 		rpl := &types.Message{ChannelID: ch.ID}
 
-		msg, err = msgRpo.CreateMessage(msg)
+		msg, err = msgRpo.Create(msg)
 		test.Assert(t, err == nil, "CreateMessage error: %+v", err)
 		test.Assert(t, msg.ID > 0, "Message did not get its ID")
 
 		rpl.ReplyTo = msg.ID
-		rpl, err = msgRpo.CreateMessage(rpl)
+		rpl, err = msgRpo.Create(rpl)
 		test.Assert(t, err == nil, "CreateMessage error: %+v", err)
 		test.Assert(t, rpl.ID > 0, "Reply did not get its ID")
 
@@ -102,7 +102,7 @@ func TestReplies(t *testing.T) {
 		msgRpo.IncReplyCount(msg.ID)
 
 		{
-			mm, err = msgRpo.FindMessages(&types.MessageFilter{
+			mm, err = msgRpo.Find(&types.MessageFilter{
 				RepliesTo: msg.ID,
 				ChannelID: ch.ID,
 			})
@@ -124,7 +124,7 @@ func TestReplies(t *testing.T) {
 		}
 
 		{
-			mm, err = msgRpo.FindMessages(&types.MessageFilter{
+			mm, err = msgRpo.Find(&types.MessageFilter{
 				ChannelID: ch.ID,
 			})
 
@@ -139,13 +139,13 @@ func TestReplies(t *testing.T) {
 			test.Assert(t, msgRpo.IncReplyCount(msg.ID) == nil, "IncReplyCount should not return an error")
 			// +1 that we have from before
 
-			msg, err = msgRpo.FindMessageByID(msg.ID)
+			msg, err = msgRpo.FindByID(msg.ID)
 			test.Assert(t, err == nil, "FindMessageByID error: %+v", err)
 			test.Assert(t, msg.Replies == 3, "Reply counter check failed, expecting 3, got %d", msg.Replies)
 
 			test.Assert(t, msgRpo.DecReplyCount(msg.ID) == nil, "DecReplyCount should not return an error")
 
-			msg, err = msgRpo.FindMessageByID(msg.ID)
+			msg, err = msgRpo.FindByID(msg.ID)
 			test.Assert(t, err == nil, "FindMessageByID error: %+v", err)
 			test.Assert(t, msg.Replies == 2, "Reply counter check failed, expecting 1, got %d", msg.Replies)
 		}

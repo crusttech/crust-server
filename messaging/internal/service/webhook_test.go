@@ -27,20 +27,35 @@ func TestOutgoingWebhook(t *testing.T) {
 	})
 	test.Assert(t, err == nil, "Error creating HTTP client: %+v", err)
 
-	/* create outgoing webhook */
-	svc := Webhook(ctx, client)
-	webhook, err := svc.Create(types.OutgoingWebhook, channel.ID, "test-webhook", "", "fortune", "https://api.scene-si.org/fortune.php")
-	test.Assert(t, err == nil, "Error when creating webhook: %+v", err)
+	{
+		/* create outgoing webhook */
+		svc := Webhook(ctx, client)
+		webhook, err := svc.Create(types.OutgoingWebhook, channel.ID, "test-webhook", "", "fortune", "https://api.scene-si.org/fortune.php")
+		test.Assert(t, err == nil, "Error when creating webhook: %+v", err)
 
-	/* find outgoing webhook */
-	webhooks, err := svc.Find(&types.WebhookFilter{
-		OutgoingTrigger: webhook.OutgoingTrigger,
-	})
-	test.Assert(t, err == nil, "Error when finding webhook: %+v", err)
-	test.Assert(t, len(webhooks) == 1, "Expected to find 1 webhook, got %d", len(webhooks))
+		/* find outgoing webhook */
+		webhooks, err := svc.Find(&types.WebhookFilter{
+			OutgoingTrigger: webhook.OutgoingTrigger,
+		})
+		test.Assert(t, err == nil, "Error when finding webhook: %+v", err)
+		test.Assert(t, len(webhooks) == 1, "Expected to find 1 webhook, got %d", len(webhooks))
 
-	/* trigger outgoing webhook */
-	message, err := svc.Do(webhooks[0], "")
-	test.Assert(t, err == nil, "Error when triggering webhook: %+v", err)
-	test.Assert(t, strings.Contains(message.Message, "BOFH"), "Unexpected webhook output: %s", message.Message)
+		/* trigger outgoing webhook */
+		message, err := svc.Do(webhooks[0], "")
+		test.Assert(t, err == nil, "Error when triggering webhook: %+v", err)
+		test.Assert(t, strings.Contains(message.Message, "BOFH"), "Unexpected webhook output: %s", message.Message)
+	}
+
+	{
+		/* create outgoing webhook */
+		svc := Webhook(ctx, client)
+		webhook, err := svc.Create(types.OutgoingWebhook, channel.ID, "test-webhook-json", "", "fortune-json", "https://api.scene-si.org/fortune.php?username=test")
+		test.Assert(t, err == nil, "Error when creating webhook: %+v", err)
+
+		/* trigger outgoing webhook */
+		message, err := svc.Do(webhook, "")
+		test.Assert(t, err == nil, "Error when triggering webhook: %+v", err)
+		test.Assert(t, message.Meta.Username == "test", "Expected message.meta.username = 'test', got: '%s'", message.Meta.Username)
+		test.Assert(t, strings.Contains(message.Message, "BOFH"), "Unexpected webhook output: %s", message.Message)
+	}
 }

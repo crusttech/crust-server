@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"mime/multipart"
 	"testing"
 
 	"github.com/crusttech/crust/system/internal/service"
@@ -10,6 +11,10 @@ import (
 
 type (
 	UserService interface {
+		Create(input *types.User, avatar *multipart.FileHeader, avatarURL string) (*types.User, error)
+		Update(mod *types.User, avatar *multipart.FileHeader, avatarURL string) (*types.User, error)
+		Delete(id uint64) error
+
 		FindByUsername(username string) (*types.User, error)
 		FindByEmail(email string) (*types.User, error)
 		FindByID(id uint64) (*types.User, error)

@@ -28,6 +28,9 @@ func TestUser(t *testing.T) {
 			Name:     "John User Doe",
 			Username: "johndoe",
 			SatosaID: "1234",
+			Meta: types.UserMeta{
+				Avatar: "123",
+			},
 		}
 		user.GeneratePassword("johndoe")
 
@@ -54,6 +57,7 @@ func TestUser(t *testing.T) {
 		{
 			uu, err := userRepo.FindByID(user.ID)
 			test.Assert(t, err == nil, "Owner.FindByID error: %+v", err)
+			test.Assert(t, uu.Meta.Avatar == "123", "Expected avatar to be '123', got '%s'", uu.Meta.Avatar)
 			test.Assert(t, len(uu.Roles) == 1, "Expected 1 role, got %d", len(uu.Roles))
 		}
 

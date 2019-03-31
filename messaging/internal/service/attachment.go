@@ -152,7 +152,7 @@ func (svc *attachment) Create(name string, size int64, fh io.ReadSeeker, channel
 
 		// Create the first message, doing this directly with repository to circumvent
 		// message service constraints
-		if msg, err = svc.message.CreateMessage(msg); err != nil {
+		if msg, err = svc.message.Create(msg); err != nil {
 			return
 		}
 

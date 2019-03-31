@@ -94,7 +94,7 @@ func (svc *channel) With(ctx context.Context) ChannelService {
 }
 
 func (svc *channel) FindByID(ID uint64) (ch *types.Channel, err error) {
-	ch, err = svc.channel.FindChannelByID(ID)
+	ch, err = svc.channel.FindByID(ID)
 	if err != nil {
 		return
 	} else if err = svc.preloadExtras(types.ChannelSet{ch}); err != nil {
@@ -112,7 +112,7 @@ func (svc *channel) Find(filter *types.ChannelFilter) (cc types.ChannelSet, err 
 	filter.CurrentUserID = auth.GetIdentityFromContext(svc.ctx).Identity()
 
 	return cc, svc.db.Transaction(func() (err error) {
-		if cc, err = svc.channel.FindChannels(filter); err != nil {
+		if cc, err = svc.channel.Find(filter); err != nil {
 			return
 		} else if err = svc.preloadExtras(cc); err != nil {
 			return
@@ -255,7 +255,7 @@ func (svc *channel) Create(in *types.Channel) (out *types.Channel, err error) {
 		}
 
 		// Save the channel
-		if out, err = svc.channel.CreateChannel(out); err != nil {
+		if out, err = svc.channel.Create(out); err != nil {
 			return
 		}
 
@@ -323,7 +323,7 @@ func (svc *channel) buildMemberSet(owner uint64, members ...uint64) (mm types.Ch
 }
 
 func (svc *channel) checkGroupExistance(mm types.ChannelMemberSet) (out *types.Channel, err error) {
-	if out, err = svc.channel.FindChannelByMemberSet(mm.AllMemberIDs()...); err == repository.ErrChannelNotFound {
+	if out, err = svc.channel.FindByMemberSet(mm.AllMemberIDs()...); err == repository.ErrChannelNotFound {
 		return nil, nil
 	} else if out != nil && err == nil {
 		err = svc.preloadExtras(types.ChannelSet{out})
@@ -392,7 +392,7 @@ func (svc *channel) Update(in *types.Channel) (ch *types.Channel, err error) {
 			return nil
 		}
 		// Save the updated channel
-		if ch, err = svc.channel.UpdateChannel(in); err != nil {
+		if ch, err = svc.channel.Update(in); err != nil {
 			return
 		}
 
@@ -423,7 +423,7 @@ func (svc *channel) Delete(ID uint64) (ch *types.Channel, err error) {
 
 		svc.scheduleSystemMessage(ch, "<@%d> deleted this channel", userID)
 
-		if err = svc.channel.DeleteChannelByID(ID); err != nil {
+		if err = svc.channel.DeleteByID(ID); err != nil {
 			return
 		} else {
 			// Set deletedAt timestamp so that our clients can react properly...
@@ -454,7 +454,7 @@ func (svc *channel) Undelete(ID uint64) (ch *types.Channel, err error) {
 
 		svc.scheduleSystemMessage(ch, "<@%d> undeleted this channel", userID)
 
-		if err = svc.channel.UndeleteChannelByID(ID); err != nil {
+		if err = svc.channel.UndeleteByID(ID); err != nil {
 			return
 		} else {
 			// Remove deletedAt timestamp so that our clients can react properly...
@@ -513,7 +513,7 @@ func (svc *channel) Archive(ID uint64) (ch *types.Channel, err error) {
 
 		svc.scheduleSystemMessage(ch, "<@%d> archived this channel", userID)
 
-		if err = svc.channel.ArchiveChannelByID(ID); err != nil {
+		if err = svc.channel.ArchiveByID(ID); err != nil {
 			return
 		} else {
 			// Set archivedAt timestamp so that our clients can react properly...
@@ -541,7 +541,7 @@ func (svc *channel) Unarchive(ID uint64) (ch *types.Channel, err error) {
 			return errors.New("channel not archived")
 		}
 
-		if err = svc.channel.UnarchiveChannelByID(ID); err != nil {
+		if err = svc.channel.UnarchiveByID(ID); err != nil {
 			return
 		} else {
 			// Unset archivedAt timestamp so that our clients can react properly...
@@ -782,7 +782,7 @@ func (svc *channel) flushSystemMessages() (err error) {
 	}()
 
 	return svc.sysmsgs.Walk(func(msg *types.Message) error {
-		if msg, err = svc.message.CreateMessage(msg); err != nil {
+		if msg, err = svc.message.Create(msg); err != nil {
 			return err
 		} else {
 			return svc.event.Message(msg)

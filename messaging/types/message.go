@@ -1,8 +1,13 @@
 package types
 
 import (
-	"database/sql/driver"
 	"time"
+
+	"encoding/json"
+
+	"database/sql/driver"
+
+	"github.com/pkg/errors"
 
 	"github.com/crusttech/crust/internal/rules"
 	systemTypes "github.com/crusttech/crust/system/types"
@@ -10,22 +15,30 @@ import (
 
 type (
 	Message struct {
-		ID         uint64            `json:"id" db:"id"`
-		Type       MessageType       `json:"type" db:"type"`
-		Message    string            `json:"message" db:"message"`
-		UserID     uint64            `json:"userId" db:"rel_user"`
-		ChannelID  uint64            `json:"channelId" db:"rel_channel"`
-		ReplyTo    uint64            `json:"replyTo" db:"reply_to"`
-		Replies    uint              `json:"replies" db:"replies"`
-		CreatedAt  time.Time         `json:"createdAt,omitempty" db:"created_at"`
-		UpdatedAt  *time.Time        `json:"updatedAt,omitempty" db:"updated_at"`
-		DeletedAt  *time.Time        `json:"deletedAt,omitempty" db:"deleted_at"`
+		ID        uint64       `json:"id" db:"id"`
+		Type      MessageType  `json:"type" db:"type"`
+		Message   string       `json:"message" db:"message"`
+		Meta      *MessageMeta `json:"meta" db:"meta"`
+		UserID    uint64       `json:"userId" db:"rel_user"`
+		ChannelID uint64       `json:"channelId" db:"rel_channel"`
+		ReplyTo   uint64       `json:"replyTo" db:"reply_to"`
+		Replies   uint         `json:"replies" db:"replies"`
+		CreatedAt time.Time    `json:"createdAt,omitempty" db:"created_at"`
+		UpdatedAt *time.Time   `json:"updatedAt,omitempty" db:"updated_at"`
+		DeletedAt *time.Time   `json:"deletedAt,omitempty" db:"deleted_at"`
+
 		Attachment *Attachment       `json:"attachment,omitempty"`
 		User       *systemTypes.User `json:"user,omitempty"`
 		Flags      MessageFlagSet    `json:"flags,omitempty"`
 
 		Mentions    MentionSet
 		RepliesFrom []uint64
+	}
+
+	MessageMeta struct {
+		// Bot users can override username/avatar
+		Username string `json:"username"`
+		Avatar   string `json:"avatar"`
 	}
 
 	MessageFilter struct {
@@ -130,4 +143,19 @@ func (m *Message) IsValid() bool {
 
 func (m Message) PermissionResource() rules.Resource {
 	return ChannelPermissionResource.AppendID(m.ChannelID)
+}
+
+func (mm *MessageMeta) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	str, ok := value.(string)
+	if !ok {
+		return errors.Errorf("Message.Meta must be a string, got %T instead", value)
+	}
+	return json.Unmarshal([]byte(str), mm)
+}
+
+func (mm *MessageMeta) Value() (driver.Value, error) {
+	return json.Marshal(mm)
 }

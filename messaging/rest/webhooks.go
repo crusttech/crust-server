@@ -36,31 +36,25 @@ func (ctrl *Webhooks) WebhookList(ctx context.Context, r *request.WebhooksWebhoo
 }
 
 func (ctrl *Webhooks) WebhookCreate(ctx context.Context, r *request.WebhooksWebhookCreate) (interface{}, error) {
-	// Webhooks webhookCreate request parameters
-	/*
-	   ChannelID uint64 `json:",string"`
-	   Kind      types.WebhookKind
-	   Trigger   string
-	   Url       string
-	   Username  string
-	   Avatar    *multipart.FileHeader
-	*/
-
-	// @todo: process r.Avatar file upload for webhook
-	return ctrl.webhook.With(ctx).Create(r.Kind, r.ChannelID, r.Username, r.Avatar, r.Trigger, r.Url)
+	// Webhook request parameters
+	parameters := types.WebhookRequest{
+		r.Username,
+		r.Avatar,
+		r.AvatarURL,
+		r.Trigger,
+		r.Url,
+	}
+	return ctrl.webhook.With(ctx).Create(r.Kind, r.ChannelID, parameters)
 }
 
 func (ctrl *Webhooks) WebhookUpdate(ctx context.Context, r *request.WebhooksWebhookUpdate) (interface{}, error) {
-	// Webhooks webhookCreate request parameters
-	/*
-	   ChannelID uint64 `json:",string"`
-	   Kind      types.WebhookKind
-	   Trigger   string
-	   Url       string
-	   Username  string
-	   Avatar    *multipart.FileHeader
-	*/
-
-	// @todo: process r.Avatar file upload for webhook
-	return ctrl.webhook.With(ctx).Update(r.WebhookID, r.Kind, r.ChannelID, r.Username, r.Avatar, r.Trigger, r.Url)
+	// Webhook request parameters
+	parameters := types.WebhookRequest{
+		r.Username,
+		r.Avatar,
+		r.AvatarURL,
+		r.Trigger,
+		r.Url,
+	}
+	return ctrl.webhook.With(ctx).Update(r.WebhookID, r.Kind, r.ChannelID, parameters)
 }

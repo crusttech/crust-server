@@ -26,7 +26,7 @@ type (
 		Create(mod *types.User) (*types.User, error)
 		Update(mod *types.User) (*types.User, error)
 
-		UpdateAvatar(user *types.User, avatar io.Reader) (*types.User, error)
+		BindAvatar(user *types.User, avatar io.Reader) (*types.User, error)
 
 		SuspendByID(id uint64) error
 		UnsuspendByID(id uint64) error
@@ -169,8 +169,12 @@ func (r *user) Update(mod *types.User) (*types.User, error) {
 	return mod, r.db().Replace(r.users, mod)
 }
 
-func (r *user) UpdateAvatar(user *types.User, avatar io.Reader) (*types.User, error) {
+func (r *user) BindAvatar(user *types.User, avatar io.Reader) (*types.User, error) {
+	if user.Meta == nil {
+		user.Meta = new(types.UserMeta)
+	}
 	// @todo: IMPORTANT: implement avatar uploading
+	user.Meta.Avatar = ""
 	return user, nil
 }
 

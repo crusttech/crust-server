@@ -41,7 +41,7 @@ func (ctrl *User) Create(ctx context.Context, r *request.UserCreate) (interface{
 		Kind:   r.Kind,
 	}
 
-	return ctrl.user.With(ctx).Create(user)
+	return ctrl.user.With(ctx).Create(user, r.Avatar, r.AvatarURL)
 }
 
 func (ctrl *User) Update(ctx context.Context, r *request.UserUpdate) (interface{}, error) {
@@ -53,7 +53,7 @@ func (ctrl *User) Update(ctx context.Context, r *request.UserUpdate) (interface{
 		Kind:   r.Kind,
 	}
 
-	return ctrl.user.With(ctx).Update(user)
+	return ctrl.user.With(ctx).Update(user, r.Avatar, r.AvatarURL)
 }
 
 func (ctrl *User) Read(ctx context.Context, r *request.UserRead) (interface{}, error) {

@@ -40,6 +40,7 @@ type (
 		FindThreads(filter *types.MessageFilter) (types.MessageSet, error)
 
 		Create(messages *types.Message) (*types.Message, error)
+
 		Update(messages *types.Message) (*types.Message, error)
 
 		React(messageID uint64, reaction string) error
@@ -97,7 +98,7 @@ func (svc *message) Find(filter *types.MessageFilter) (mm types.MessageSet, err 
 		return nil, errors.WithStack(ErrNoPermissions)
 	}
 
-	mm, err = svc.message.FindMessages(filter)
+	mm, err = svc.message.Find(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +151,7 @@ func (svc *message) Create(in *types.Message) (message *types.Message, err error
 
 			for replyTo > 0 {
 				// Find original message
-				original, err = svc.message.FindMessageByID(in.ReplyTo)
+				original, err = svc.message.FindByID(in.ReplyTo)
 				if err != nil {
 					return
 				}
@@ -181,7 +182,7 @@ func (svc *message) Create(in *types.Message) (message *types.Message, err error
 		if in.ChannelID == 0 {
 			return errors.New("channelID missing")
 		}
-		if ch, err = svc.channel.FindChannelByID(in.ChannelID); err != nil {
+		if ch, err = svc.channel.FindByID(in.ChannelID); err != nil {
 			return
 		}
 		if in.ReplyTo > 0 && !svc.prm.CanReplyMessage(ch) {
@@ -191,7 +192,7 @@ func (svc *message) Create(in *types.Message) (message *types.Message, err error
 			return errors.WithStack(ErrNoPermissions)
 		}
 
-		if message, err = svc.message.CreateMessage(in); err != nil {
+		if message, err = svc.message.Create(in); err != nil {
 			return
 		}
 
@@ -217,7 +218,8 @@ func (svc *message) Update(in *types.Message) (message *types.Message, err error
 
 	if mlen == 0 {
 		return nil, errors.Errorf("refusing to update message without contents")
-	} else if settingsMessageBodyLength > 0 && mlen > settingsMessageBodyLength {
+	}
+	if settingsMessageBodyLength > 0 && mlen > settingsMessageBodyLength {
 		return nil, errors.Errorf("message length (%d characters) too long (max: %d)", mlen, settingsMessageBodyLength)
 	}
 
@@ -229,7 +231,7 @@ func (svc *message) Update(in *types.Message) (message *types.Message, err error
 	}
 
 	return message, svc.db.Transaction(func() (err error) {
-		message, err = svc.message.FindMessageByID(in.ID)
+		message, err = svc.message.FindByID(in.ID)
 		if err != nil {
 			return errors.Wrap(err, "could not load message for editing")
 		}
@@ -239,7 +241,7 @@ func (svc *message) Update(in *types.Message) (message *types.Message, err error
 			return nil
 		}
 
-		if ch, err = svc.channel.FindChannelByID(message.ChannelID); err != nil {
+		if ch, err = svc.channel.FindByID(message.ChannelID); err != nil {
 			return
 		}
 		if message.UserID == currentUserID && !svc.prm.CanUpdateOwnMessages(ch) {
@@ -252,7 +254,7 @@ func (svc *message) Update(in *types.Message) (message *types.Message, err error
 		// Allow message content to be changed
 		message.Message = in.Message
 
-		if message, err = svc.message.UpdateMessage(message); err != nil {
+		if message, err = svc.message.Update(message); err != nil {
 			return err
 		}
 
@@ -275,7 +277,7 @@ func (svc *message) Delete(messageID uint64) error {
 		var deletedMsg, original *types.Message
 		var ch *types.Channel
 
-		deletedMsg, err = svc.message.FindMessageByID(messageID)
+		deletedMsg, err = svc.message.FindByID(messageID)
 		if err != nil {
 			return err
 		}
@@ -285,12 +287,12 @@ func (svc *message) Delete(messageID uint64) error {
 		}
 
 		if deletedMsg.ReplyTo > 0 {
-			original, err = svc.message.FindMessageByID(deletedMsg.ReplyTo)
+			original, err = svc.message.FindByID(deletedMsg.ReplyTo)
 			if err != nil {
 				return err
 			}
 
-			if ch, err = svc.channel.FindChannelByID(original.ChannelID); err != nil {
+			if ch, err = svc.channel.FindByID(original.ChannelID); err != nil {
 				return
 			}
 			if original.UserID == currentUserID && !svc.prm.CanUpdateOwnMessages(ch) {
@@ -314,7 +316,7 @@ func (svc *message) Delete(messageID uint64) error {
 			bq = append(bq, original)
 		}
 
-		if err = svc.message.DeleteMessageByID(messageID); err != nil {
+		if err = svc.message.DeleteByID(messageID); err != nil {
 			return
 		}
 
@@ -343,7 +345,7 @@ func (svc *message) MarkAsRead(channelID, threadID, lastReadMessageID uint64) (c
 		var lastMessage *types.Message
 
 		// Validate channel
-		if ch, err = svc.channel.FindChannelByID(channelID); err != nil {
+		if ch, err = svc.channel.FindByID(channelID); err != nil {
 			return errors.Wrap(err, "unable to verify channel")
 		} else if !ch.IsValid() {
 			return errors.New("invalid channel")
@@ -351,7 +353,7 @@ func (svc *message) MarkAsRead(channelID, threadID, lastReadMessageID uint64) (c
 
 		if threadID > 0 {
 			// Validate thread
-			if thread, err = svc.message.FindMessageByID(threadID); err != nil {
+			if thread, err = svc.message.FindByID(threadID); err != nil {
 				return errors.Wrap(err, "unable to verify thread")
 			} else if !thread.IsValid() {
 				return errors.New("invalid thread")
@@ -360,7 +362,7 @@ func (svc *message) MarkAsRead(channelID, threadID, lastReadMessageID uint64) (c
 
 		if lastReadMessageID > 0 {
 			// Validate thread
-			if lastMessage, err = svc.message.FindMessageByID(lastReadMessageID); err != nil {
+			if lastMessage, err = svc.message.FindByID(lastReadMessageID); err != nil {
 				return errors.Wrap(err, "unable to verify last message")
 			} else if !lastMessage.IsValid() {
 				return errors.New("invalid message")
@@ -447,10 +449,10 @@ func (svc *message) flag(messageID uint64, flag string, remove bool) error {
 			return
 		}
 
-		if msg, err = svc.message.FindMessageByID(messageID); err != nil {
+		if msg, err = svc.message.FindByID(messageID); err != nil {
 			return
 		}
-		if ch, err = svc.channel.FindChannelByID(msg.ChannelID); err != nil {
+		if ch, err = svc.channel.FindByID(msg.ChannelID); err != nil {
 			return
 		}
 		if !svc.prm.CanReadChannel(ch) {

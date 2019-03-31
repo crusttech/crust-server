@@ -1,13 +1,13 @@
 package service
 
 type (
-	serviceError string
+	readableError string
 )
 
-func (e serviceError) Error() string {
+func (e readableError) Error() string {
 	return string(e)
 }
 
 const (
-	ErrNoPermissions serviceError = "You don't have permissions for this operation"
+	ErrNoPermissions readableError = "You don't have permissions for this operation"
 )
