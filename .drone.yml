@@ -7,7 +7,7 @@ name: crust
 
 steps:
 - name: build
-  image: crusttech/api-builder:latest
+  image: crusttech/crust-builder:latest
   pull: always
   environment:
     CGO_ENABLED: 0
@@ -36,7 +36,7 @@ name: integration
 
 steps:
 - name: build
-  image: crusttech/api-builder:latest
+  image: crusttech/crust-builder:latest
   pull: always
   environment:
     CGO_ENABLED: 0

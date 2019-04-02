@@ -35,12 +35,12 @@ help:
 docker: $(IMAGES:%=docker-image.%)
 
 docker-image.%: Dockerfile.%
-	@ docker build --no-cache --rm -f Dockerfile.$* -t crusttech/api-$*:latest .
+	@ docker build --no-cache --rm -f Dockerfile.$* -t crusttech/$*:latest .
 
 docker-push: $(IMAGES:%=docker-push.%)
 
 docker-push.%: Dockerfile.%
-	@ docker push crusttech/api-$*:latest
+	@ docker push crusttech/$*:latest
 
 
 ########################################################################################################################
