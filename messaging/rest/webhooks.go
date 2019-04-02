@@ -20,22 +20,22 @@ func (Webhooks) New() *Webhooks {
 	return &Webhooks{}
 }
 
-func (ctrl *Webhooks) WebhookGet(ctx context.Context, r *request.WebhooksWebhookGet) (interface{}, error) {
+func (ctrl *Webhooks) Get(ctx context.Context, r *request.WebhooksGet) (interface{}, error) {
 	return ctrl.webhook.With(ctx).Get(r.WebhookID)
 }
 
-func (ctrl *Webhooks) WebhookDelete(ctx context.Context, r *request.WebhooksWebhookDelete) (interface{}, error) {
+func (ctrl *Webhooks) Delete(ctx context.Context, r *request.WebhooksDelete) (interface{}, error) {
 	return nil, ctrl.webhook.With(ctx).Delete(r.WebhookID)
 }
 
-func (ctrl *Webhooks) WebhookList(ctx context.Context, r *request.WebhooksWebhookList) (interface{}, error) {
+func (ctrl *Webhooks) List(ctx context.Context, r *request.WebhooksList) (interface{}, error) {
 	return ctrl.webhook.With(ctx).Find(&types.WebhookFilter{
 		ChannelID:   r.ChannelID,
 		OwnerUserID: r.UserID,
 	})
 }
 
-func (ctrl *Webhooks) WebhookCreate(ctx context.Context, r *request.WebhooksWebhookCreate) (interface{}, error) {
+func (ctrl *Webhooks) Create(ctx context.Context, r *request.WebhooksCreate) (interface{}, error) {
 	// Webhook request parameters
 	parameters := types.WebhookRequest{
 		r.Username,
@@ -47,7 +47,7 @@ func (ctrl *Webhooks) WebhookCreate(ctx context.Context, r *request.WebhooksWebh
 	return ctrl.webhook.With(ctx).Create(r.Kind, r.ChannelID, parameters)
 }
 
-func (ctrl *Webhooks) WebhookUpdate(ctx context.Context, r *request.WebhooksWebhookUpdate) (interface{}, error) {
+func (ctrl *Webhooks) Update(ctx context.Context, r *request.WebhooksUpdate) (interface{}, error) {
 	// Webhook request parameters
 	parameters := types.WebhookRequest{
 		r.Username,

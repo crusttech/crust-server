@@ -32,17 +32,17 @@ import (
 var _ = chi.URLParam
 var _ = multipart.FileHeader{}
 
-// Webhooks webhookList request parameters
-type WebhooksWebhookList struct {
+// Webhooks list request parameters
+type WebhooksList struct {
 	ChannelID uint64 `json:",string"`
 	UserID    uint64 `json:",string"`
 }
 
-func NewWebhooksWebhookList() *WebhooksWebhookList {
-	return &WebhooksWebhookList{}
+func NewWebhooksList() *WebhooksList {
+	return &WebhooksList{}
 }
 
-func (wReq *WebhooksWebhookList) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksList) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(r.Body).Decode(wReq)
 
@@ -81,10 +81,10 @@ func (wReq *WebhooksWebhookList) Fill(r *http.Request) (err error) {
 	return err
 }
 
-var _ RequestFiller = NewWebhooksWebhookList()
+var _ RequestFiller = NewWebhooksList()
 
-// Webhooks webhookCreate request parameters
-type WebhooksWebhookCreate struct {
+// Webhooks create request parameters
+type WebhooksCreate struct {
 	ChannelID uint64 `json:",string"`
 	Kind      types.WebhookKind
 	Trigger   string
@@ -94,11 +94,11 @@ type WebhooksWebhookCreate struct {
 	AvatarURL string
 }
 
-func NewWebhooksWebhookCreate() *WebhooksWebhookCreate {
-	return &WebhooksWebhookCreate{}
+func NewWebhooksCreate() *WebhooksCreate {
+	return &WebhooksCreate{}
 }
 
-func (wReq *WebhooksWebhookCreate) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksCreate) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(r.Body).Decode(wReq)
 
@@ -157,10 +157,10 @@ func (wReq *WebhooksWebhookCreate) Fill(r *http.Request) (err error) {
 	return err
 }
 
-var _ RequestFiller = NewWebhooksWebhookCreate()
+var _ RequestFiller = NewWebhooksCreate()
 
-// Webhooks webhookUpdate request parameters
-type WebhooksWebhookUpdate struct {
+// Webhooks update request parameters
+type WebhooksUpdate struct {
 	WebhookID uint64 `json:",string"`
 	ChannelID uint64 `json:",string"`
 	Kind      types.WebhookKind
@@ -171,11 +171,11 @@ type WebhooksWebhookUpdate struct {
 	AvatarURL string
 }
 
-func NewWebhooksWebhookUpdate() *WebhooksWebhookUpdate {
-	return &WebhooksWebhookUpdate{}
+func NewWebhooksUpdate() *WebhooksUpdate {
+	return &WebhooksUpdate{}
 }
 
-func (wReq *WebhooksWebhookUpdate) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksUpdate) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(r.Body).Decode(wReq)
 
@@ -235,18 +235,18 @@ func (wReq *WebhooksWebhookUpdate) Fill(r *http.Request) (err error) {
 	return err
 }
 
-var _ RequestFiller = NewWebhooksWebhookUpdate()
+var _ RequestFiller = NewWebhooksUpdate()
 
-// Webhooks webhookGet request parameters
-type WebhooksWebhookGet struct {
+// Webhooks get request parameters
+type WebhooksGet struct {
 	WebhookID uint64 `json:",string"`
 }
 
-func NewWebhooksWebhookGet() *WebhooksWebhookGet {
-	return &WebhooksWebhookGet{}
+func NewWebhooksGet() *WebhooksGet {
+	return &WebhooksGet{}
 }
 
-func (wReq *WebhooksWebhookGet) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksGet) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(r.Body).Decode(wReq)
 
@@ -278,18 +278,18 @@ func (wReq *WebhooksWebhookGet) Fill(r *http.Request) (err error) {
 	return err
 }
 
-var _ RequestFiller = NewWebhooksWebhookGet()
+var _ RequestFiller = NewWebhooksGet()
 
-// Webhooks webhookDelete request parameters
-type WebhooksWebhookDelete struct {
+// Webhooks delete request parameters
+type WebhooksDelete struct {
 	WebhookID uint64 `json:",string"`
 }
 
-func NewWebhooksWebhookDelete() *WebhooksWebhookDelete {
-	return &WebhooksWebhookDelete{}
+func NewWebhooksDelete() *WebhooksDelete {
+	return &WebhooksDelete{}
 }
 
-func (wReq *WebhooksWebhookDelete) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksDelete) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(r.Body).Decode(wReq)
 
@@ -321,4 +321,4 @@ func (wReq *WebhooksWebhookDelete) Fill(r *http.Request) (err error) {
 	return err
 }
 
-var _ RequestFiller = NewWebhooksWebhookDelete()
+var _ RequestFiller = NewWebhooksDelete()

@@ -30,17 +30,17 @@ import (
 var _ = chi.URLParam
 var _ = multipart.FileHeader{}
 
-// WebhooksPublic webhookDelete request parameters
-type WebhooksPublicWebhookDelete struct {
+// WebhooksPublic delete request parameters
+type WebhooksPublicDelete struct {
 	WebhookID    uint64 `json:",string"`
 	WebhookToken string
 }
 
-func NewWebhooksPublicWebhookDelete() *WebhooksPublicWebhookDelete {
-	return &WebhooksPublicWebhookDelete{}
+func NewWebhooksPublicDelete() *WebhooksPublicDelete {
+	return &WebhooksPublicDelete{}
 }
 
-func (wReq *WebhooksPublicWebhookDelete) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksPublicDelete) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(r.Body).Decode(wReq)
 
@@ -73,10 +73,10 @@ func (wReq *WebhooksPublicWebhookDelete) Fill(r *http.Request) (err error) {
 	return err
 }
 
-var _ RequestFiller = NewWebhooksPublicWebhookDelete()
+var _ RequestFiller = NewWebhooksPublicDelete()
 
-// WebhooksPublic webhookMessageCreate request parameters
-type WebhooksPublicWebhookMessageCreate struct {
+// WebhooksPublic create request parameters
+type WebhooksPublicCreate struct {
 	Username     string
 	AvatarURL    string
 	Content      string
@@ -84,11 +84,11 @@ type WebhooksPublicWebhookMessageCreate struct {
 	WebhookToken string
 }
 
-func NewWebhooksPublicWebhookMessageCreate() *WebhooksPublicWebhookMessageCreate {
-	return &WebhooksPublicWebhookMessageCreate{}
+func NewWebhooksPublicCreate() *WebhooksPublicCreate {
+	return &WebhooksPublicCreate{}
 }
 
-func (wReq *WebhooksPublicWebhookMessageCreate) Fill(r *http.Request) (err error) {
+func (wReq *WebhooksPublicCreate) Fill(r *http.Request) (err error) {
 	if strings.ToLower(r.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(r.Body).Decode(wReq)
 
@@ -133,4 +133,4 @@ func (wReq *WebhooksPublicWebhookMessageCreate) Fill(r *http.Request) (err error
 	return err
 }
 
-var _ RequestFiller = NewWebhooksPublicWebhookMessageCreate()
+var _ RequestFiller = NewWebhooksPublicCreate()

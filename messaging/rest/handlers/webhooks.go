@@ -28,57 +28,57 @@ import (
 
 // Internal API interface
 type WebhooksAPI interface {
-	WebhookList(context.Context, *request.WebhooksWebhookList) (interface{}, error)
-	WebhookCreate(context.Context, *request.WebhooksWebhookCreate) (interface{}, error)
-	WebhookUpdate(context.Context, *request.WebhooksWebhookUpdate) (interface{}, error)
-	WebhookGet(context.Context, *request.WebhooksWebhookGet) (interface{}, error)
-	WebhookDelete(context.Context, *request.WebhooksWebhookDelete) (interface{}, error)
+	List(context.Context, *request.WebhooksList) (interface{}, error)
+	Create(context.Context, *request.WebhooksCreate) (interface{}, error)
+	Update(context.Context, *request.WebhooksUpdate) (interface{}, error)
+	Get(context.Context, *request.WebhooksGet) (interface{}, error)
+	Delete(context.Context, *request.WebhooksDelete) (interface{}, error)
 }
 
 // HTTP API interface
 type Webhooks struct {
-	WebhookList   func(http.ResponseWriter, *http.Request)
-	WebhookCreate func(http.ResponseWriter, *http.Request)
-	WebhookUpdate func(http.ResponseWriter, *http.Request)
-	WebhookGet    func(http.ResponseWriter, *http.Request)
-	WebhookDelete func(http.ResponseWriter, *http.Request)
+	List   func(http.ResponseWriter, *http.Request)
+	Create func(http.ResponseWriter, *http.Request)
+	Update func(http.ResponseWriter, *http.Request)
+	Get    func(http.ResponseWriter, *http.Request)
+	Delete func(http.ResponseWriter, *http.Request)
 }
 
 func NewWebhooks(wh WebhooksAPI) *Webhooks {
 	return &Webhooks{
-		WebhookList: func(w http.ResponseWriter, r *http.Request) {
+		List: func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			params := request.NewWebhooksWebhookList()
+			params := request.NewWebhooksList()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookList(r.Context(), params)
+				return wh.List(r.Context(), params)
 			})
 		},
-		WebhookCreate: func(w http.ResponseWriter, r *http.Request) {
+		Create: func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			params := request.NewWebhooksWebhookCreate()
+			params := request.NewWebhooksCreate()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookCreate(r.Context(), params)
+				return wh.Create(r.Context(), params)
 			})
 		},
-		WebhookUpdate: func(w http.ResponseWriter, r *http.Request) {
+		Update: func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			params := request.NewWebhooksWebhookUpdate()
+			params := request.NewWebhooksUpdate()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookUpdate(r.Context(), params)
+				return wh.Update(r.Context(), params)
 			})
 		},
-		WebhookGet: func(w http.ResponseWriter, r *http.Request) {
+		Get: func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			params := request.NewWebhooksWebhookGet()
+			params := request.NewWebhooksGet()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookGet(r.Context(), params)
+				return wh.Get(r.Context(), params)
 			})
 		},
-		WebhookDelete: func(w http.ResponseWriter, r *http.Request) {
+		Delete: func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			params := request.NewWebhooksWebhookDelete()
+			params := request.NewWebhooksDelete()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookDelete(r.Context(), params)
+				return wh.Delete(r.Context(), params)
 			})
 		},
 	}
@@ -88,11 +88,11 @@ func (wh *Webhooks) MountRoutes(r chi.Router, middlewares ...func(http.Handler) 
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares...)
 		r.Route("/webhooks", func(r chi.Router) {
-			r.Get("/", wh.WebhookList)
-			r.Post("/", wh.WebhookCreate)
-			r.Post("/{webhookID}", wh.WebhookUpdate)
-			r.Get("/{webhookID}", wh.WebhookGet)
-			r.Delete("/{webhookID}", wh.WebhookDelete)
+			r.Get("/", wh.List)
+			r.Post("/", wh.Create)
+			r.Post("/{webhookID}", wh.Update)
+			r.Get("/{webhookID}", wh.Get)
+			r.Delete("/{webhookID}", wh.Delete)
 		})
 	})
 }

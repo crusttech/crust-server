@@ -8,7 +8,7 @@
   "Path": "/webhooks",
   "APIs": [
     {
-      "Name": "webhookDelete",
+      "Name": "delete",
       "Method": "DELETE",
       "Title": "Delete webhook",
       "Path": "/{webhookID}/{webhookToken}",
@@ -30,7 +30,7 @@
       }
     },
     {
-      "Name": "webhookMessageCreate",
+      "Name": "create",
       "Method": "POST",
       "Title": "Create a message from a webhook payload",
       "Path": "/{webhookID}/{webhookToken}",

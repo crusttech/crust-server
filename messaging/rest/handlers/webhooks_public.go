@@ -28,30 +28,30 @@ import (
 
 // Internal API interface
 type WebhooksPublicAPI interface {
-	WebhookDelete(context.Context, *request.WebhooksPublicWebhookDelete) (interface{}, error)
-	WebhookMessageCreate(context.Context, *request.WebhooksPublicWebhookMessageCreate) (interface{}, error)
+	Delete(context.Context, *request.WebhooksPublicDelete) (interface{}, error)
+	Create(context.Context, *request.WebhooksPublicCreate) (interface{}, error)
 }
 
 // HTTP API interface
 type WebhooksPublic struct {
-	WebhookDelete        func(http.ResponseWriter, *http.Request)
-	WebhookMessageCreate func(http.ResponseWriter, *http.Request)
+	Delete func(http.ResponseWriter, *http.Request)
+	Create func(http.ResponseWriter, *http.Request)
 }
 
 func NewWebhooksPublic(wh WebhooksPublicAPI) *WebhooksPublic {
 	return &WebhooksPublic{
-		WebhookDelete: func(w http.ResponseWriter, r *http.Request) {
+		Delete: func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			params := request.NewWebhooksPublicWebhookDelete()
+			params := request.NewWebhooksPublicDelete()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookDelete(r.Context(), params)
+				return wh.Delete(r.Context(), params)
 			})
 		},
-		WebhookMessageCreate: func(w http.ResponseWriter, r *http.Request) {
+		Create: func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			params := request.NewWebhooksPublicWebhookMessageCreate()
+			params := request.NewWebhooksPublicCreate()
 			resputil.JSON(w, params.Fill(r), func() (interface{}, error) {
-				return wh.WebhookMessageCreate(r.Context(), params)
+				return wh.Create(r.Context(), params)
 			})
 		},
 	}
@@ -61,8 +61,8 @@ func (wh *WebhooksPublic) MountRoutes(r chi.Router, middlewares ...func(http.Han
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares...)
 		r.Route("/webhooks", func(r chi.Router) {
-			r.Delete("/{webhookID}/{webhookToken}", wh.WebhookDelete)
-			r.Post("/{webhookID}/{webhookToken}", wh.WebhookMessageCreate)
+			r.Delete("/{webhookID}/{webhookToken}", wh.Delete)
+			r.Post("/{webhookID}/{webhookToken}", wh.Create)
 		})
 	})
 }

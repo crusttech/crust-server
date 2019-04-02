@@ -19,10 +19,10 @@ func (WebhooksPublic) New() *WebhooksPublic {
 	return &WebhooksPublic{}
 }
 
-func (ctrl *WebhooksPublic) WebhookDelete(ctx context.Context, r *request.WebhooksPublicWebhookDelete) (interface{}, error) {
+func (ctrl *WebhooksPublic) Delete(ctx context.Context, r *request.WebhooksPublicDelete) (interface{}, error) {
 	return nil, ctrl.webhook.With(ctx).DeleteByToken(r.WebhookID, r.WebhookToken)
 }
 
-func (ctrl *WebhooksPublic) WebhookMessageCreate(ctx context.Context, r *request.WebhooksPublicWebhookMessageCreate) (interface{}, error) {
+func (ctrl *WebhooksPublic) Create(ctx context.Context, r *request.WebhooksPublicCreate) (interface{}, error) {
 	return ctrl.webhook.With(ctx).Message(r.WebhookID, r.WebhookToken, r.Username, r.AvatarURL, r.Content)
 }

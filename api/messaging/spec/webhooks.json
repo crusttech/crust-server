@@ -14,7 +14,7 @@
   "Path": "/webhooks",
   "APIs": [
     {
-      "Name": "webhookList",
+      "Name": "list",
       "Method": "GET",
       "Title": "List created webhooks",
       "Path": "/",
@@ -36,7 +36,7 @@
       }
     },
     {
-      "Name": "webhookCreate",
+      "Name": "create",
       "Method": "POST",
       "Title": "Attach file to channel",
       "Path": "/",
@@ -88,7 +88,7 @@
       }
     },
     {
-      "Name": "webhookUpdate",
+      "Name": "update",
       "Method": "POST",
       "Title": "Attach file to channel",
       "Path": "/{webhookID}",
@@ -148,7 +148,7 @@
       }
     },
     {
-      "Name": "webhookGet",
+      "Name": "get",
       "Method": "GET",
       "Title": "Get webhook details",
       "Path": "/{webhookID}",
@@ -164,7 +164,7 @@
       }
     },
     {
-      "Name": "webhookDelete",
+      "Name": "delete",
       "Method": "DELETE",
       "Title": "Delete webhook",
       "Path": "/{webhookID}",

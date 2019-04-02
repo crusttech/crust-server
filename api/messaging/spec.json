@@ -719,7 +719,7 @@
         "parameters": {},
         "apis": [
             {
-                "name": "webhookList",
+                "name": "list",
                 "path": "/",
                 "method": "GET",
                 "title": "List created webhooks",
@@ -741,7 +741,7 @@
                 }
             },
             {
-                "name": "webhookCreate",
+                "name": "create",
                 "path": "/",
                 "method": "POST",
                 "title": "Attach file to channel",
@@ -793,7 +793,7 @@
                 }
             },
             {
-                "name": "webhookUpdate",
+                "name": "update",
                 "path": "/{webhookID}",
                 "method": "POST",
                 "title": "Attach file to channel",
@@ -854,7 +854,7 @@
             },
             {
                 "method": "GET",
-                "name": "webhookGet",
+                "name": "get",
                 "path": "/{webhookID}",
                 "title": "Get webhook details",
                 "parameters": {
@@ -870,7 +870,7 @@
             },
             {
                 "method": "DELETE",
-                "name": "webhookDelete",
+                "name": "delete",
                 "path": "/{webhookID}",
                 "title": "Delete webhook",
                 "parameters": {
@@ -896,7 +896,7 @@
         "apis": [
             {
                 "method": "DELETE",
-                "name": "webhookDelete",
+                "name": "delete",
                 "path": "/{webhookID}/{webhookToken}",
                 "title": "Delete webhook",
                 "parameters": {
@@ -918,7 +918,7 @@
             },
             {
                 "method": "POST",
-                "name": "webhookMessageCreate",
+                "name": "create",
                 "path": "/{webhookID}/{webhookToken}",
                 "title": "Create a message from a webhook payload",
                 "parameters": {
