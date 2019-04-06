@@ -1,9 +1,8 @@
 package types
 
 import (
+	"io"
 	"time"
-
-	"mime/multipart"
 
 	"github.com/crusttech/crust/internal/rules"
 )
@@ -33,8 +32,7 @@ type (
 	WebhookRequest struct {
 		Username string
 
-		Avatar    *multipart.FileHeader
-		AvatarURL string
+		Avatar io.Reader
 
 		OutgoingTrigger string
 		OutgoingURL     string
