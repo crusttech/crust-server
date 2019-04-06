@@ -40,9 +40,10 @@ type (
 		user auth.Identifiable
 
 		svc struct {
-			user systemService.UserService
-			ch   service.ChannelService
-			msg  service.MessageService
+			user    systemService.UserService
+			ch      service.ChannelService
+			msg     service.MessageService
+			command service.CommandService
 		}
 	}
 )
@@ -60,6 +61,7 @@ func (Session) New(ctx context.Context, config *repository.Flags, conn *websocke
 	s.svc.user = systemService.DefaultUser
 	s.svc.ch = service.DefaultChannel
 	s.svc.msg = service.DefaultMessage
+	s.svc.command = service.DefaultCommand
 
 	return s
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/crusttech/crust/internal/payload"
 	"github.com/crusttech/crust/internal/payload/incoming"
 	"github.com/crusttech/crust/internal/payload/outgoing"
-	"github.com/crusttech/crust/messaging/types"
 	systemService "github.com/crusttech/crust/system/service"
 )
 
@@ -19,36 +18,21 @@ func (s *Session) execCommand(ctx context.Context, c *incoming.ExecCommand) erro
 
 	log.Printf("Received command '%s(%v)", c.Command, c.Params)
 
-	switch c.Command {
-	case "echo":
+	if c.Command == "echo" {
 		if c.Input != "" {
-			user, err := systemService.User(ctx).FindByID(s.user.Identity())
-			if err != nil {
+			if user, err := systemService.User(ctx).FindByID(s.user.Identity()); err != nil {
 				return err
+			} else {
+				return s.sendReply(&outgoing.Message{
+					ID:        factory.Sonyflake.NextID(),
+					User:      payload.User(user),
+					CreatedAt: time.Now(),
+					Type:      "hallucination",
+					ChannelID: c.ChannelID,
+					Message:   c.Input,
+				})
 			}
-
-			return s.sendReply(&outgoing.Message{
-				ID:        factory.Sonyflake.NextID(),
-				User:      payload.User(user),
-				CreatedAt: time.Now(),
-				Type:      "hallucination",
-				ChannelID: c.ChannelID,
-				Message:   c.Input})
 		}
-
-	case "shrug":
-		msg := &types.Message{
-			ChannelID: payload.ParseUInt64(c.ChannelID),
-			Message:   "¯\\_(ツ)_/¯",
-		}
-
-		if c.Input != "" {
-			msg.Message = c.Input + " " + msg.Message
-		}
-		_, err := s.svc.msg.With(ctx).Create(msg)
-
-		return err
 	}
-
-	return nil
+	return s.svc.command.With(ctx).Do(c.ChannelID, c.Command, c.Input)
 }
