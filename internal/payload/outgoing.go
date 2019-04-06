@@ -23,7 +23,7 @@ func Message(ctx context.Context, msg *messagingTypes.Message) *outgoing.Message
 
 	return &outgoing.Message{
 		ID:        msg.ID,
-		ChannelID: Uint64toa(msg.ChannelID),
+		ChannelID: msg.ChannelID,
 		Message:   msg.Message,
 		Type:      string(msg.Type),
 
