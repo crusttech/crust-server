@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"io"
 
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory"
@@ -39,6 +40,9 @@ type (
 
 		Create(input *types.User) (*types.User, error)
 		Update(mod *types.User) (*types.User, error)
+
+		CreateWithAvatar(input *types.User, avatar io.Reader) (*types.User, error)
+		UpdateWithAvatar(mod *types.User, avatar io.Reader) (*types.User, error)
 
 		Delete(id uint64) error
 		Suspend(id uint64) error
@@ -97,6 +101,11 @@ func (svc *user) Create(input *types.User) (out *types.User, err error) {
 	})
 }
 
+func (svc *user) CreateWithAvatar(input *types.User, avatar io.Reader) (out *types.User, err error) {
+	// @todo: avatar
+	return svc.Create(input)
+}
+
 func (svc *user) Update(mod *types.User) (u *types.User, err error) {
 	return u, svc.db.Transaction(func() (err error) {
 		if u, err = svc.user.FindByID(mod.ID); err != nil {
@@ -120,6 +129,11 @@ func (svc *user) Update(mod *types.User) (u *types.User, err error) {
 
 		return nil
 	})
+}
+
+func (svc *user) UpdateWithAvatar(mod *types.User, avatar io.Reader) (out *types.User, err error) {
+	// @todo: avatar
+	return svc.Create(mod)
 }
 
 func (svc *user) Delete(id uint64) error {
