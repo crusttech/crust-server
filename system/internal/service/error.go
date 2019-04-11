@@ -14,5 +14,6 @@ func (e readableError) Error() string {
 }
 
 const (
+	ErrNoPermissions   readableError = "You don't have permissions for this operation"
 	ErrAvatarOnlyHTTPS readableError = "Avatar URL only supports HTTPS"
 )

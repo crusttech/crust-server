@@ -153,12 +153,12 @@ func (r *user) Find(filter *types.UserFilter) ([]*types.User, error) {
 func (r *user) Create(mod *types.User) (*types.User, error) {
 	mod.ID = factory.Sonyflake.NextID()
 	mod.CreatedAt = time.Now()
-	return mod, r.db().Insert(r.users, mod)
+	return mod, r.db().Insert(r.users, *mod)
 }
 
 func (r *user) Update(mod *types.User) (*types.User, error) {
 	mod.UpdatedAt = timeNowPtr()
-	return mod, r.db().Replace(r.users, mod)
+	return mod, r.db().Replace(r.users, *mod)
 }
 
 func (r *user) BindAvatar(user *types.User, avatar io.Reader) (*types.User, error) {
