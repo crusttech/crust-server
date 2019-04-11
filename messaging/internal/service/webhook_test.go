@@ -11,7 +11,9 @@ import (
 	"github.com/crusttech/crust/internal/config"
 	"github.com/crusttech/crust/internal/http"
 	"github.com/crusttech/crust/internal/test"
+	"github.com/crusttech/crust/messaging/internal/repository"
 	"github.com/crusttech/crust/messaging/types"
+	systemService "github.com/crusttech/crust/system/service"
 	systemTypes "github.com/crusttech/crust/system/types"
 )
 
@@ -21,6 +23,20 @@ func TestOutgoingWebhook(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), "testing", true)
 	ctx = auth.SetIdentityToContext(ctx, user)
+
+	// set up user
+	{
+		svc := systemService.User(ctx)
+		_, err := svc.Create(user)
+		test.Assert(t, err == nil, "Error when creating user: %+v", err)
+	}
+
+	// set up channel
+	{
+		rpo := repository.Channel(ctx, repository.DB(ctx))
+		_, err := rpo.Create(channel)
+		test.Assert(t, err == nil, "Error when creating channel: %+v", err)
+	}
 
 	client, err := http.New(&config.HTTPClient{
 		Timeout: 10,
@@ -58,7 +74,7 @@ func TestOutgoingWebhook(t *testing.T) {
 			OutgoingTrigger: "fortune-json",
 			OutgoingURL:     "https://api.scene-si.org/fortune.php?username=test",
 		})
-		test.Assert(t, err == nil, "Error when creating webhook: %+v", err)
+		test.Assert(t, err == nil, "Error when updating webhook: %+v", err)
 
 		/* trigger outgoing webhook */
 		{

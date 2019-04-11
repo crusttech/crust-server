@@ -53,7 +53,7 @@ func (svc *command) Do(channelID uint64, command, input string) error {
 	default:
 		webhookSvc := DefaultWebhook.With(svc.ctx)
 		webhooks, err := webhookSvc.Find(&types.WebhookFilter{
-			ChannelID: channelID,
+			ChannelID:       channelID,
 			OutgoingTrigger: command,
 		})
 		if err != nil || len(webhooks) == 0 {

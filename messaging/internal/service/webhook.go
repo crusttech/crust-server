@@ -119,7 +119,7 @@ func (svc *webhook) Update(webhookID uint64, kind types.WebhookKind, channelID u
 
 	botUser, err := svc.users.FindByID(webhook.UserID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "Error when looking for User ID %d", webhook.UserID)
 	}
 
 	if _, err := svc.users.UpdateWithAvatar(botUser, params.Avatar); err != nil {
@@ -166,7 +166,7 @@ func (svc *webhook) Message(webhookID uint64, webhookToken string, username stri
 		return nil, err
 	} else {
 		msg := &types.Message{
-			Message:   message,
+			Message: message,
 			Meta: &types.MessageMeta{
 				Username: username,
 			},
@@ -227,7 +227,7 @@ func (svc *webhook) Do(webhook *types.Webhook, message string) (*types.Message, 
 	}
 
 	msg := &types.Message{
-		Message:   responseBody.Text,
+		Message: responseBody.Text,
 		Meta: &types.MessageMeta{
 			Username: responseBody.Username,
 		},
