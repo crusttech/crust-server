@@ -46,8 +46,8 @@ steps:
     AUTH_OIDC_ENABLED: 0
     AUTH_JWT_SECRET: bRxJ37sJ6Qu4
   commands:
-  - go fmt ./cmd/... ./internal/... ./crm/... ./messaging/... ./system/...
   - make mocks
+  - make codegen
   # check all tests are able to build
   - wait-for-it.sh -t 60 --strict crust-db:3306 -- echo "Crust DB1 is up"
   - gotest -v --tags="migrations" ./system/db/...

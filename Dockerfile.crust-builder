@@ -1,6 +1,6 @@
 FROM golang:1.12-alpine
 
-RUN	apk add --no-cache git make bash && \
+RUN	apk add --no-cache git make bash php7 php7-json php7-tokenizer && \
 	go get -u github.com/golang/mock/gomock && \
 	go get -u github.com/golang/mock/mockgen && \
 	go get -u github.com/rakyll/gotest && \

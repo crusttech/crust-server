@@ -64,7 +64,7 @@ function database {
 		FOLDER=$(dirname $(dirname $FOLDER))
 		FOLDER=${FOLDER:2}
 		echo $FOLDER
-		cd $FOLDER && $GOPATH/bin/statik -p mysql -m -Z -f -src=schema/mysql && cd $_PWD
+		cd $FOLDER && statik -p mysql -m -Z -f -src=schema/mysql && cd $_PWD
 	done
 	green "OK"
 }
@@ -78,7 +78,7 @@ function files {
 		FOLDER=$(dirname $FOLDER)
 		FOLDER=${FOLDER:2}
 		echo $FOLDER
-		cd $FOLDER && $GOPATH/bin/statik -p files -m -Z -f -src=data && cd $_PWD
+		cd $FOLDER && statik -p files -m -Z -f -src=data && cd $_PWD
 	done
 	green "OK"
 }
