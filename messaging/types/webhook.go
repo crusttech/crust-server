@@ -11,8 +11,8 @@ type (
 	Webhook struct {
 		ID uint64 `json:"id" db:"id"`
 
-		Kind      WebhookKind `json:"kind" db:"webhook_kind"`
-		AuthToken string      `json:"-" db:"webhook_token"`
+		Kind      WebhookKind `json:"kind" db:"kind"`
+		AuthToken string      `json:"-" db:"token"`
 
 		OwnerUserID uint64 `json:"userId" db:"rel_owner"`
 

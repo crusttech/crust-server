@@ -1,7 +1,7 @@
 CREATE TABLE `messaging_webhook` (
  `id` bigint(20) unsigned NOT NULL,
- `webhook_kind` varchar(8) NOT NULL COMMENT 'Kind: incoming, outgoing',
- `webhook_token` varchar(255) NOT NULL COMMENT 'Authentication token',
+ `kind` varchar(8) NOT NULL COMMENT 'Kind: incoming, outgoing',
+ `token` varchar(255) NOT NULL COMMENT 'Authentication token',
  `rel_owner` bigint(20) unsigned NOT NULL COMMENT 'Webhook owner User ID',
  `rel_user` bigint(20) unsigned NOT NULL COMMENT 'Webhook message User ID',
  `rel_channel` bigint(20) unsigned NOT NULL COMMENT 'Channel ID',
