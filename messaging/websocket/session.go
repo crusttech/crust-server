@@ -15,9 +15,6 @@ import (
 	"github.com/crusttech/crust/messaging/internal/repository"
 	"github.com/crusttech/crust/messaging/internal/service"
 	"github.com/crusttech/crust/messaging/types"
-
-	systemService "github.com/crusttech/crust/system/service"
-	systemTypes "github.com/crusttech/crust/system/types"
 )
 
 type (
@@ -40,10 +37,8 @@ type (
 		user auth.Identifiable
 
 		svc struct {
-			user    systemService.UserService
-			ch      service.ChannelService
-			msg     service.MessageService
-			command service.CommandService
+			ch  service.ChannelService
+			msg service.MessageService
 		}
 	}
 )
@@ -58,10 +53,8 @@ func (Session) New(ctx context.Context, config *repository.Flags, conn *websocke
 		stop:   make(chan []byte, 1),
 	}
 
-	s.svc.user = systemService.DefaultUser
 	s.svc.ch = service.DefaultChannel
 	s.svc.msg = service.DefaultMessage
-	s.svc.command = service.DefaultCommand
 
 	return s
 }
@@ -72,36 +65,13 @@ func (sess *Session) Context() context.Context {
 
 func (sess *Session) connected() (err error) {
 	var (
-		uu systemTypes.UserSet
 		cc types.ChannelSet
 	)
-
-	// Push user info about all users we know...
-	if uu, err = systemService.User(sess.ctx).Find(nil); err != nil {
-		log.Printf("Error: %v", err)
-	} else {
-		userPayload := payload.Users(uu)
-		store.Walk(func(session *Session) {
-			for _, u := range *userPayload {
-				if u.ID == session.user.Identity() {
-					u.Connections++
-				}
-			}
-		})
-
-		if err = sess.sendReply(userPayload); err != nil {
-			return
-		}
-	}
 
 	// Push user info about all channels he has access to...
 	if cc, err = sess.svc.ch.With(sess.ctx).Find(&types.ChannelFilter{}); err != nil {
 		log.Printf("Error: %v", err)
 	} else {
-		if err = sess.sendReply(payload.Channels(cc)); err != nil {
-			return
-		}
-
 		log.Printf("Subscribing %d to %d channels", sess.user.Identity(), len(cc))
 
 		err = cc.Walk(func(c *types.Channel) error {
@@ -113,10 +83,6 @@ func (sess *Session) connected() (err error) {
 		if err != nil {
 			return
 		}
-	}
-
-	if err = sess.sendReply(payload.Commands(types.Preset)); err != nil {
-		return
 	}
 
 	// Tell everyone that user has connected
