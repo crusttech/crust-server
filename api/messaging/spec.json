@@ -744,7 +744,7 @@
                 "name": "create",
                 "path": "/",
                 "method": "POST",
-                "title": "Attach file to channel",
+                "title": "Create webhook",
                 "parameters": {
                     "post": [
                         {
@@ -757,37 +757,37 @@
                             "name": "kind",
                             "type": "types.WebhookKind",
                             "required": true,
-                            "title": "Webhook kind (incoming, outgoing)"
+                            "title": "Kind (incoming, outgoing)"
                         },
                         {
                             "name": "trigger",
                             "type": "string",
                             "required": false,
-                            "title": "Outgoing webhook: Trigger word"
+                            "title": "Trigger word"
                         },
                         {
                             "name": "url",
                             "type": "string",
                             "required": false,
-                            "title": "Outgoing webhook: POST URL"
+                            "title": "POST URL"
                         },
                         {
                             "name": "username",
                             "type": "string",
                             "required": false,
-                            "title": "Webhook default user name"
+                            "title": "Default user name"
                         },
                         {
                             "name": "avatar",
                             "type": "*multipart.FileHeader",
                             "required": false,
-                            "title": "Webhook default avatar"
+                            "title": "Default avatar"
                         },
                         {
                             "name": "avatarURL",
                             "type": "string",
                             "required": false,
-                            "title": "Webhook default avatar (from URL)"
+                            "title": "Default avatar (from URL)"
                         }
                     ]
                 }
@@ -817,37 +817,37 @@
                             "name": "kind",
                             "type": "types.WebhookKind",
                             "required": true,
-                            "title": "Webhook kind (incoming, outgoing)"
+                            "title": "Kind (incoming, outgoing)"
                         },
                         {
                             "name": "trigger",
                             "type": "string",
                             "required": false,
-                            "title": "Outgoing webhook: Trigger word"
+                            "title": "Trigger word"
                         },
                         {
                             "name": "url",
                             "type": "string",
                             "required": false,
-                            "title": "Outgoing webhook: POST URL"
+                            "title": "POST URL"
                         },
                         {
                             "name": "username",
                             "type": "string",
                             "required": false,
-                            "title": "Webhook default user name"
+                            "title": "Default user name"
                         },
                         {
                             "name": "avatar",
                             "type": "*multipart.FileHeader",
                             "required": false,
-                            "title": "Webhook default avatar"
+                            "title": "Default avatar"
                         },
                         {
                             "name": "avatarURL",
                             "type": "string",
                             "required": false,
-                            "title": "Webhook default avatar (from URL)"
+                            "title": "Default avatar (from URL)"
                         }
                     ]
                 }
@@ -911,7 +911,7 @@
                             "name": "webhookToken",
                             "type": "string",
                             "required": true,
-                            "title": "Webhook authentication token"
+                            "title": "Authentication token"
                         }
                     ]
                 }
@@ -933,7 +933,7 @@
                             "name": "webhookToken",
                             "type": "string",
                             "required": true,
-                            "title": "Webhook authentication token"
+                            "title": "Authentication token"
                         }
                     ],
                     "get": [

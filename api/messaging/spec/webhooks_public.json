@@ -23,7 +23,7 @@
           {
             "name": "webhookToken",
             "required": true,
-            "title": "Webhook authentication token",
+            "title": "Authentication token",
             "type": "string"
           }
         ]
@@ -65,7 +65,7 @@
           {
             "name": "webhookToken",
             "required": true,
-            "title": "Webhook authentication token",
+            "title": "Authentication token",
             "type": "string"
           }
         ]

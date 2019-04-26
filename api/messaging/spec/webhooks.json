@@ -38,7 +38,7 @@
     {
       "Name": "create",
       "Method": "POST",
-      "Title": "Attach file to channel",
+      "Title": "Create webhook",
       "Path": "/",
       "Parameters": {
         "post": [
@@ -51,37 +51,37 @@
           {
             "name": "kind",
             "required": true,
-            "title": "Webhook kind (incoming, outgoing)",
+            "title": "Kind (incoming, outgoing)",
             "type": "types.WebhookKind"
           },
           {
             "name": "trigger",
             "required": false,
-            "title": "Outgoing webhook: Trigger word",
+            "title": "Trigger word",
             "type": "string"
           },
           {
             "name": "url",
             "required": false,
-            "title": "Outgoing webhook: POST URL",
+            "title": "POST URL",
             "type": "string"
           },
           {
             "name": "username",
             "required": false,
-            "title": "Webhook default user name",
+            "title": "Default user name",
             "type": "string"
           },
           {
             "name": "avatar",
             "required": false,
-            "title": "Webhook default avatar",
+            "title": "Default avatar",
             "type": "*multipart.FileHeader"
           },
           {
             "name": "avatarURL",
             "required": false,
-            "title": "Webhook default avatar (from URL)",
+            "title": "Default avatar (from URL)",
             "type": "string"
           }
         ]
@@ -111,37 +111,37 @@
           {
             "name": "kind",
             "required": true,
-            "title": "Webhook kind (incoming, outgoing)",
+            "title": "Kind (incoming, outgoing)",
             "type": "types.WebhookKind"
           },
           {
             "name": "trigger",
             "required": false,
-            "title": "Outgoing webhook: Trigger word",
+            "title": "Trigger word",
             "type": "string"
           },
           {
             "name": "url",
             "required": false,
-            "title": "Outgoing webhook: POST URL",
+            "title": "POST URL",
             "type": "string"
           },
           {
             "name": "username",
             "required": false,
-            "title": "Webhook default user name",
+            "title": "Default user name",
             "type": "string"
           },
           {
             "name": "avatar",
             "required": false,
-            "title": "Webhook default avatar",
+            "title": "Default avatar",
             "type": "*multipart.FileHeader"
           },
           {
             "name": "avatarURL",
             "required": false,
-            "title": "Webhook default avatar (from URL)",
+            "title": "Default avatar (from URL)",
             "type": "string"
           }
         ]

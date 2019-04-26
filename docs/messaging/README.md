@@ -549,7 +549,7 @@ The following event types may be sent with a message event:
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |
 | `GET` | `/webhooks/` | List created webhooks |
-| `POST` | `/webhooks/` | Attach file to channel |
+| `POST` | `/webhooks/` | Create webhook |
 | `POST` | `/webhooks/{webhookID}` | Attach file to channel |
 | `GET` | `/webhooks/{webhookID}` | Get webhook details |
 | `DELETE` | `/webhooks/{webhookID}` | Delete webhook |
@@ -569,7 +569,7 @@ The following event types may be sent with a message event:
 | channelID | uint64 | GET | Channel ID | N/A | NO |
 | userID | uint64 | GET | Owner user ID | N/A | NO |
 
-## Attach file to channel
+## Create webhook
 
 #### Method
 
@@ -582,12 +582,12 @@ The following event types may be sent with a message event:
 | Parameter | Type | Method | Description | Default | Required? |
 | --------- | ---- | ------ | ----------- | ------- | --------- |
 | channelID | uint64 | POST | Channel ID | N/A | YES |
-| kind | types.WebhookKind | POST | Webhook kind (incoming, outgoing) | N/A | YES |
-| trigger | string | POST | Outgoing webhook: Trigger word | N/A | NO |
-| url | string | POST | Outgoing webhook: POST URL | N/A | NO |
-| username | string | POST | Webhook default user name | N/A | NO |
-| avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | NO |
-| avatarURL | string | POST | Webhook default avatar (from URL) | N/A | NO |
+| kind | types.WebhookKind | POST | Kind (incoming, outgoing) | N/A | YES |
+| trigger | string | POST | Trigger word | N/A | NO |
+| url | string | POST | POST URL | N/A | NO |
+| username | string | POST | Default user name | N/A | NO |
+| avatar | *multipart.FileHeader | POST | Default avatar | N/A | NO |
+| avatarURL | string | POST | Default avatar (from URL) | N/A | NO |
 
 ## Attach file to channel
 
@@ -603,12 +603,12 @@ The following event types may be sent with a message event:
 | --------- | ---- | ------ | ----------- | ------- | --------- |
 | webhookID | uint64 | PATH | Webhook ID | N/A | YES |
 | channelID | uint64 | POST | Channel ID | N/A | YES |
-| kind | types.WebhookKind | POST | Webhook kind (incoming, outgoing) | N/A | YES |
-| trigger | string | POST | Outgoing webhook: Trigger word | N/A | NO |
-| url | string | POST | Outgoing webhook: POST URL | N/A | NO |
-| username | string | POST | Webhook default user name | N/A | NO |
-| avatar | *multipart.FileHeader | POST | Webhook default avatar | N/A | NO |
-| avatarURL | string | POST | Webhook default avatar (from URL) | N/A | NO |
+| kind | types.WebhookKind | POST | Kind (incoming, outgoing) | N/A | YES |
+| trigger | string | POST | Trigger word | N/A | NO |
+| url | string | POST | POST URL | N/A | NO |
+| username | string | POST | Default user name | N/A | NO |
+| avatar | *multipart.FileHeader | POST | Default avatar | N/A | NO |
+| avatarURL | string | POST | Default avatar (from URL) | N/A | NO |
 
 ## Get webhook details
 
@@ -663,7 +663,7 @@ The following event types may be sent with a message event:
 | Parameter | Type | Method | Description | Default | Required? |
 | --------- | ---- | ------ | ----------- | ------- | --------- |
 | webhookID | uint64 | PATH | Webhook ID | N/A | YES |
-| webhookToken | string | PATH | Webhook authentication token | N/A | YES |
+| webhookToken | string | PATH | Authentication token | N/A | YES |
 
 ## Create a message from a webhook payload
 
@@ -681,6 +681,6 @@ The following event types may be sent with a message event:
 | avatarURL | string | GET | Custom avatar picture for webhook message | N/A | NO |
 | content | string | GET | Message contents | N/A | YES |
 | webhookID | uint64 | PATH | Webhook ID | N/A | YES |
-| webhookToken | string | PATH | Webhook authentication token | N/A | YES |
+| webhookToken | string | PATH | Authentication token | N/A | YES |
 
 ---
