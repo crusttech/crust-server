@@ -69,9 +69,8 @@ test:
 	$(GO) test ./cmd/... ./internal/... ./compose/... ./messaging/... ./system/...
 
 test-coverage:
-	# Run basic unit tests
-	echo 'mode: atomic' > coverage.txt
-	go list $(shell find -name '*_test.go' | xargs -n1 dirname | grep -v /db$ | sort | uniq) | xargs -n1 -I{} sh -c "gotest -v --tags=integration -covermode=atomic -coverprofile=coverage.tmp -coverpkg all {} && tail -n +2 coverage.tmp | grep github.com/crusttech/crust | grep -v /vendor >> coverage.txt || exit 255" && rm coverage.tmp
+	overalls -project=github.com/crusttech/crust -covermode=count -debug -- -coverpkg=./... --tags=integration
+	mv overalls.coverprofile coverage.txt
 
 test.internal: $(GOTEST)
 	$(GOTEST) -covermode count -coverprofile .cover.out -v ./internal/...
