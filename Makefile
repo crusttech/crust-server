@@ -68,6 +68,11 @@ test:
 	# Run basic unit tests
 	$(GO) test ./cmd/... ./internal/... ./compose/... ./messaging/... ./system/...
 
+test-coverage:
+	# Run basic unit tests
+	echo 'mode: atomic' > coverage.txt
+	go list $(shell find -name '*_test.go' | xargs -n1 dirname | sort | uniq) | xargs -n1 -I{} sh -c "gotest -v --tags=integration -covermode=atomic -coverprofile=coverage.tmp -coverpkg all {} && tail -n +2 coverage.tmp >> coverage.txt || exit 255" && rm coverage.tmp
+
 test.internal: $(GOTEST)
 	$(GOTEST) -covermode count -coverprofile .cover.out -v ./internal/...
 	$(GO) tool cover -func=.cover.out
