@@ -10,6 +10,7 @@ import (
 
 	"github.com/cortezaproject/corteza-server/internal/rand"
 	"github.com/cortezaproject/corteza-server/internal/settings"
+	"github.com/cortezaproject/corteza-server/pkg/cli"
 	"github.com/cortezaproject/corteza-server/system/internal/service"
 )
 
@@ -73,10 +74,17 @@ func Settings(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			prefix := cmd.Flags().Lookup("prefix").Value.String()
 			if kv, err := service.DefaultIntSettings.FindByPrefix(prefix); err != nil {
-				exit(err)
+				cli.HandleError(err)
 			} else {
+				var maxlen int
 				for _, v := range kv {
-					cmd.Printf("%s\t%v\n", v.Name, v.Value)
+					if l := len(v.Name); l > maxlen {
+						maxlen = l
+					}
+				}
+
+				for _, v := range kv {
+					cmd.Printf("%s%s\t%v\n", v.Name, strings.Repeat(" ", maxlen-len(v.Name)), v.Value)
 				}
 			}
 		},
@@ -85,24 +93,23 @@ func Settings(ctx context.Context) *cobra.Command {
 	list.Flags().String("prefix", "", "Filter settings by prefix")
 
 	get := &cobra.Command{
-		Use: "get [key to get]",
+		Use: "get [key to get, ...]",
 
 		Short: "Get value (raw JSON) for a specific key",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if v, err := service.DefaultIntSettings.Get(args[0], 0); err != nil {
-				exit(err)
+				cli.HandleError(err)
 			} else if v != nil {
 				cmd.Printf("%v\n", v.Value)
 			}
-			exit(nil)
 		},
 	}
 
 	set := &cobra.Command{
-		Use:   "set [key to set] [value",
+		Use:   "set [key to set] [value]",
 		Short: "Set value (raw JSON) for a specific key",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			value := args[1]
 			v := &settings.Value{
@@ -110,19 +117,59 @@ func Settings(ctx context.Context) *cobra.Command {
 			}
 
 			if err := v.SetValueAsString(value); err != nil {
-				exit(err)
+				cli.HandleError(err)
 			}
 
-			exit(service.DefaultIntSettings.Set(v))
+			cli.HandleError(service.DefaultIntSettings.Set(v))
+		},
+	}
+
+	imp := &cobra.Command{
+		Use:   "import [file]",
+		Short: "Import settings as JSON from stdin or file",
+		Args:  cobra.MaximumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			var (
+				fh  *os.File
+				err error
+			)
+
+			if len(args) > 0 {
+				fh, err = os.Open(args[0])
+				cli.HandleError(err)
+			} else {
+				fh = os.Stdin
+			}
+
+			var (
+				decoder = json.NewDecoder(fh)
+				input   = map[string]interface{}{}
+				vv      settings.ValueSet
+			)
+
+			cli.HandleError(decoder.Decode(&input))
+
+			for k, v := range input {
+				val := &settings.Value{Name: k}
+
+				cli.HandleError(val.SetValue(v))
+				vv = append(vv, val)
+			}
+
+			if len(vv) > 0 {
+				cli.HandleError(service.DefaultIntSettings.BulkSet(vv))
+			}
 		},
 	}
 
 	del := &cobra.Command{
-		Use:   "delete [key to remove]",
+		Use:   "delete [keys, ...]",
 		Short: "Set value (raw JSON) for a specific key",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			exit(service.DefaultIntSettings.Delete(args[0], 0))
+			for a := 0; a < len(args); a++ {
+				cli.HandleError(service.DefaultIntSettings.Delete(args[a], 0))
+			}
 		},
 	}
 
@@ -132,6 +179,7 @@ func Settings(ctx context.Context) *cobra.Command {
 		get,
 		set,
 		del,
+		imp,
 	)
 
 	return cmd
