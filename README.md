@@ -3,30 +3,22 @@
 
 # What is Crust?
 
-Crust brings your user ecosystem and essential applications together on one
-platform, unifying them via Compose, Team Messaging and Advanced Identity and Access Management.
+Crust is the open source unified work platform with CRM, Team Messaging and Low Code Development.
 
 [Crust](https://www.crust.tech) is an enterprise distribution of [Corteza Project](https://github.com/cortezaproject).
 
-**Crust Messaging** 
-is a secure, high performance, open source Slack alternative that allows your 
-teams to collaborate more efficiently, as well as communicate safely with other 
-organisations or customers.
 
-**Crust Compose** 
-is an open source Rapid Application Development (RAD) and Low Code Development platform
-for custom web based business applications like CRM, intranet or employee self service 
-portals. Deliver the application you need more  easily and faster then ever before with 
-the drag and drop page builder, protect users with integrated Identity, Access and 
-Privacy Management, and automate tasks with Compose’s advanced automation functionality. 
-Compose is easy, fast and secure – your perfect ally to digitize your organisation’s 
-business processes and customer engagement.
+**Crust CRM**
+Crust CRM is the highly flexible, scalable and open source Salesforce alternative, that enables your team to sell faster. It provides a 360 degree view of your customers, enabling you to service your prospects better and detect new opportunities.
 
-**Crust Unify** 
-manages user experience for Crust applications, such as Compose 
-and Messaging, as well as providing an integrated interface for third party or 
-other bespoke applications. 100% responsive and with an intuitive design, Crust 
-Unify increases productivity and ease of access to all IT resources.
+**Crust Messaging**
+Crust Messaging is the secure, high performance, open source Slack alternative that allows your teams to collaborate more efficiently, as well as communicate safely with other organisations or customers.
+
+**Crust Compose**
+Crust Compose is the flexible and easy to use open source Low Code Development platform for custom web based business applications, with drag and drop builder features, integrated Identity, Access and Privacy Management, and powerful automation options. Crust CRM is based on Compose.
+
+**Crust Unify**
+Crust Unify manages the user experience for Crust applications, such as CRM, Messaging and Compose, as well as providing an integrated interface for third party or other bespoke applications. 100% responsive and with an intuitive design, Crust Unify increases productivity and ease of access to all IT resources.
 
 
 See [README.md on Corteza Server](https://github.com/crusttech/crust-server/blob/master/README.md#setup) for details.
