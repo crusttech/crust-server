@@ -1,0 +1,12 @@
+/.idea
+/coverage.txt
+/*.iml
+/.env*
+/.dev*
+/.cover*
+/overalls*
+profile.coverprofile
+/public_html
+/build
+/var
+/TODO
