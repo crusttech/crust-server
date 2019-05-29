@@ -38,7 +38,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:191e46f5a5fbb2771dbcb8816ef0d345301180ca427ce7c4507fe16a716ef36f"
+  digest = "1:fcaf24ccdcccd46677735630f3b63b77840d4576a7398f79968ae29cfa6ba647"
   name = "github.com/cortezaproject/corteza-server"
   packages = [
     "compose",
@@ -77,7 +77,7 @@
     "monolith",
     "pkg/api",
     "pkg/cli",
-    "pkg/cli/flags",
+    "pkg/cli/options",
     "pkg/logger",
     "system",
     "system/commands",
@@ -92,7 +92,7 @@
     "system/types",
   ]
   pruneopts = "UT"
-  revision = "328bdeda070e6c84e9cf315f59da06e65e138dc5"
+  revision = "a8ae581e8f2f5d42cd4aa82d96df97980aff1ab0"
 
 [[projects]]
   branch = "v2"

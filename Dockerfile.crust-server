@@ -15,6 +15,12 @@ RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /tmp/crust-server /bin
 
+ENV COMPOSE_STORAGE_PATH   /data/compose
+ENV MESSAGING_STORAGE_PATH /data/messaging
+ENV SYSTEM_STORAGE_PATH    /data/system
+
+VOLUME /data
+
 EXPOSE 80
 ENTRYPOINT ["/bin/crust-server"]
 CMD ["serve-api"]

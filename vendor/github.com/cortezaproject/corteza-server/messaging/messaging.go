@@ -13,7 +13,7 @@ import (
 	"github.com/cortezaproject/corteza-server/messaging/rest"
 	"github.com/cortezaproject/corteza-server/messaging/websocket"
 	"github.com/cortezaproject/corteza-server/pkg/cli"
-	"github.com/cortezaproject/corteza-server/pkg/cli/flags"
+	"github.com/cortezaproject/corteza-server/pkg/cli/options"
 )
 
 const (
@@ -22,9 +22,6 @@ const (
 
 func Configure() *cli.Config {
 	var (
-		// Messaging API Server specific
-		websocketOpt *flags.WebsocketOpt
-
 		// Websocket handler
 		ws *websocket.Websocket
 
@@ -45,7 +42,11 @@ func Configure() *cli.Config {
 					cli.HandleError(c.ProvisionMigrateDatabase.Run(ctx, cmd, c))
 				}
 
-				cli.HandleError(service.Init(ctx, c.Log))
+				storagePath := options.EnvString("", "MESSAGING_STORAGE_PATH", "var/store")
+
+				cli.HandleError(service.Init(ctx, c.Log, storagePath))
+
+				var websocketOpt = options.Websocket(messaging)
 
 				ws = websocket.Init(ctx, &websocket.Config{
 					Timeout:     websocketOpt.Timeout,
@@ -58,12 +59,6 @@ func Configure() *cli.Config {
 				}
 
 				return
-			},
-		},
-
-		ApiServerAdtFlags: cli.FlagBinders{
-			func(cmd *cobra.Command, c *cli.Config) {
-				websocketOpt = flags.Websocket(cmd, messaging)
 			},
 		},
 
