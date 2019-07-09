@@ -165,6 +165,11 @@ func (r *TriggerCreate) Fill(req *http.Request) (err error) {
 	if val, ok := post["name"]; ok {
 		r.Name = val
 	}
+
+	if val, ok := req.Form["actions"]; ok {
+		r.Actions = parseStrings(val)
+	}
+
 	if val, ok := post["enabled"]; ok {
 		r.Enabled = parseBool(val)
 	}
@@ -302,6 +307,11 @@ func (r *TriggerUpdate) Fill(req *http.Request) (err error) {
 	if val, ok := post["name"]; ok {
 		r.Name = val
 	}
+
+	if val, ok := req.Form["actions"]; ok {
+		r.Actions = parseStrings(val)
+	}
+
 	if val, ok := post["enabled"]; ok {
 		r.Enabled = parseBool(val)
 	}

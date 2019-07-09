@@ -56,6 +56,9 @@ type (
 		SendPasswordResetToken(email string) (err error)
 
 		LoadRoleMemberships(*types.User) error
+
+		checkPasswordStrength(string) error
+		changePassword(uint64, string) error
 	}
 )
 
@@ -275,28 +278,28 @@ func (svc auth) InternalSignUp(input *types.User, password string) (u *types.Use
 	existing, err := svc.users.FindByEmail(input.Email)
 
 	if err == nil && existing.Valid() {
-		if len(password) > 0 {
-			cc, err := svc.credentials.FindByKind(existing.ID, credentialsTypePassword)
-			if err != nil {
-				return nil, errors.Wrap(err, "could not find credentials")
-			}
-
-			err = svc.checkPassword(password, cc)
-			if err != nil {
-				return nil, errors.Wrap(err, "user with this email already exists")
-			}
-
-			if !existing.EmailConfirmed {
-				err = svc.sendEmailAddressConfirmationToken(existing)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			return existing, nil
+		if len(password) == 0 {
+			return nil, errors.New("invalid username/password combination")
 		}
 
-		return nil, errors.Wrap(err, "user with this email already exists")
+		cc, err := svc.credentials.FindByKind(existing.ID, credentialsTypePassword)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not find credentials")
+		}
+
+		err = svc.checkPassword(password, cc)
+		if err != nil {
+			return nil, errors.Wrap(err, "user with this email already exists")
+		}
+
+		if !existing.EmailConfirmed {
+			err = svc.sendEmailAddressConfirmationToken(existing)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return existing, nil
 
 		// if !svc.settings.internalSignUpSendEmailOnExisting {
 		// 	return nil,errors.Wrap(err, "user with this email already exists")
@@ -331,13 +334,7 @@ func (svc auth) InternalSignUp(input *types.User, password string) (u *types.Use
 	_ = svc.autoPromote(u)
 
 	if len(password) > 0 {
-		var hash []byte
-		hash, err = svc.hashPassword(password)
-		if err != nil {
-			return nil, err
-		}
-
-		err = svc.changePassword(u.ID, hash)
+		err = svc.changePassword(u.ID, password)
 		if err != nil {
 			return nil, err
 		}
@@ -475,18 +472,12 @@ func (svc auth) SetPassword(userID uint64, newPassword string) (err error) {
 		return errors.New("internal authentication disabled")
 	}
 
-	if len(newPassword) == 0 {
-		return errors.New("new password missing")
-	}
-
-	var hash []byte
-	hash, err = svc.hashPassword(newPassword)
-	if err != nil {
-		return err
+	if err = svc.checkPasswordStrength(newPassword); err != nil {
+		return
 	}
 
 	return svc.db.Transaction(func() error {
-		if err != svc.changePassword(userID, hash) {
+		if err != svc.changePassword(userID, newPassword) {
 			return err
 		}
 
@@ -507,14 +498,8 @@ func (svc auth) ChangePassword(userID uint64, oldPassword, newPassword string) (
 		return errors.New("old password missing")
 	}
 
-	if len(newPassword) == 0 {
-		return errors.New("new password missing")
-	}
-
-	var hash []byte
-	hash, err = svc.hashPassword(newPassword)
-	if err != nil {
-		return err
+	if err = svc.checkPasswordStrength(newPassword); err != nil {
+		return
 	}
 
 	return svc.db.Transaction(func() error {
@@ -532,7 +517,7 @@ func (svc auth) ChangePassword(userID uint64, oldPassword, newPassword string) (
 			return errors.Wrap(err, "could not change password")
 		}
 
-		if err != svc.changePassword(userID, hash) {
+		if err != svc.changePassword(userID, newPassword) {
 			return err
 		}
 
@@ -542,6 +527,7 @@ func (svc auth) ChangePassword(userID uint64, oldPassword, newPassword string) (
 }
 
 func (svc auth) hashPassword(password string) (hash []byte, err error) {
+	// @todo refactor and/or merge with user.hashPasssword()
 	hash, err = bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not hash password")
@@ -550,12 +536,27 @@ func (svc auth) hashPassword(password string) (hash []byte, err error) {
 	return
 }
 
+func (svc auth) checkPasswordStrength(password string) error {
+	if len(password) <= 4 {
+		return errors.New("password too short")
+	}
+
+	// @todo proper strength checking
+
+	return nil
+}
+
 // ChangePassword (soft) deletes old password entry and creates a new one
 //
 // Expects hashed password as an input
-func (svc auth) changePassword(userID uint64, hash []byte) (err error) {
+func (svc auth) changePassword(userID uint64, password string) (err error) {
+	var hash []byte
+	if hash, err = svc.hashPassword(password); err != nil {
+		return err
+	}
+
 	if err = svc.credentials.DeleteByKind(userID, credentialsTypePassword); err != nil {
-		return errors.Wrap(err, "could not remove old passwords")
+		return errors.Wrap(err, "could not delete old credentials")
 	}
 
 	_, err = svc.credentials.Create(&types.Credentials{
@@ -816,13 +817,13 @@ func (svc auth) createUserToken(user *types.User, kind string) (token string, er
 func (svc auth) autoPromote(u *types.User) (err error) {
 	if svc.users.Total() == 0 && u.ID > 0 {
 		err = svc.roles.MemberAddByID(permissions.AdminRoleID, u.ID)
-	}
 
-	svc.log(
-		zap.String("email", u.Email),
-		zap.Uint64("userID", u.ID),
-		zap.Error(err),
-	).Info("auto-promoted user to administrator role")
+		svc.log(
+			zap.String("email", u.Email),
+			zap.Uint64("userID", u.ID),
+			zap.Error(err),
+		).Info("auto-promoted user to administrator role")
+	}
 
 	return
 }

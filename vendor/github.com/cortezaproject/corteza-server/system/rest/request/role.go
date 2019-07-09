@@ -133,6 +133,10 @@ func (r *RoleCreate) Fill(req *http.Request) (err error) {
 		r.Name = val
 	}
 
+	if val, ok := req.Form["members"]; ok {
+		r.Members = parseStrings(val)
+	}
+
 	return err
 }
 
@@ -189,6 +193,10 @@ func (r *RoleUpdate) Fill(req *http.Request) (err error) {
 	r.RoleID = parseUInt64(chi.URLParam(req, "roleID"))
 	if val, ok := post["name"]; ok {
 		r.Name = val
+	}
+
+	if val, ok := req.Form["members"]; ok {
+		r.Members = parseStrings(val)
 	}
 
 	return err

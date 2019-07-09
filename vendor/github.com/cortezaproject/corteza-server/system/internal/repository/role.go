@@ -27,6 +27,7 @@ type (
 		MergeByID(id, targetRoleID uint64) error
 		MoveByID(id, targetOrganisationID uint64) error
 
+		MembershipsFindByUserID(userID uint64) ([]*types.RoleMember, error)
 		MemberFindByRoleID(roleID uint64) ([]*types.RoleMember, error)
 		MemberAddByID(roleID, userID uint64) error
 		MemberRemoveByID(roleID, userID uint64) error
@@ -47,6 +48,7 @@ const (
 	ErrRoleNotFound = repositoryError("RoleNotFound")
 )
 
+// @todo migrate to same pattern as we have for uselang/en.jsonrs
 func Role(ctx context.Context, db *factory.DB) RoleRepository {
 	return (&role{}).With(ctx, db)
 }
@@ -124,6 +126,12 @@ func (r *role) MergeByID(id, targetRoleID uint64) error {
 
 func (r *role) MoveByID(id, targetOrganisationID uint64) error {
 	return ErrNotImplemented
+}
+
+func (r *role) MembershipsFindByUserID(roleID uint64) (mm []*types.RoleMember, err error) {
+	rval := make([]*types.RoleMember, 0)
+	sql := "SELECT * FROM " + r.members + " WHERE rel_user = ?"
+	return rval, r.db().Select(&rval, sql, roleID)
 }
 
 func (r *role) MemberFindByRoleID(roleID uint64) (mm []*types.RoleMember, err error) {

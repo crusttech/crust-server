@@ -53,8 +53,9 @@ func NewRecordReportBuilder(module *types.Module) *recordReportBuilder {
 	var report = squirrel.
 		Select().
 		Column(squirrel.Alias(squirrel.Expr("COUNT(*)"), "count")).
-		From("compose_record").
-		Where("module_id = ?", module.ID)
+		From("compose_record AS r").
+		Where("r.deleted_at IS NULL").
+		Where("r.module_id = ?", module.ID)
 
 	return &recordReportBuilder{
 		parser: ql.NewParser(),
@@ -88,7 +89,7 @@ func (b *recordReportBuilder) Build(metrics, dimensions, filters string) (sql st
 
 		if !alreadyJoined(i.Value) {
 			b.report = b.report.LeftJoin(fmt.Sprintf(
-				"compose_record_value AS rv_%s ON (rv_%s.record_id = compose_record.id AND rv_%s.name = ? AND rv_%s.deleted_at IS NULL)",
+				"compose_record_value AS rv_%s ON (rv_%s.record_id = r.id AND rv_%s.name = ? AND rv_%s.deleted_at IS NULL)",
 				i.Value, i.Value, i.Value, i.Value,
 			), i.Value)
 		}
@@ -141,13 +142,15 @@ func (b *recordReportBuilder) Build(metrics, dimensions, filters string) (sql st
 	// Use a different handler for filter functions for this
 	b.parser.OnFunction = stdFilterFuncHandler
 
-	var filter ql.ASTNode
-	if filter, err = b.parser.ParseExpression(filters); err != nil {
-		err = errors.Wrapf(err, "could not parse filters %q", filters)
-		return
-	}
+	if len(filters) > 0 {
+		var filter ql.ASTNode
+		if filter, err = b.parser.ParseExpression(filters); err != nil {
+			err = errors.Wrapf(err, "could not parse filters %q", filters)
+			return
+		}
 
-	b.report = b.report.Where(filter)
+		b.report = b.report.Where(filter)
+	}
 
 	return b.report.ToSql()
 }

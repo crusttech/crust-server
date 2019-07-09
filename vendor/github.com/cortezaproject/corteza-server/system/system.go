@@ -20,15 +20,6 @@ const (
 )
 
 func Configure() *cli.Config {
-	var (
-		accessControlSetup = func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
-			// Calling grant directly on internal permissions service to avoid AC check for "grant"
-			var p = service.DefaultPermissions
-			var ac = service.DefaultAccessControl
-			return p.Grant(ctx, ac.Whitelist(), ac.DefaultRules()...)
-		}
-	)
-
 	return &cli.Config{
 		ServiceName: system,
 
@@ -42,6 +33,7 @@ func Configure() *cli.Config {
 
 				if c.ProvisionOpt.AutoSetup {
 					cli.HandleError(accessControlSetup(ctx, cmd, c))
+					cli.HandleError(makeDefaultApplications(ctx, cmd, c))
 
 					// Run auto configuration
 					commands.SettingsAutoConfigure(cmd, "", "", "", "")
@@ -57,7 +49,6 @@ func Configure() *cli.Config {
 		ApiServerPreRun: cli.Runners{
 			func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
 				external.Init(service.DefaultIntSettings)
-
 				go service.Watchers(ctx)
 				return nil
 			},

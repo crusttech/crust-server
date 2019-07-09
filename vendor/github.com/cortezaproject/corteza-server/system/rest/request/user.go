@@ -34,9 +34,15 @@ var _ = multipart.FileHeader{}
 
 // User list request parameters
 type UserList struct {
-	Query    string
-	Username string
-	Email    string
+	Query        string
+	Username     string
+	Email        string
+	Kind         types.UserKind
+	IncDeleted   bool
+	IncSuspended bool
+	Sort         string
+	Page         uint
+	PerPage      uint
 }
 
 func NewUserList() *UserList {
@@ -49,6 +55,12 @@ func (r UserList) Auditable() map[string]interface{} {
 	out["query"] = r.Query
 	out["username"] = r.Username
 	out["email"] = r.Email
+	out["kind"] = r.Kind
+	out["incDeleted"] = r.IncDeleted
+	out["incSuspended"] = r.IncSuspended
+	out["sort"] = r.Sort
+	out["page"] = r.Page
+	out["perPage"] = r.PerPage
 
 	return out
 }
@@ -88,6 +100,24 @@ func (r *UserList) Fill(req *http.Request) (err error) {
 	}
 	if val, ok := get["email"]; ok {
 		r.Email = val
+	}
+	if val, ok := get["kind"]; ok {
+		r.Kind = types.UserKind(val)
+	}
+	if val, ok := get["incDeleted"]; ok {
+		r.IncDeleted = parseBool(val)
+	}
+	if val, ok := get["incSuspended"]; ok {
+		r.IncSuspended = parseBool(val)
+	}
+	if val, ok := get["sort"]; ok {
+		r.Sort = val
+	}
+	if val, ok := get["page"]; ok {
+		r.Page = parseUint(val)
+	}
+	if val, ok := get["perPage"]; ok {
+		r.PerPage = parseUint(val)
 	}
 
 	return err
@@ -437,3 +467,218 @@ func (r *UserUnsuspend) Fill(req *http.Request) (err error) {
 }
 
 var _ RequestFiller = NewUserUnsuspend()
+
+// User setPassword request parameters
+type UserSetPassword struct {
+	UserID   uint64 `json:",string"`
+	Password string
+}
+
+func NewUserSetPassword() *UserSetPassword {
+	return &UserSetPassword{}
+}
+
+func (r UserSetPassword) Auditable() map[string]interface{} {
+	var out = map[string]interface{}{}
+
+	out["userID"] = r.UserID
+	out["password"] = "*masked*sensitive*data*"
+
+	return out
+}
+
+func (r *UserSetPassword) Fill(req *http.Request) (err error) {
+	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
+		err = json.NewDecoder(req.Body).Decode(r)
+
+		switch {
+		case err == io.EOF:
+			err = nil
+		case err != nil:
+			return errors.Wrap(err, "error parsing http request body")
+		}
+	}
+
+	if err = req.ParseForm(); err != nil {
+		return err
+	}
+
+	get := map[string]string{}
+	post := map[string]string{}
+	urlQuery := req.URL.Query()
+	for name, param := range urlQuery {
+		get[name] = string(param[0])
+	}
+	postVars := req.Form
+	for name, param := range postVars {
+		post[name] = string(param[0])
+	}
+
+	r.UserID = parseUInt64(chi.URLParam(req, "userID"))
+	if val, ok := post["password"]; ok {
+		r.Password = val
+	}
+
+	return err
+}
+
+var _ RequestFiller = NewUserSetPassword()
+
+// User membershipList request parameters
+type UserMembershipList struct {
+	UserID uint64 `json:",string"`
+}
+
+func NewUserMembershipList() *UserMembershipList {
+	return &UserMembershipList{}
+}
+
+func (r UserMembershipList) Auditable() map[string]interface{} {
+	var out = map[string]interface{}{}
+
+	out["userID"] = r.UserID
+
+	return out
+}
+
+func (r *UserMembershipList) Fill(req *http.Request) (err error) {
+	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
+		err = json.NewDecoder(req.Body).Decode(r)
+
+		switch {
+		case err == io.EOF:
+			err = nil
+		case err != nil:
+			return errors.Wrap(err, "error parsing http request body")
+		}
+	}
+
+	if err = req.ParseForm(); err != nil {
+		return err
+	}
+
+	get := map[string]string{}
+	post := map[string]string{}
+	urlQuery := req.URL.Query()
+	for name, param := range urlQuery {
+		get[name] = string(param[0])
+	}
+	postVars := req.Form
+	for name, param := range postVars {
+		post[name] = string(param[0])
+	}
+
+	r.UserID = parseUInt64(chi.URLParam(req, "userID"))
+
+	return err
+}
+
+var _ RequestFiller = NewUserMembershipList()
+
+// User membershipAdd request parameters
+type UserMembershipAdd struct {
+	RoleID uint64 `json:",string"`
+	UserID uint64 `json:",string"`
+}
+
+func NewUserMembershipAdd() *UserMembershipAdd {
+	return &UserMembershipAdd{}
+}
+
+func (r UserMembershipAdd) Auditable() map[string]interface{} {
+	var out = map[string]interface{}{}
+
+	out["roleID"] = r.RoleID
+	out["userID"] = r.UserID
+
+	return out
+}
+
+func (r *UserMembershipAdd) Fill(req *http.Request) (err error) {
+	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
+		err = json.NewDecoder(req.Body).Decode(r)
+
+		switch {
+		case err == io.EOF:
+			err = nil
+		case err != nil:
+			return errors.Wrap(err, "error parsing http request body")
+		}
+	}
+
+	if err = req.ParseForm(); err != nil {
+		return err
+	}
+
+	get := map[string]string{}
+	post := map[string]string{}
+	urlQuery := req.URL.Query()
+	for name, param := range urlQuery {
+		get[name] = string(param[0])
+	}
+	postVars := req.Form
+	for name, param := range postVars {
+		post[name] = string(param[0])
+	}
+
+	r.RoleID = parseUInt64(chi.URLParam(req, "roleID"))
+	r.UserID = parseUInt64(chi.URLParam(req, "userID"))
+
+	return err
+}
+
+var _ RequestFiller = NewUserMembershipAdd()
+
+// User membershipRemove request parameters
+type UserMembershipRemove struct {
+	RoleID uint64 `json:",string"`
+	UserID uint64 `json:",string"`
+}
+
+func NewUserMembershipRemove() *UserMembershipRemove {
+	return &UserMembershipRemove{}
+}
+
+func (r UserMembershipRemove) Auditable() map[string]interface{} {
+	var out = map[string]interface{}{}
+
+	out["roleID"] = r.RoleID
+	out["userID"] = r.UserID
+
+	return out
+}
+
+func (r *UserMembershipRemove) Fill(req *http.Request) (err error) {
+	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
+		err = json.NewDecoder(req.Body).Decode(r)
+
+		switch {
+		case err == io.EOF:
+			err = nil
+		case err != nil:
+			return errors.Wrap(err, "error parsing http request body")
+		}
+	}
+
+	if err = req.ParseForm(); err != nil {
+		return err
+	}
+
+	get := map[string]string{}
+	post := map[string]string{}
+	urlQuery := req.URL.Query()
+	for name, param := range urlQuery {
+		get[name] = string(param[0])
+	}
+	postVars := req.Form
+	for name, param := range postVars {
+		post[name] = string(param[0])
+	}
+
+	r.RoleID = parseUInt64(chi.URLParam(req, "roleID"))
+	r.UserID = parseUInt64(chi.URLParam(req, "userID"))
+
+	return err
+}
+
+var _ RequestFiller = NewUserMembershipRemove()
