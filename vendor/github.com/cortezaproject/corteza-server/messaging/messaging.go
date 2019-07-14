@@ -22,6 +22,8 @@ const (
 
 func Configure() *cli.Config {
 	var (
+		servicesInitialized bool
+
 		// Websocket handler
 		ws *websocket.Websocket
 	)
@@ -31,13 +33,27 @@ func Configure() *cli.Config {
 
 		RootCommandPreRun: cli.Runners{
 			func(ctx context.Context, cmd *cobra.Command, c *cli.Config) (err error) {
+				return
+			},
+		},
+
+		InitServices: func(ctx context.Context, c *cli.Config) {
+			if servicesInitialized {
+				return
+			}
+			servicesInitialized = true
+
+			storagePath := options.EnvString("", "MESSAGING_STORAGE_PATH", "var/store")
+			cli.HandleError(service.Init(ctx, c.Log, storagePath))
+		},
+
+		ApiServerPreRun: cli.Runners{
+			func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
 				if c.ProvisionOpt.MigrateDatabase {
 					cli.HandleError(c.ProvisionMigrateDatabase.Run(ctx, cmd, c))
 				}
 
-				storagePath := options.EnvString("", "MESSAGING_STORAGE_PATH", "var/store")
-
-				cli.HandleError(service.Init(ctx, c.Log, storagePath))
+				c.InitServices(ctx, c)
 
 				var websocketOpt = options.Websocket(messaging)
 
@@ -52,12 +68,6 @@ func Configure() *cli.Config {
 					cli.HandleError(makeDefaultChannels(ctx, cmd, c))
 				}
 
-				return
-			},
-		},
-
-		ApiServerPreRun: cli.Runners{
-			func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
 				go service.Watchers(ctx)
 				return nil
 			},

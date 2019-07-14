@@ -18,6 +18,8 @@ import (
 // external auth loop in 15 minutes.
 const (
 	gothMaxSessionStoreAge = 60 * 15 // In seconds.
+
+	WellKnown = "/.well-known/openid-configuration"
 )
 
 func setupGoth(eas *externalAuthSettings) {
@@ -28,10 +30,16 @@ func setupGoth(eas *externalAuthSettings) {
 
 	store := sessions.NewCookieStore([]byte(eas.sessionStoreSecret))
 	store.MaxAge(gothMaxSessionStoreAge)
-	store.Options.Path = "/auth/external"
 	store.Options.HttpOnly = true
 	store.Options.Secure = eas.sessionStoreSecure
 	gothic.Store = store
+
+	log().Debug("registering cookie session store")
+
+	if store.Options.Secure {
+		log().Debug("cookie session store has 'secure' flag ON, make sure this URL is accessed via HTTPS")
+
+	}
 
 	setupGothProviders(eas)
 
@@ -73,7 +81,7 @@ func setupGothProviders(eas *externalAuthSettings) {
 				continue
 			}
 
-			wellKnown := strings.TrimSuffix(pc.issuerUrl, "/") + "/.well-known/openid-configuration"
+			wellKnown := strings.TrimSuffix(pc.issuerUrl, "/") + WellKnown
 
 			if provider, err = openidConnect.New(pc.key, pc.secret, pc.redirectUrl, wellKnown, scopes...); err != nil {
 				log.Error("failed to discover OIDC provider", zap.Error(err), zap.String("well-known", wellKnown))

@@ -20,34 +20,50 @@ const (
 )
 
 func Configure() *cli.Config {
+	var (
+		servicesInitialized bool
+	)
+
 	return &cli.Config{
 		ServiceName: system,
 
 		RootCommandPreRun: cli.Runners{
 			func(ctx context.Context, cmd *cobra.Command, c *cli.Config) (err error) {
+				return
+			},
+		},
+
+		InitServices: func(ctx context.Context, c *cli.Config) {
+			if servicesInitialized {
+				return
+			}
+			servicesInitialized = true
+
+			// storagePath := options.EnvString("", "SYSTEM_STORAGE_PATH", "var/store")
+			cli.HandleError(service.Init(ctx, c.Log))
+
+		},
+
+		ApiServerPreRun: cli.Runners{
+			func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
 				if c.ProvisionOpt.MigrateDatabase {
 					cli.HandleError(c.ProvisionMigrateDatabase.Run(ctx, cmd, c))
 				}
 
-				cli.HandleError(service.Init(ctx, c.Log))
+				c.InitServices(ctx, c)
 
 				if c.ProvisionOpt.AutoSetup {
 					cli.HandleError(accessControlSetup(ctx, cmd, c))
 					cli.HandleError(makeDefaultApplications(ctx, cmd, c))
+					cli.HandleError(discoverSettings(ctx, cmd, c))
 
 					// Run auto configuration
-					commands.SettingsAutoConfigure(cmd, "", "", "", "")
+					commands.SettingsAutoConfigure(cmd)
 
 					// Reload auto-configured settings
 					service.DefaultAuthSettings, _ = service.DefaultSettings.LoadAuthSettings()
 				}
 
-				return
-			},
-		},
-
-		ApiServerPreRun: cli.Runners{
-			func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
 				external.Init(service.DefaultIntSettings)
 				go service.Watchers(ctx)
 				return nil
@@ -60,16 +76,16 @@ func Configure() *cli.Config {
 
 		AdtSubCommands: cli.CommandMakers{
 			func(ctx context.Context, c *cli.Config) *cobra.Command {
-				return commands.Settings(ctx)
+				return commands.Settings(ctx, c)
 			},
 			func(ctx context.Context, c *cli.Config) *cobra.Command {
-				return commands.Auth(ctx)
+				return commands.Auth(ctx, c)
 			},
 			func(ctx context.Context, c *cli.Config) *cobra.Command {
-				return commands.Users(ctx)
+				return commands.Users(ctx, c)
 			},
 			func(ctx context.Context, c *cli.Config) *cobra.Command {
-				return commands.Roles(ctx)
+				return commands.Roles(ctx, c)
 			},
 		},
 

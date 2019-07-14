@@ -3,12 +3,13 @@ package external
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
 
-	"github.com/cortezaproject/corteza-server/internal/rand"
 	intset "github.com/cortezaproject/corteza-server/internal/settings"
 )
 
@@ -62,6 +63,61 @@ func ExternalAuthProvider(kv intset.KV) (eap externalAuthProvider, err error) {
 	return
 }
 
+func (eas externalAuthSettings) Enabled() bool {
+	return eas.enabled
+}
+
+func (eas externalAuthSettings) ValidateStatic() error {
+	if eas.redirectUrl == "" {
+		return errors.New("redirect URL is empty")
+	}
+
+	const (
+		tpt = "test-provider-test"
+	)
+	p, err := url.Parse(fmt.Sprintf(eas.redirectUrl, tpt))
+	if err != nil {
+		return errors.Wrap(err, "invalid redirect URL")
+	}
+
+	if !strings.Contains(p.Path, tpt+"/callback") {
+		return errors.Wrap(err, "could find injected provider in the URL, make sure you use '%s' as a placeholder")
+	}
+
+	if eas.sessionStoreSecret == "" {
+		return errors.New("session store secret is empty")
+	}
+
+	if eas.sessionStoreSecure && p.Scheme != "https" {
+		return errors.New("session store is secure, redirect URL should have HTTPS")
+	}
+
+	return nil
+}
+
+func (eas externalAuthSettings) ValidateRedirectURL() error {
+	const tpt = "test-provider-test"
+	const cb = "/callback"
+
+	// Replace placeholders & remove /callback
+	var url = fmt.Sprintf(eas.redirectUrl, tpt)
+	url = url[0 : len(url)-len(cb)]
+
+	rsp, err := http.DefaultClient.Get(url)
+	if err != nil {
+		return errors.Wrap(err, "could not get response from redirect URL")
+	}
+
+	defer rsp.Body.Close()
+	body, err := ioutil.ReadAll(rsp.Body)
+
+	if strings.Contains(string(body), tpt) {
+		return nil
+	}
+
+	return errors.New("could not validate external auth redirection URL")
+}
+
 func (eap externalAuthProvider) MakeValueSet(name string) (vv intset.ValueSet, err error) {
 	set := func(name string, value interface{}) error {
 		v := &intset.Value{Name: name}
@@ -112,40 +168,9 @@ func ExternalAuthSettings(s intset.Service) (eas *externalAuthSettings, err erro
 		sessionStoreSecret: kv.String(settingsKeySessionStoreSecret),
 	}
 
-	storeGenerated := func(name string, value interface{}) (err error) {
-		v := &intset.Value{Name: name}
-		if v.Value, err = json.Marshal(value); err != nil {
-			return
-		}
-
-		return s.Set(v)
-	}
-
-	if eas.redirectUrl == "" {
-		path := "/auth/external/%s/callback"
-		if leHost, has := os.LookupEnv("LETSENCRYPT_HOST"); has {
-			eas.redirectUrl = "https://" + leHost + path
-		} else if vHost, has := os.LookupEnv("VIRTUAL_HOST"); has {
-			eas.redirectUrl = "http://" + vHost + path
-		} else {
-			// Fallback to local
-			eas.redirectUrl = "http://system.api.local.crust.tech" + path
-		}
-
-		if err = storeGenerated(settingsKeyRedirectUrl, eas.redirectUrl); err != nil {
-			return
-		}
-	}
-
-	if eas.sessionStoreSecret == "" {
-		eas.sessionStoreSecret = string(rand.Bytes(64))
-		if err = storeGenerated(settingsKeySessionStoreSecret, eas.sessionStoreSecret); err != nil {
-			return
-		}
-	}
-
 	if !kv.Has(settingsKeySessionStoreSecure) {
-		// Assume we want to use secure store if we are accessed via HTTPS
+		// If auth.external.session-store-secure is not explicitly set;
+		// check if redirectUrl uses HTTPS schema and assume we want secure session store
 		eas.sessionStoreSecure = strings.Index(eas.redirectUrl, "https://") == 0
 	} else {
 		eas.sessionStoreSecure = kv.Bool(settingsKeySessionStoreSecure)
