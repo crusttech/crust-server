@@ -22,3 +22,8 @@ Crust Unify manages the user experience for Crust applications, such as CRM, Mes
 
 
 See [README.md on Corteza Server](https://github.com/crusttech/crust-server/blob/master/README.md#setup) for details.
+
+# Documentation
+You can find more documentation about Crust CLI, setup, deployment, authentication 
+in [corteza-docs](https://github.com/cortezaproject/corteza-docs) GitHub repository.
+
