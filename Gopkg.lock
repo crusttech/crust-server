@@ -38,7 +38,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ca933186bc6c103de4282f01b352fce60f91237580edfe8905a9c565538649fe"
+  digest = "1:198532eea65602cdfb2612cea3f98a3b09eae298665a9f366ed220c74601607d"
   name = "github.com/cortezaproject/corteza-server"
   packages = [
     "compose",
@@ -92,7 +92,7 @@
     "system/types",
   ]
   pruneopts = "UT"
-  revision = "30400754efd96e7bcc3c8339c1134302299e2e53"
+  revision = "5f7bd696cfae0408a9f60fb5216ca60dbe7453d2"
 
 [[projects]]
   branch = "v2"
