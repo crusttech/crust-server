@@ -56,15 +56,14 @@ func Configure() *cli.Config {
 					cli.HandleError(accessControlSetup(ctx, cmd, c))
 					cli.HandleError(makeDefaultApplications(ctx, cmd, c))
 					cli.HandleError(discoverSettings(ctx, cmd, c))
-
-					// Run auto configuration
-					commands.SettingsAutoConfigure(cmd)
+					cli.HandleError(oidcAutoDiscovery(ctx, cmd, c))
 
 					// Reload auto-configured settings
 					service.DefaultAuthSettings, _ = service.DefaultSettings.LoadAuthSettings()
 				}
 
-				external.Init(service.DefaultIntSettings)
+				// Initialize external authentication (from default settings)
+				external.Init()
 				go service.Watchers(ctx)
 				return nil
 			},
