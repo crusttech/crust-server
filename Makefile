@@ -51,7 +51,7 @@ realize: $(REALIZE)
 dep.update: $(DEP)
 	$(DEP) ensure -update -v
 
-cdep: $(DEP)
+cdeps: $(DEP)
 	$(DEP) ensure -update github.com/cortezaproject/corteza-server
 	$(DEP) ensure -v
 
