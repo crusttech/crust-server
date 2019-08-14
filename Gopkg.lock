@@ -38,7 +38,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cd68a5f9604d1dc8e5e65c403d8a88d0b4bb428ac6fc25f31b7f9a6ed30920f5"
+  digest = "1:e6d113aec56f02fef0d1db6015e19d82b019fd7714338e9b1124e1df8c7cd549"
   name = "github.com/cortezaproject/corteza-server"
   packages = [
     "compose",
@@ -92,7 +92,7 @@
     "system/types",
   ]
   pruneopts = "UT"
-  revision = "8d7fb9c8145511565338e5ae324173e3e03e6881"
+  revision = "c1e3231d00c7af7a52c01f5538b4701920964daf"
 
 [[projects]]
   branch = "v2"
@@ -448,14 +448,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:75b563e4052e994ae1ce1d5014f04ed51a00842c74a1687eb1791b11ae22cf82"
+  digest = "1:6f9b3f65b090dd2c458eed073ce9a861836060077009f92148e9ccf5d0e42fe8"
   name = "github.com/titpetric/factory"
   packages = [
     ".",
+    "logger",
     "resputil",
   ]
   pruneopts = "UT"
-  revision = "ce6800c0c52f2c1da3b166b4c26f174dc55c2d02"
+  revision = "ae4b02b9e03450360b3bf34ef3182eef2f42e2b3"
 
 [[projects]]
   digest = "1:a5158647b553c61877aa9ae74f4015000294e47981e6b8b07525edcbb0747c81"

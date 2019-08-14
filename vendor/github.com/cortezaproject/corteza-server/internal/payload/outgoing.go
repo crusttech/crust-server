@@ -40,7 +40,7 @@ func Message(ctx context.Context, msg *messagingTypes.Message) *outgoing.Message
 		ReplyTo:     msg.ReplyTo,
 		Replies:     msg.Replies,
 		RepliesFrom: Uint64stoa(msg.RepliesFrom),
-		Unread:      Unread(msg.Unread),
+		Unread:      MessageUnread(msg.Unread),
 
 		Attachment:   Attachment(msg.Attachment, currentUserID),
 		Mentions:     messageMentionSet(msg.Mentions),
@@ -138,24 +138,26 @@ func Channel(ch *messagingTypes.Channel) *outgoing.Channel {
 	}
 
 	return &outgoing.Channel{
-		ID:             Uint64toa(ch.ID),
-		Name:           ch.Name,
-		LastMessageID:  Uint64toa(ch.LastMessageID),
-		Topic:          ch.Topic,
-		Type:           string(ch.Type),
-		MembershipFlag: string(flag),
-		Members:        Uint64stoa(ch.Members),
-		Unread:         Unread(ch.Unread),
+		ID:               Uint64toa(ch.ID),
+		Name:             ch.Name,
+		LastMessageID:    Uint64toa(ch.LastMessageID),
+		Topic:            ch.Topic,
+		Type:             string(ch.Type),
+		MembershipFlag:   string(flag),
+		MembershipPolicy: string(ch.MembershipPolicy),
+		Members:          Uint64stoa(ch.Members),
+		Unread:           ChannelUnread(ch.Unread),
 
-		CanJoin:           ch.CanJoin,
-		CanPart:           ch.CanPart,
-		CanObserve:        ch.CanObserve,
-		CanSendMessages:   ch.CanSendMessages,
-		CanDeleteMessages: ch.CanDeleteMessages,
-		CanChangeMembers:  ch.CanChangeMembers,
-		CanUpdate:         ch.CanUpdate,
-		CanArchive:        ch.CanArchive,
-		CanDelete:         ch.CanDelete,
+		CanJoin:                   ch.CanJoin,
+		CanPart:                   ch.CanPart,
+		CanObserve:                ch.CanObserve,
+		CanSendMessages:           ch.CanSendMessages,
+		CanDeleteMessages:         ch.CanDeleteMessages,
+		CanChangeMembers:          ch.CanChangeMembers,
+		CanChangeMembershipPolicy: ch.CanChangeMembershipPolicy,
+		CanUpdate:                 ch.CanUpdate,
+		CanArchive:                ch.CanArchive,
+		CanDelete:                 ch.CanDelete,
 
 		CreatedAt:  ch.CreatedAt,
 		UpdatedAt:  ch.UpdatedAt,
@@ -197,9 +199,36 @@ func Unread(v *messagingTypes.Unread) *outgoing.Unread {
 	}
 
 	return &outgoing.Unread{
+		ChannelID:     v.ChannelID,
+		ThreadID:      v.ReplyTo,
 		LastMessageID: v.LastMessageID,
 		Count:         v.Count,
-		InThreadCount: v.InThreadCount,
+		ThreadCount:   v.ThreadCount,
+		ThreadTotal:   v.ThreadTotal,
+	}
+}
+
+func ChannelUnread(v *messagingTypes.Unread) *outgoing.Unread {
+	if v == nil || (v.Count == 0 && v.ThreadCount == 0) {
+		return nil
+	}
+
+	return &outgoing.Unread{
+		LastMessageID: v.LastMessageID,
+		Count:         v.Count,
+		ThreadCount:   v.ThreadCount,
+		ThreadTotal:   v.ThreadTotal,
+	}
+}
+
+func MessageUnread(v *messagingTypes.Unread) *outgoing.Unread {
+	if v == nil || v.Count == 0 {
+		return nil
+	}
+
+	return &outgoing.Unread{
+		LastMessageID: v.LastMessageID,
+		Count:         v.Count,
 	}
 }
 
