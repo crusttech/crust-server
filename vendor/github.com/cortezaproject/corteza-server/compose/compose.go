@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/titpetric/factory"
 
+	"github.com/cortezaproject/corteza-server/compose/commands"
 	migrate "github.com/cortezaproject/corteza-server/compose/db"
-	"github.com/cortezaproject/corteza-server/compose/internal/service"
 	"github.com/cortezaproject/corteza-server/compose/rest"
+	"github.com/cortezaproject/corteza-server/compose/service"
 	"github.com/cortezaproject/corteza-server/pkg/cli"
-	"github.com/cortezaproject/corteza-server/pkg/cli/options"
 )
 
 const (
@@ -36,8 +36,11 @@ func Configure() *cli.Config {
 			}
 			servicesInitialized = true
 
-			storagePath := options.EnvString("", "COMPOSE_STORAGE_PATH", "var/store")
-			cli.HandleError(service.Init(ctx, c.Log, storagePath))
+			cli.HandleError(service.Init(ctx, c.Log, service.Config{
+				Storage:          *c.StorageOpt,
+				Corredor:         *c.ScriptRunner,
+				GRPCClientSystem: *c.GRPCServerSystem,
+			}))
 		},
 
 		ApiServerPreRun: cli.Runners{
@@ -48,8 +51,8 @@ func Configure() *cli.Config {
 
 				c.InitServices(ctx, c)
 
-				if c.ProvisionOpt.AutoSetup {
-					cli.HandleError(accessControlSetup(ctx, cmd, c))
+				if c.ProvisionOpt.Configuration {
+					cli.HandleError(provisionConfig(ctx, cmd, c))
 				}
 
 				go service.Watchers(ctx)
@@ -59,6 +62,15 @@ func Configure() *cli.Config {
 
 		ApiServerRoutes: cli.Mounters{
 			rest.MountRoutes,
+		},
+
+		AdtSubCommands: cli.CommandMakers{
+			func(ctx context.Context, c *cli.Config) *cobra.Command {
+				return commands.Importer(ctx, c)
+			},
+			func(ctx context.Context, c *cli.Config) *cobra.Command {
+				return commands.Exporter(ctx, c)
+			},
 		},
 
 		ProvisionMigrateDatabase: cli.Runners{
@@ -74,8 +86,8 @@ func Configure() *cli.Config {
 			},
 		},
 
-		ProvisionAccessControl: cli.Runners{
-			accessControlSetup,
+		ProvisionConfig: cli.Runners{
+			provisionConfig,
 		},
 	}
 }

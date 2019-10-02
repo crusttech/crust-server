@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/cortezaproject/corteza-server/internal/permissions"
+	"github.com/cortezaproject/corteza-server/pkg/permissions"
 )
 
 type (
@@ -46,6 +46,7 @@ type (
 		Query        string   `json:"query"`
 		Email        string   `json:"email"`
 		Username     string   `json:"username"`
+		Handle       string   `json:"handle"`
 		Kind         UserKind `json:"kind"`
 		IncDeleted   bool     `json:"incDeleted"`
 		IncSuspended bool     `json:"incSuspended"`

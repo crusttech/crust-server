@@ -3,8 +3,9 @@ package types
 import (
 	"time"
 
-	"github.com/cortezaproject/corteza-server/internal/permissions"
 	"github.com/jmoiron/sqlx/types"
+
+	"github.com/cortezaproject/corteza-server/pkg/permissions"
 )
 
 type (
@@ -110,4 +111,15 @@ func (cm ChannelMembershipPolicy) IsValid() bool {
 	}
 
 	return false
+}
+
+// FindByName finds items from slice by its name
+func (set ChannelSet) FindByName(name string) *Channel {
+	for i := range set {
+		if set[i].Name == name {
+			return set[i]
+		}
+	}
+
+	return nil
 }

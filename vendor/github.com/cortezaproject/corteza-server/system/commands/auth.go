@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/titpetric/factory"
 
-	"github.com/cortezaproject/corteza-server/internal/auth"
+	"github.com/cortezaproject/corteza-server/pkg/auth"
 	"github.com/cortezaproject/corteza-server/pkg/cli"
-	"github.com/cortezaproject/corteza-server/system/internal/auth/external"
-	"github.com/cortezaproject/corteza-server/system/internal/repository"
-	"github.com/cortezaproject/corteza-server/system/internal/service"
+	"github.com/cortezaproject/corteza-server/system/auth/external"
+	"github.com/cortezaproject/corteza-server/system/repository"
+	"github.com/cortezaproject/corteza-server/system/service"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
 

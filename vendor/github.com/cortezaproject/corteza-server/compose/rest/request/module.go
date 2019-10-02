@@ -37,6 +37,8 @@ var _ = multipart.FileHeader{}
 // Module list request parameters
 type ModuleList struct {
 	Query       string
+	Name        string
+	Handle      string
 	Page        uint
 	PerPage     uint
 	NamespaceID uint64 `json:",string"`
@@ -50,6 +52,8 @@ func (r ModuleList) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
 	out["query"] = r.Query
+	out["name"] = r.Name
+	out["handle"] = r.Handle
 	out["page"] = r.Page
 	out["perPage"] = r.PerPage
 	out["namespaceID"] = r.NamespaceID
@@ -87,6 +91,12 @@ func (r *ModuleList) Fill(req *http.Request) (err error) {
 	if val, ok := get["query"]; ok {
 		r.Query = val
 	}
+	if val, ok := get["name"]; ok {
+		r.Name = val
+	}
+	if val, ok := get["handle"]; ok {
+		r.Handle = val
+	}
 	if val, ok := get["page"]; ok {
 		r.Page = parseUint(val)
 	}
@@ -103,6 +113,7 @@ var _ RequestFiller = NewModuleList()
 // Module create request parameters
 type ModuleCreate struct {
 	Name        string
+	Handle      string
 	Fields      types.ModuleFieldSet
 	Meta        sqlxTypes.JSONText
 	NamespaceID uint64 `json:",string"`
@@ -116,6 +127,7 @@ func (r ModuleCreate) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
 	out["name"] = r.Name
+	out["handle"] = r.Handle
 	out["fields"] = r.Fields
 	out["meta"] = r.Meta
 	out["namespaceID"] = r.NamespaceID
@@ -152,6 +164,9 @@ func (r *ModuleCreate) Fill(req *http.Request) (err error) {
 
 	if val, ok := post["name"]; ok {
 		r.Name = val
+	}
+	if val, ok := post["handle"]; ok {
+		r.Handle = val
 	}
 	if val, ok := post["meta"]; ok {
 
@@ -225,6 +240,7 @@ type ModuleUpdate struct {
 	ModuleID    uint64 `json:",string"`
 	NamespaceID uint64 `json:",string"`
 	Name        string
+	Handle      string
 	Fields      types.ModuleFieldSet
 	Meta        sqlxTypes.JSONText
 	UpdatedAt   *time.Time
@@ -240,6 +256,7 @@ func (r ModuleUpdate) Auditable() map[string]interface{} {
 	out["moduleID"] = r.ModuleID
 	out["namespaceID"] = r.NamespaceID
 	out["name"] = r.Name
+	out["handle"] = r.Handle
 	out["fields"] = r.Fields
 	out["meta"] = r.Meta
 	out["updatedAt"] = r.UpdatedAt
@@ -278,6 +295,9 @@ func (r *ModuleUpdate) Fill(req *http.Request) (err error) {
 	r.NamespaceID = parseUInt64(chi.URLParam(req, "namespaceID"))
 	if val, ok := post["name"]; ok {
 		r.Name = val
+	}
+	if val, ok := post["handle"]; ok {
+		r.Handle = val
 	}
 	if val, ok := post["meta"]; ok {
 

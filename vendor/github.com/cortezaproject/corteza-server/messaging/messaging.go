@@ -9,8 +9,8 @@ import (
 	"github.com/titpetric/factory"
 
 	migrate "github.com/cortezaproject/corteza-server/messaging/db"
-	"github.com/cortezaproject/corteza-server/messaging/internal/service"
 	"github.com/cortezaproject/corteza-server/messaging/rest"
+	"github.com/cortezaproject/corteza-server/messaging/service"
 	"github.com/cortezaproject/corteza-server/messaging/websocket"
 	"github.com/cortezaproject/corteza-server/pkg/cli"
 	"github.com/cortezaproject/corteza-server/pkg/cli/options"
@@ -43,14 +43,19 @@ func Configure() *cli.Config {
 			}
 			servicesInitialized = true
 
-			storagePath := options.EnvString("", "MESSAGING_STORAGE_PATH", "var/store")
-			cli.HandleError(service.Init(ctx, c.Log, storagePath))
+			cli.HandleError(service.Init(ctx, c.Log, service.Config{
+				Storage: *c.StorageOpt,
+			}))
 		},
 
 		ApiServerPreRun: cli.Runners{
 			func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
 				if c.ProvisionOpt.MigrateDatabase {
 					cli.HandleError(c.ProvisionMigrateDatabase.Run(ctx, cmd, c))
+				}
+
+				if c.ProvisionOpt.Configuration {
+					cli.HandleError(provisionConfig(ctx, cmd, c))
 				}
 
 				c.InitServices(ctx, c)
@@ -62,11 +67,6 @@ func Configure() *cli.Config {
 					PingTimeout: websocketOpt.PingTimeout,
 					PingPeriod:  websocketOpt.PingPeriod,
 				})
-
-				if c.ProvisionOpt.AutoSetup {
-					cli.HandleError(accessControlSetup(ctx, cmd, c))
-					cli.HandleError(makeDefaultChannels(ctx, cmd, c))
-				}
 
 				go service.Watchers(ctx)
 				return nil
@@ -92,8 +92,8 @@ func Configure() *cli.Config {
 			},
 		},
 
-		ProvisionAccessControl: cli.Runners{
-			accessControlSetup,
+		ProvisionConfig: cli.Runners{
+			provisionConfig,
 		},
 	}
 }

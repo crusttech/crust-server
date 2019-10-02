@@ -5,8 +5,8 @@ import (
 
 	"github.com/titpetric/factory/resputil"
 
-	"github.com/cortezaproject/corteza-server/compose/internal/service"
 	"github.com/cortezaproject/corteza-server/compose/rest/request"
+	"github.com/cortezaproject/corteza-server/compose/service"
 	"github.com/cortezaproject/corteza-server/compose/types"
 )
 
@@ -14,14 +14,14 @@ type (
 	namespacePayload struct {
 		*types.Namespace
 
-		CanGrant           bool `json:"canGrant"`
-		CanUpdateNamespace bool `json:"canUpdateNamespace"`
-		CanDeleteNamespace bool `json:"canDeleteNamespace"`
-		CanManageNamespace bool `json:"canManageNamespace"`
-		CanCreateModule    bool `json:"canCreateModule"`
-		CanCreateChart     bool `json:"canCreateChart"`
-		CanCreateTrigger   bool `json:"canCreateTrigger"`
-		CanCreatePage      bool `json:"canCreatePage"`
+		CanGrant                  bool `json:"canGrant"`
+		CanUpdateNamespace        bool `json:"canUpdateNamespace"`
+		CanDeleteNamespace        bool `json:"canDeleteNamespace"`
+		CanManageNamespace        bool `json:"canManageNamespace"`
+		CanCreateModule           bool `json:"canCreateModule"`
+		CanCreateChart            bool `json:"canCreateChart"`
+		CanCreateAutomationScript bool `json:"canCreateAutomationScript"`
+		CanCreatePage             bool `json:"canCreatePage"`
 	}
 
 	namespaceSetPayload struct {
@@ -43,7 +43,7 @@ type (
 
 		CanCreateModule(context.Context, *types.Namespace) bool
 		CanCreateChart(context.Context, *types.Namespace) bool
-		CanCreateTrigger(context.Context, *types.Namespace) bool
+		CanCreateAutomationScript(context.Context, *types.Namespace) bool
 		CanCreatePage(context.Context, *types.Namespace) bool
 	}
 )
@@ -58,6 +58,7 @@ func (Namespace) New() *Namespace {
 func (ctrl Namespace) List(ctx context.Context, r *request.NamespaceList) (interface{}, error) {
 	f := types.NamespaceFilter{
 		Query:   r.Query,
+		Slug:    r.Slug,
 		PerPage: r.PerPage,
 		Page:    r.Page,
 	}
@@ -67,12 +68,17 @@ func (ctrl Namespace) List(ctx context.Context, r *request.NamespaceList) (inter
 }
 
 func (ctrl Namespace) Create(ctx context.Context, r *request.NamespaceCreate) (interface{}, error) {
-	var err error
-	ns := &types.Namespace{
-		Name:    r.Name,
-		Slug:    r.Slug,
-		Meta:    r.Meta,
-		Enabled: r.Enabled,
+	var (
+		err error
+		ns  = &types.Namespace{
+			Name:    r.Name,
+			Slug:    r.Slug,
+			Enabled: r.Enabled,
+		}
+	)
+
+	if err = r.Meta.Unmarshal(&ns.Meta); err != nil {
+		return nil, err
 	}
 
 	ns, err = ctrl.namespace.With(ctx).Create(ns)
@@ -86,16 +92,19 @@ func (ctrl Namespace) Read(ctx context.Context, r *request.NamespaceRead) (inter
 
 func (ctrl Namespace) Update(ctx context.Context, r *request.NamespaceUpdate) (interface{}, error) {
 	var (
-		ns  = &types.Namespace{}
 		err error
+		ns  = &types.Namespace{
+			ID:        r.NamespaceID,
+			Name:      r.Name,
+			Slug:      r.Slug,
+			Enabled:   r.Enabled,
+			UpdatedAt: r.UpdatedAt,
+		}
 	)
 
-	ns.ID = r.NamespaceID
-	ns.Name = r.Name
-	ns.Slug = r.Slug
-	ns.Meta = r.Meta
-	ns.Enabled = r.Enabled
-	ns.UpdatedAt = r.UpdatedAt
+	if err = r.Meta.Unmarshal(&ns.Meta); err != nil {
+		return nil, err
+	}
 
 	ns, err = ctrl.namespace.With(ctx).Update(ns)
 	return ctrl.makePayload(ctx, ns, err)
@@ -123,10 +132,10 @@ func (ctrl Namespace) makePayload(ctx context.Context, ns *types.Namespace, err 
 		CanDeleteNamespace: ctrl.ac.CanDeleteNamespace(ctx, ns),
 		CanManageNamespace: ctrl.ac.CanManageNamespace(ctx, ns),
 
-		CanCreateModule:  ctrl.ac.CanCreateModule(ctx, ns),
-		CanCreateChart:   ctrl.ac.CanCreateChart(ctx, ns),
-		CanCreateTrigger: ctrl.ac.CanCreateTrigger(ctx, ns),
-		CanCreatePage:    ctrl.ac.CanCreatePage(ctx, ns),
+		CanCreateModule:           ctrl.ac.CanCreateModule(ctx, ns),
+		CanCreateChart:            ctrl.ac.CanCreateChart(ctx, ns),
+		CanCreateAutomationScript: ctrl.ac.CanCreateAutomationScript(ctx, ns),
+		CanCreatePage:             ctrl.ac.CanCreatePage(ctx, ns),
 	}, nil
 }
 

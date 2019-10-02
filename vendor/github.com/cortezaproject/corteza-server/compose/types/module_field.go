@@ -3,11 +3,12 @@ package types
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"sort"
 	"time"
 
-	"github.com/jmoiron/sqlx/types"
+	"github.com/pkg/errors"
 
-	"github.com/cortezaproject/corteza-server/internal/permissions"
+	"github.com/cortezaproject/corteza-server/pkg/permissions"
 )
 
 type (
@@ -17,22 +18,48 @@ type (
 		ModuleID uint64 `json:"moduleID,string" db:"rel_module"`
 		Place    int    `json:"-" db:"place"`
 
-		Kind  string `json:"kind" db:"kind"`
-		Name  string `json:"name" db:"name"`
+		Kind  string `json:"kind"  db:"kind"`
+		Name  string `json:"name"  db:"name"`
 		Label string `json:"label" db:"label"`
 
-		Options types.JSONText `json:"options" db:"options"`
+		Options ModuleFieldOptions `json:"options" db:"options"`
 
-		Private  bool `json:"isPrivate" db:"is_private"`
-		Required bool `json:"isRequired" db:"is_required"`
-		Visible  bool `json:"isVisible" db:"is_visible"`
-		Multi    bool `json:"isMulti" db:"is_multi"`
+		Private      bool           `json:"isPrivate" db:"is_private"`
+		Required     bool           `json:"isRequired" db:"is_required"`
+		Visible      bool           `json:"isVisible" db:"is_visible"`
+		Multi        bool           `json:"isMulti" db:"is_multi"`
+		DefaultValue RecordValueSet `json:"defaultValue" db:"default_value"`
 
 		CreatedAt time.Time  `db:"created_at" json:"createdAt,omitempty"`
 		UpdatedAt *time.Time `db:"updated_at" json:"updatedAt,omitempty"`
 		DeletedAt *time.Time `db:"deleted_at" json:"deletedAt,omitempty"`
 	}
+
+	ModuleFieldOptions map[string]interface{}
 )
+
+var (
+	_ sort.Interface = &ModuleFieldSet{}
+)
+
+func (mfo *ModuleFieldOptions) Scan(value interface{}) error {
+	//lint:ignore S1034 This typecast is intentional, we need to get []byte out of a []uint8
+	switch value.(type) {
+	case nil:
+		*mfo = ModuleFieldOptions{}
+	case []uint8:
+		b := value.([]byte)
+		if err := json.Unmarshal(b, mfo); err != nil {
+			return errors.Wrapf(err, "Can not scan '%v' into ModuleFieldOptions", string(b))
+		}
+	}
+
+	return nil
+}
+
+func (mfo ModuleFieldOptions) Value() (driver.Value, error) {
+	return json.Marshal(mfo)
+}
 
 // Resource returns a system resource ID for this type
 func (m ModuleField) PermissionResource() permissions.Resource {
@@ -88,6 +115,18 @@ func (set ModuleFieldSet) FilterByModule(moduleID uint64) (ff ModuleFieldSet) {
 	}
 
 	return
+}
+
+func (set ModuleFieldSet) Len() int {
+	return len(set)
+}
+
+func (set ModuleFieldSet) Less(i, j int) bool {
+	return set[i].Place < set[j].Place
+}
+
+func (set ModuleFieldSet) Swap(i, j int) {
+	set[i], set[j] = set[j], set[i]
 }
 
 // IsRef tells us if value of this field be a reference to something (another record, user)?

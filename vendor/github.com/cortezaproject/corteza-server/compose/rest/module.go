@@ -5,12 +5,17 @@ import (
 
 	"github.com/titpetric/factory/resputil"
 
-	"github.com/cortezaproject/corteza-server/compose/internal/service"
 	"github.com/cortezaproject/corteza-server/compose/rest/request"
+	"github.com/cortezaproject/corteza-server/compose/service"
 	"github.com/cortezaproject/corteza-server/compose/types"
 )
 
 type (
+	moduleSetPayload struct {
+		Filter types.ModuleFilter `json:"filter"`
+		Set    []*modulePayload   `json:"set"`
+	}
+
 	modulePayload struct {
 		*types.Module
 
@@ -23,6 +28,8 @@ type (
 		CanReadRecord   bool `json:"canReadRecord"`
 		CanUpdateRecord bool `json:"canUpdateRecord"`
 		CanDeleteRecord bool `json:"canDeleteRecord"`
+
+		CanManageAutomationTriggers bool `json:"canManageAutomationTriggers"`
 	}
 
 	moduleFieldPayload struct {
@@ -32,14 +39,8 @@ type (
 		CanUpdateRecordValue bool `json:"canUpdateRecordValue"`
 	}
 
-	moduleSetPayload struct {
-		Filter types.ModuleFilter `json:"filter"`
-		Set    []*modulePayload   `json:"set"`
-	}
-
 	Module struct {
 		module service.ModuleService
-		record service.RecordService
 		ac     moduleAccessController
 	}
 
@@ -55,13 +56,14 @@ type (
 
 		CanReadRecordValue(context.Context, *types.ModuleField) bool
 		CanUpdateRecordValue(context.Context, *types.ModuleField) bool
+
+		CanManageAutomationTriggersOnModule(context.Context, *types.Module) bool
 	}
 )
 
 func (Module) New() *Module {
 	return &Module{
 		module: service.DefaultModule,
-		record: service.DefaultRecord,
 		ac:     service.DefaultAccessControl,
 	}
 }
@@ -70,6 +72,8 @@ func (ctrl *Module) List(ctx context.Context, r *request.ModuleList) (interface{
 	f := types.ModuleFilter{
 		NamespaceID: r.NamespaceID,
 		Query:       r.Query,
+		Name:        r.Name,
+		Handle:      r.Handle,
 		PerPage:     r.PerPage,
 		Page:        r.Page,
 	}
@@ -89,6 +93,7 @@ func (ctrl *Module) Create(ctx context.Context, r *request.ModuleCreate) (interf
 		mod = &types.Module{
 			NamespaceID: r.NamespaceID,
 			Name:        r.Name,
+			Handle:      r.Handle,
 			Fields:      r.Fields,
 			Meta:        r.Meta,
 		}
@@ -105,6 +110,7 @@ func (ctrl *Module) Update(ctx context.Context, r *request.ModuleUpdate) (interf
 			ID:          r.ModuleID,
 			NamespaceID: r.NamespaceID,
 			Name:        r.Name,
+			Handle:      r.Handle,
 			Fields:      r.Fields,
 			Meta:        r.Meta,
 			UpdatedAt:   r.UpdatedAt,
@@ -147,6 +153,8 @@ func (ctrl Module) makePayload(ctx context.Context, m *types.Module, err error) 
 		CanReadRecord:   ctrl.ac.CanReadRecord(ctx, m),
 		CanUpdateRecord: ctrl.ac.CanUpdateRecord(ctx, m),
 		CanDeleteRecord: ctrl.ac.CanDeleteRecord(ctx, m),
+
+		CanManageAutomationTriggers: ctrl.ac.CanManageAutomationTriggersOnModule(ctx, m),
 	}, nil
 }
 

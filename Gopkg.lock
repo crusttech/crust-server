@@ -2,6 +2,22 @@
 
 
 [[projects]]
+  digest = "1:26ee1e365ea8f312ee11e170fc6675bac0dd3d4adf2406e753d0a43527e1afb8"
+  name = "cloud.google.com/go"
+  packages = ["compute/metadata"]
+  pruneopts = "UT"
+  revision = "264def2dd949cdb8a803bb9f50fa29a67b798a6a"
+  version = "v0.46.3"
+
+[[projects]]
+  digest = "1:b4c5ba677fe2b1b97bdabc04a3bca517b73cec262d5a0a58fd45faa1c892ee17"
+  name = "github.com/360EntSecGroup-Skylar/excelize"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "dc8210d4a7d18f6425f6f18dc383b26778883715"
+  version = "v2.0.1"
+
+[[projects]]
   branch = "master"
   digest = "1:75db4b9fc5d032088f273028c5355efa3a4dfb05b3a590cbe05d13828351decd"
   name = "github.com/766b/chi-prometheus"
@@ -16,6 +32,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "2a93ba0f464da2a77748a1dc2e9e5bea8bbdd4b9"
+
+[[projects]]
+  digest = "1:e3f17aa0eb8c151426d23cb767ae50f5b42c46533db3424761ee639b56ab9041"
+  name = "github.com/DestinyWang/cronexpr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a557574d6c024ed6e36acc8b610f5f211c91568a"
+  version = "1.0.0"
 
 [[projects]]
   branch = "master"
@@ -37,62 +61,84 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:e6d113aec56f02fef0d1db6015e19d82b019fd7714338e9b1124e1df8c7cd549"
+  digest = "1:f49045c9d6a445d3fa1ac78a09396aab8237ff459dc1f0657c440c5ab5ff9ca6"
   name = "github.com/cortezaproject/corteza-server"
   packages = [
     "compose",
+    "compose/commands",
     "compose/db",
     "compose/db/mysql",
-    "compose/internal/repository",
-    "compose/internal/repository/ql",
-    "compose/internal/service",
+    "compose/decoder",
+    "compose/encoder",
+    "compose/importer",
+    "compose/proto",
+    "compose/repository",
+    "compose/repository/ql",
     "compose/rest",
     "compose/rest/handlers",
     "compose/rest/request",
+    "compose/service",
     "compose/types",
-    "internal/auth",
-    "internal/db",
-    "internal/http",
-    "internal/mail",
-    "internal/organization",
-    "internal/payload",
-    "internal/payload/incoming",
-    "internal/payload/outgoing",
-    "internal/permissions",
-    "internal/rand",
-    "internal/settings",
-    "internal/store",
-    "internal/version",
     "messaging",
     "messaging/db",
     "messaging/db/mysql",
-    "messaging/internal/repository",
-    "messaging/internal/service",
+    "messaging/importer",
+    "messaging/repository",
     "messaging/rest",
     "messaging/rest/handlers",
     "messaging/rest/request",
+    "messaging/service",
     "messaging/types",
     "messaging/websocket",
     "monolith",
     "pkg/api",
+    "pkg/auth",
+    "pkg/automation",
+    "pkg/automation/corredor",
+    "pkg/automation/mail",
     "pkg/cli",
     "pkg/cli/options",
+    "pkg/count",
+    "pkg/db",
+    "pkg/deinterfacer",
+    "pkg/handle",
+    "pkg/http",
+    "pkg/importer",
     "pkg/logger",
+    "pkg/mail",
+    "pkg/mime",
+    "pkg/organization",
+    "pkg/payload",
+    "pkg/payload/incoming",
+    "pkg/payload/outgoing",
+    "pkg/permissions",
+    "pkg/rand",
+    "pkg/rh",
+    "pkg/sentry",
+    "pkg/settings",
+    "pkg/store",
+    "pkg/version",
+    "provision/compose",
+    "provision/messaging",
+    "provision/system",
     "system",
+    "system/auth/external",
     "system/commands",
     "system/db",
     "system/db/mysql",
-    "system/internal/auth/external",
-    "system/internal/repository",
-    "system/internal/service",
+    "system/grpc",
+    "system/importer",
+    "system/proto",
+    "system/repository",
     "system/rest",
     "system/rest/handlers",
     "system/rest/request",
+    "system/service",
     "system/types",
   ]
   pruneopts = "UT"
-  revision = "c1e3231d00c7af7a52c01f5538b4701920964daf"
+  revision = "982de0d1d9964f37d91e9bf7c62a381f9960b8eb"
+  version = "2019.10.0-rc.1"
 
 [[projects]]
   branch = "v2"
@@ -133,6 +179,18 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "b57537c92a6b4155c5219ce0d7d2a9c0cc74b1c4"
+
+[[projects]]
+  digest = "1:feaf1fbffad6f93ec539aef5c98c8899716a371f6306e12f53da8d76c20ad7ab"
+  name = "github.com/gabriel-vasile/mimetype"
+  packages = [
+    ".",
+    "internal/json",
+    "internal/matchers",
+  ]
+  pruneopts = "UT"
+  revision = "c9b95c7fd87cdd3cfe0ab821739961618028849b"
+  version = "v0.3.18"
 
 [[projects]]
   digest = "1:f59f34bb582fbc13885cd0338570bc0f21738fc711065527c36928213de62c1b"
@@ -181,9 +239,15 @@
   version = "v1.4.1"
 
 [[projects]]
-  digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
+  digest = "1:239c4c7fd2159585454003d9be7207167970194216193a8a210b8d29576f19c9"
   name = "github.com/golang/protobuf"
-  packages = ["proto"]
+  packages = [
+    "proto",
+    "ptypes",
+    "ptypes/any",
+    "ptypes/duration",
+    "ptypes/timestamp",
+  ]
   pruneopts = "UT"
   revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
   version = "v1.3.1"
@@ -307,14 +371,14 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:f0d8b3521fa1503abf153a0eaa9fbf285a52d3257d0eafe7021dbb44efc1107d"
+  digest = "1:4bfad9132298fbf73e160db0be1e7f7fc834c8986db05fb31dc2817ee6b09845"
   name = "github.com/markbates/goth"
   packages = [
     ".",
     "gothic",
     "providers/facebook",
     "providers/github",
-    "providers/gplus",
+    "providers/google",
     "providers/linkedin",
     "providers/openidConnect",
   ]
@@ -329,6 +393,14 @@
   pruneopts = "UT"
   revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
   version = "v1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:84bd7f8a2e0bcd53ddc33c3b47c34c1fe340c8632cbe928f7f8ae10ec6ecdd62"
+  name = "github.com/mohae/deepcopy"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c48cc78d482608239f6c4c92a4abd87eb8761c90"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -475,7 +547,7 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:676160e6a4722b08e0e26b11521d575c2cb2b6f0c679e1ee6178c5d8dee51e5e"
+  digest = "1:ecd62b854fc2a3c6583720380e8518730a4f45ffe878a0f9628f0e2454faacf6"
   name = "go.uber.org/zap"
   packages = [
     ".",
@@ -484,6 +556,7 @@
     "internal/color",
     "internal/exit",
     "zapcore",
+    "zapgrpc",
   ]
   pruneopts = "UT"
   revision = "27376062155ad36be76b0f12cf1572a221d3a48c"
@@ -518,22 +591,31 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f8b491a7c25030a895a0e579742d07136e6958e77ef2d46e769db8eec4e58fcd"
+  digest = "1:1b13e8770142a9251361b13a3b8b9b77296be6fa32856c937b346a45f93c845c"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
+    "http/httpguts",
+    "http2",
+    "http2/hpack",
+    "idna",
+    "internal/timeseries",
+    "trace",
   ]
   pruneopts = "UT"
   revision = "f3200d17e092c607f615320ecaad13d87ad9a2b3"
 
 [[projects]]
   branch = "master"
-  digest = "1:8d1c112fb1679fa097e9a9255a786ee47383fa2549a3da71bcb1334a693ebcfe"
+  digest = "1:7cba983d19f4aa6a154d73268dcc67a66bcc24bd7ee1c1b09d448a721dea0d9f"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
+    "google",
     "internal",
+    "jws",
+    "jwt",
   ]
   pruneopts = "UT"
   revision = "aaccbc9213b0974828f81aaac109d194880e3014"
@@ -550,29 +632,42 @@
   revision = "dbbf3f1254d491605cf4a0034ce25d0dc71b0c58"
 
 [[projects]]
-  digest = "1:1093f2eb4b344996604f7d8b29a16c5b22ab9e1b25652140d3fede39f640d5cd"
+  digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
   name = "golang.org/x/text"
   packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
     "internal/gen",
+    "internal/language",
+    "internal/language/compact",
+    "internal/tag",
     "internal/triegen",
     "internal/ucd",
+    "language",
+    "secure/bidirule",
     "transform",
+    "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
+    "unicode/rangetable",
   ]
   pruneopts = "UT"
   revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
   version = "v0.3.2"
 
 [[projects]]
-  digest = "1:7e8b9c5ae49011b12ae8473834ac1a7bb8ac029ba201270c723e4c280c9e4855"
+  digest = "1:976bb93842df8598504293a578eb3693d17836cd8dfa8fe122517832f2d878c4"
   name = "google.golang.org/appengine"
   packages = [
+    ".",
     "cloudsql",
     "internal",
+    "internal/app_identity",
     "internal/base",
     "internal/datastore",
     "internal/log",
+    "internal/modules",
     "internal/remote_api",
     "internal/urlfetch",
     "urlfetch",
@@ -580,6 +675,56 @@
   pruneopts = "UT"
   revision = "4c25cacc810c02874000e4f7071286a8e96b2515"
   version = "v1.6.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:583a0c80f5e3a9343d33aea4aead1e1afcc0043db66fdf961ddd1fe8cd3a4faf"
+  name = "google.golang.org/genproto"
+  packages = ["googleapis/rpc/status"]
+  pruneopts = "UT"
+  revision = "20e1ac93f88cf06d2b1defb90b9e9e126c7dfff6"
+
+[[projects]]
+  digest = "1:6cd77d0b616d2dcebd363dfecba593f27b0151fc82cdb5fbfb96c5a7cfbc95b5"
+  name = "google.golang.org/grpc"
+  packages = [
+    ".",
+    "balancer",
+    "balancer/base",
+    "balancer/roundrobin",
+    "binarylog/grpc_binarylog_v1",
+    "codes",
+    "connectivity",
+    "credentials",
+    "credentials/internal",
+    "encoding",
+    "encoding/proto",
+    "grpclog",
+    "internal",
+    "internal/backoff",
+    "internal/balancerload",
+    "internal/binarylog",
+    "internal/channelz",
+    "internal/envconfig",
+    "internal/grpcrand",
+    "internal/grpcsync",
+    "internal/syscall",
+    "internal/transport",
+    "keepalive",
+    "metadata",
+    "naming",
+    "peer",
+    "resolver",
+    "resolver/dns",
+    "resolver/passthrough",
+    "serviceconfig",
+    "stats",
+    "status",
+    "tap",
+  ]
+  pruneopts = "UT"
+  revision = "f6d0f9ee430895e87ef1ceb5ac8f39725bafceef"
+  version = "v1.24.0"
 
 [[projects]]
   digest = "1:14a90eb1290bd0aa42848afa9ee2c9ce247abdb63c2cf614331670119760962f"
@@ -616,6 +761,14 @@
   pruneopts = "UT"
   revision = "730df5f748271903322feb182be83b43ebbbe27d"
   version = "v2.3.1"
+
+[[projects]]
+  digest = "1:1033856ca84153217fda9f527e1c02e11b636e28ad2ab19f2ea4a06e4abbe8e1"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bb4e33bf68bf89cad44d386192cbed201f35b241"
+  version = "v2.2.3"
 
 [solve-meta]
   analyzer-name = "dep"

@@ -6,9 +6,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory/resputil"
 
-	"github.com/cortezaproject/corteza-server/internal/payload"
-	"github.com/cortezaproject/corteza-server/system/internal/service"
+	"github.com/cortezaproject/corteza-server/pkg/payload"
 	"github.com/cortezaproject/corteza-server/system/rest/request"
+	"github.com/cortezaproject/corteza-server/system/service"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
 
@@ -38,6 +38,7 @@ func (ctrl User) List(ctx context.Context, r *request.UserList) (interface{}, er
 		Query:        r.Query,
 		Email:        r.Email,
 		Username:     r.Username,
+		Handle:       r.Handle,
 		Kind:         r.Kind,
 		IncSuspended: r.IncSuspended,
 		IncDeleted:   r.IncDeleted,

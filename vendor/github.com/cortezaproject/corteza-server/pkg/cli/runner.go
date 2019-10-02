@@ -3,16 +3,16 @@ package cli
 import (
 	"context"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/cortezaproject/corteza-server/internal/db"
 	"github.com/cortezaproject/corteza-server/pkg/api"
 	"github.com/cortezaproject/corteza-server/pkg/cli/options"
+	"github.com/cortezaproject/corteza-server/pkg/db"
 	"github.com/cortezaproject/corteza-server/pkg/logger"
+	"github.com/cortezaproject/corteza-server/pkg/sentry"
 )
 
 type (
@@ -49,6 +49,14 @@ type (
 		DbOpt         *options.DBOpt
 		ProvisionOpt  *options.ProvisionOpt
 		SentryOpt     *options.SentryOpt
+		StorageOpt    *options.StorageOpt
+		ScriptRunner  *options.CorredorOpt
+
+		// Services will be calling each other so we need
+		// to keep the config opts spearated
+		GRPCServerSystem *options.GRPCServerOpt
+		// GRPCServerMessaging    *options.GRPCServerOpt
+		// GRPCServerCompose    *options.GRPCServerOpt
 
 		// DB Connection name, defaults to ServiceName
 		DatabaseName string
@@ -87,7 +95,7 @@ type (
 
 		// Access control initial setup
 		// Reapplies default access control rules for roles "everyone" [1] and "admin" [2]
-		ProvisionAccessControl Runners
+		ProvisionConfig Runners
 
 		// ******************************************************************
 
@@ -186,6 +194,11 @@ func (c *Config) Init() {
 	c.DbOpt = options.DB(c.ServiceName)
 	c.ProvisionOpt = options.Provision(c.ServiceName)
 	c.SentryOpt = options.Sentry(c.EnvPrefix)
+	c.StorageOpt = options.Storage(c.EnvPrefix)
+	c.ScriptRunner = options.Corredor(c.EnvPrefix)
+	c.GRPCServerSystem = options.GRPCServer("system")
+	// c.GRPCServerCompose = options.GRPCServer("compose")
+	// c.GRPCServerMessagign = options.GRPCServer("messaging")
 
 	if c.RootCommandDBSetup == nil {
 		c.RootCommandDBSetup = Runners{func(ctx context.Context, cmd *cobra.Command, c *Config) (err error) {
@@ -220,11 +233,12 @@ func (c *Config) MakeCLI(ctx context.Context) (cmd *cobra.Command) {
 		Use:              c.RootCommandName,
 		TraverseChildren: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-			if err = InitSentry(c.SentryOpt); err != nil {
+			if err = sentry.Init(c.SentryOpt); err != nil {
 				c.Log.Error("could not initialize Sentry", zap.Error(err))
 			}
 
 			defer sentry.Recover()
+
 			InitGeneralServices(c.SmtpOpt, c.JwtOpt, c.HttpClientOpt)
 
 			err = c.RootCommandDBSetup.Run(ctx, cmd, c)
@@ -250,7 +264,7 @@ func (c *Config) MakeCLI(ctx context.Context) (cmd *cobra.Command) {
 
 	cmd.AddCommand(serveApiCmd)
 
-	if len(c.ProvisionMigrateDatabase) > 0 || len(c.ProvisionAccessControl) > 0 {
+	if len(c.ProvisionMigrateDatabase) > 0 || len(c.ProvisionConfig) > 0 {
 		var (
 			provisionCmd = &cobra.Command{
 				Use:   "provision",
@@ -261,17 +275,17 @@ func (c *Config) MakeCLI(ctx context.Context) (cmd *cobra.Command) {
 		// Add only commands with defined callbacks
 		if len(c.ProvisionMigrateDatabase) > 0 {
 			provisionCmd.AddCommand(&cobra.Command{
-				Use:   "access-control-rules",
-				Short: "Reset access control rules & roles",
+				Use:   "configuration",
+				Short: "Create permissions & resources",
 
 				RunE: func(cmd *cobra.Command, args []string) error {
-					return c.ProvisionAccessControl.Run(ctx, nil, c)
+					return c.ProvisionConfig.Run(ctx, nil, c)
 				},
 			})
 		}
 
 		// Add only commands with defined callbacks
-		if len(c.ProvisionAccessControl) > 0 {
+		if len(c.ProvisionConfig) > 0 {
 			provisionCmd.AddCommand(&cobra.Command{
 				Use:   "migrate-database",
 				Short: "Run database migration scripts",

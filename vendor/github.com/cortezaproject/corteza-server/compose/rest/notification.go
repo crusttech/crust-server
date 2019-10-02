@@ -3,23 +3,30 @@ package rest
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza-server/compose/internal/service"
 	"github.com/cortezaproject/corteza-server/compose/rest/request"
-	"github.com/cortezaproject/corteza-server/internal/mail"
+	"github.com/cortezaproject/corteza-server/compose/service"
+	"github.com/cortezaproject/corteza-server/pkg/mail"
 
 	"github.com/pkg/errors"
+	gomail "gopkg.in/mail.v2"
 )
 
 var _ = errors.Wrap
 
 type (
 	Notification struct {
-		notification service.NotificationService
+		notification notificationService
 	}
 
 	contentPayload struct {
 		Plain string `json:"plain"`
 		Html  string `json:"html"`
+	}
+
+	notificationService interface {
+		SendEmail(*gomail.Message) error
+		AttachEmailRecipients(*gomail.Message, string, ...string) error
+		AttachRemoteFiles(context.Context, *gomail.Message, ...string) error
 	}
 )
 
@@ -31,7 +38,7 @@ func (Notification) New() *Notification {
 
 // EmailSend assembles Email Message and pushes message to notification service
 func (ctrl *Notification) EmailSend(ctx context.Context, r *request.NotificationEmailSend) (interface{}, error) {
-	ntf := ctrl.notification.With(ctx)
+	ntf := ctrl.notification
 
 	msg := mail.New()
 	if err := ntf.AttachEmailRecipients(msg, "To", r.To...); err != nil {
@@ -58,7 +65,14 @@ func (ctrl *Notification) EmailSend(ctx context.Context, r *request.Notification
 
 	msg.SetHeader("Subject", r.Subject)
 
-	if err := ctrl.notification.With(ctx).SendEmail(msg); err != nil {
+	if len(r.RemoteAttachments) > 0 {
+		err := ntf.AttachRemoteFiles(ctx, msg, r.RemoteAttachments...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err := ntf.SendEmail(msg); err != nil {
 		return false, err
 	} else {
 		return true, nil

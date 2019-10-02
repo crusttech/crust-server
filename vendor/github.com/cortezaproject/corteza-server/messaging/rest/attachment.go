@@ -8,10 +8,10 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/cortezaproject/corteza-server/internal/auth"
-	"github.com/cortezaproject/corteza-server/messaging/internal/repository"
-	"github.com/cortezaproject/corteza-server/messaging/internal/service"
+	"github.com/cortezaproject/corteza-server/messaging/repository"
 	"github.com/cortezaproject/corteza-server/messaging/rest/request"
+	"github.com/cortezaproject/corteza-server/messaging/service"
+	"github.com/cortezaproject/corteza-server/pkg/auth"
 )
 
 var _ = errors.Wrap
@@ -45,6 +45,10 @@ func (ctrl *Attachment) Preview(ctx context.Context, r *request.AttachmentPrevie
 }
 
 func (ctrl Attachment) isAccessible(attachmentID, userID uint64, signature string) error {
+	if signature == "" {
+		return errors.New("Unauthorized")
+	}
+
 	if userID == 0 {
 		return errors.New("missing or invalid user ID")
 	}

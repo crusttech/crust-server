@@ -31,6 +31,11 @@ import (
 type RecordAPI interface {
 	Report(context.Context, *request.RecordReport) (interface{}, error)
 	List(context.Context, *request.RecordList) (interface{}, error)
+	ImportInit(context.Context, *request.RecordImportInit) (interface{}, error)
+	ImportRun(context.Context, *request.RecordImportRun) (interface{}, error)
+	ImportProgress(context.Context, *request.RecordImportProgress) (interface{}, error)
+	Export(context.Context, *request.RecordExport) (interface{}, error)
+	Exec(context.Context, *request.RecordExec) (interface{}, error)
 	Create(context.Context, *request.RecordCreate) (interface{}, error)
 	Read(context.Context, *request.RecordRead) (interface{}, error)
 	Update(context.Context, *request.RecordUpdate) (interface{}, error)
@@ -40,13 +45,18 @@ type RecordAPI interface {
 
 // HTTP API interface
 type Record struct {
-	Report func(http.ResponseWriter, *http.Request)
-	List   func(http.ResponseWriter, *http.Request)
-	Create func(http.ResponseWriter, *http.Request)
-	Read   func(http.ResponseWriter, *http.Request)
-	Update func(http.ResponseWriter, *http.Request)
-	Delete func(http.ResponseWriter, *http.Request)
-	Upload func(http.ResponseWriter, *http.Request)
+	Report         func(http.ResponseWriter, *http.Request)
+	List           func(http.ResponseWriter, *http.Request)
+	ImportInit     func(http.ResponseWriter, *http.Request)
+	ImportRun      func(http.ResponseWriter, *http.Request)
+	ImportProgress func(http.ResponseWriter, *http.Request)
+	Export         func(http.ResponseWriter, *http.Request)
+	Exec           func(http.ResponseWriter, *http.Request)
+	Create         func(http.ResponseWriter, *http.Request)
+	Read           func(http.ResponseWriter, *http.Request)
+	Update         func(http.ResponseWriter, *http.Request)
+	Delete         func(http.ResponseWriter, *http.Request)
+	Upload         func(http.ResponseWriter, *http.Request)
 }
 
 func NewRecord(h RecordAPI) *Record {
@@ -87,6 +97,106 @@ func NewRecord(h RecordAPI) *Record {
 				return
 			}
 			logger.LogControllerCall("Record.List", r, params.Auditable())
+			if !serveHTTP(value, w, r) {
+				resputil.JSON(w, value)
+			}
+		},
+		ImportInit: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewRecordImportInit()
+			if err := params.Fill(r); err != nil {
+				logger.LogParamError("Record.ImportInit", r, err)
+				resputil.JSON(w, err)
+				return
+			}
+
+			value, err := h.ImportInit(r.Context(), params)
+			if err != nil {
+				logger.LogControllerError("Record.ImportInit", r, err, params.Auditable())
+				resputil.JSON(w, err)
+				return
+			}
+			logger.LogControllerCall("Record.ImportInit", r, params.Auditable())
+			if !serveHTTP(value, w, r) {
+				resputil.JSON(w, value)
+			}
+		},
+		ImportRun: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewRecordImportRun()
+			if err := params.Fill(r); err != nil {
+				logger.LogParamError("Record.ImportRun", r, err)
+				resputil.JSON(w, err)
+				return
+			}
+
+			value, err := h.ImportRun(r.Context(), params)
+			if err != nil {
+				logger.LogControllerError("Record.ImportRun", r, err, params.Auditable())
+				resputil.JSON(w, err)
+				return
+			}
+			logger.LogControllerCall("Record.ImportRun", r, params.Auditable())
+			if !serveHTTP(value, w, r) {
+				resputil.JSON(w, value)
+			}
+		},
+		ImportProgress: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewRecordImportProgress()
+			if err := params.Fill(r); err != nil {
+				logger.LogParamError("Record.ImportProgress", r, err)
+				resputil.JSON(w, err)
+				return
+			}
+
+			value, err := h.ImportProgress(r.Context(), params)
+			if err != nil {
+				logger.LogControllerError("Record.ImportProgress", r, err, params.Auditable())
+				resputil.JSON(w, err)
+				return
+			}
+			logger.LogControllerCall("Record.ImportProgress", r, params.Auditable())
+			if !serveHTTP(value, w, r) {
+				resputil.JSON(w, value)
+			}
+		},
+		Export: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewRecordExport()
+			if err := params.Fill(r); err != nil {
+				logger.LogParamError("Record.Export", r, err)
+				resputil.JSON(w, err)
+				return
+			}
+
+			value, err := h.Export(r.Context(), params)
+			if err != nil {
+				logger.LogControllerError("Record.Export", r, err, params.Auditable())
+				resputil.JSON(w, err)
+				return
+			}
+			logger.LogControllerCall("Record.Export", r, params.Auditable())
+			if !serveHTTP(value, w, r) {
+				resputil.JSON(w, value)
+			}
+		},
+		Exec: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewRecordExec()
+			if err := params.Fill(r); err != nil {
+				logger.LogParamError("Record.Exec", r, err)
+				resputil.JSON(w, err)
+				return
+			}
+
+			value, err := h.Exec(r.Context(), params)
+			if err != nil {
+				logger.LogControllerError("Record.Exec", r, err, params.Auditable())
+				resputil.JSON(w, err)
+				return
+			}
+			logger.LogControllerCall("Record.Exec", r, params.Auditable())
 			if !serveHTTP(value, w, r) {
 				resputil.JSON(w, value)
 			}
@@ -199,6 +309,11 @@ func (h Record) MountRoutes(r chi.Router, middlewares ...func(http.Handler) http
 		r.Use(middlewares...)
 		r.Get("/namespace/{namespaceID}/module/{moduleID}/record/report", h.Report)
 		r.Get("/namespace/{namespaceID}/module/{moduleID}/record/", h.List)
+		r.Post("/namespace/{namespaceID}/module/{moduleID}/record/import", h.ImportInit)
+		r.Patch("/namespace/{namespaceID}/module/{moduleID}/record/import/{sessionID}", h.ImportRun)
+		r.Get("/namespace/{namespaceID}/module/{moduleID}/record/import/{sessionID}", h.ImportProgress)
+		r.Get("/namespace/{namespaceID}/module/{moduleID}/record/export{filename}.{ext}", h.Export)
+		r.Post("/namespace/{namespaceID}/module/{moduleID}/record/exec/{procedure}", h.Exec)
 		r.Post("/namespace/{namespaceID}/module/{moduleID}/record/", h.Create)
 		r.Get("/namespace/{namespaceID}/module/{moduleID}/record/{recordID}", h.Read)
 		r.Post("/namespace/{namespaceID}/module/{moduleID}/record/{recordID}", h.Update)

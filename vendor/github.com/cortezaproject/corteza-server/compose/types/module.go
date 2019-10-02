@@ -3,13 +3,15 @@ package types
 import (
 	"time"
 
-	"github.com/cortezaproject/corteza-server/internal/permissions"
 	"github.com/jmoiron/sqlx/types"
+
+	"github.com/cortezaproject/corteza-server/pkg/permissions"
 )
 
 type (
 	Module struct {
 		ID     uint64         `json:"moduleID,string" db:"id"`
+		Handle string         `json:"handle" db:"handle"`
 		Name   string         `json:"name" db:"name"`
 		Meta   types.JSONText `json:"meta" db:"json"`
 		Fields ModuleFieldSet `json:"fields" db:"-"`
@@ -24,6 +26,8 @@ type (
 	ModuleFilter struct {
 		NamespaceID uint64 `json:"namespaceID,string"`
 		Query       string `json:"query"`
+		Handle      string `json:"handle"`
+		Name        string `json:"name"`
 		Page        uint   `json:"page"`
 		PerPage     uint   `json:"perPage"`
 		// Sort    string `json:"sort"`
@@ -34,4 +38,15 @@ type (
 // Resource returns a system resource ID for this type
 func (m Module) PermissionResource() permissions.Resource {
 	return ModulePermissionResource.AppendID(m.ID)
+}
+
+// FindByHandle finds module by it's handle
+func (set ModuleSet) FindByHandle(handle string) *Module {
+	for i := range set {
+		if set[i].Handle == handle {
+			return set[i]
+		}
+	}
+
+	return nil
 }

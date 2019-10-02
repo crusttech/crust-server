@@ -4,7 +4,7 @@ import (
 	"github.com/go-chi/chi"
 
 	"github.com/cortezaproject/corteza-server/compose/rest/handlers"
-	"github.com/cortezaproject/corteza-server/internal/auth"
+	"github.com/cortezaproject/corteza-server/pkg/auth"
 )
 
 func MountRoutes(r chi.Router) {
@@ -14,14 +14,17 @@ func MountRoutes(r chi.Router) {
 		record       = Record{}.New()
 		page         = Page{}.New()
 		chart        = Chart{}.New()
-		trigger      = Trigger{}.New()
 		notification = Notification{}.New()
 		attachment   = Attachment{}.New()
+
+		automationScript  = AutomationScript{}.New()
+		automationTrigger = AutomationTrigger{}.New()
 	)
 
 	// Initialize handlers & controllers.
 	r.Group(func(r chi.Router) {
-		handlers.NewPermissions(Permissions{}.New()).MountRoutes(r)
+		// Use alternative handlers that support file serving
+		handlers.NewAttachment(attachment).MountRoutes(r)
 	})
 
 	// Protect all _private_ routes
@@ -34,10 +37,10 @@ func MountRoutes(r chi.Router) {
 		handlers.NewModule(module).MountRoutes(r)
 		handlers.NewRecord(record).MountRoutes(r)
 		handlers.NewChart(chart).MountRoutes(r)
-		handlers.NewTrigger(trigger).MountRoutes(r)
 		handlers.NewNotification(notification).MountRoutes(r)
-	})
+		handlers.NewPermissions(Permissions{}.New()).MountRoutes(r)
 
-	// Use alternative handlers that support file serving
-	handlers.NewAttachment(attachment).MountRoutes(r)
+		handlers.NewAutomationScript(automationScript).MountRoutes(r)
+		handlers.NewAutomationTrigger(automationTrigger).MountRoutes(r)
+	})
 }
