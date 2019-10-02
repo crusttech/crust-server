@@ -24,10 +24,8 @@ steps:
     repo: crusttech/crust-server-system
     auto_tag: true # generate tag names automatically based on git branch and git tag
     dockerfile: Dockerfile.crust-server-system
-    username:
-      from_secret: docker_hub_username
-    password:
-      from_secret: docker_hub_password
+    username: { from_secret: docker_hub_username }
+    password: { from_secret: docker_hub_password }
 
 
 - name: crust-server-compose
@@ -37,10 +35,8 @@ steps:
     repo: crusttech/crust-server-compose
     auto_tag: true # generate tag names automatically based on git branch and git tag
     dockerfile: Dockerfile.crust-server-compose
-    username:
-      from_secret: docker_hub_username
-    password:
-      from_secret: docker_hub_password
+    username: { from_secret: docker_hub_username }
+    password: { from_secret: docker_hub_password }
 
 - name: crust-server-messaging
   depends_on: [ 'unit-tests' ]
@@ -49,11 +45,8 @@ steps:
     repo: crusttech/crust-server-messaging
     auto_tag: true # generate tag names automatically based on git branch and git tag
     dockerfile: Dockerfile.crust-server-messaging
-    username:
-      from_secret: docker_hub_username
-    password:
-      from_secret: docker_hub_password
-
+    username: { from_secret: docker_hub_username }
+    password: { from_secret: docker_hub_password }
 
 - name: crust-server
   image: plugins/docker
@@ -62,15 +55,8 @@ steps:
     repo: crusttech/crust-server
     auto_tag: true # generate tag names automatically based on git branch and git tag
     dockerfile: Dockerfile.crust-server
-    username:
-      from_secret: docker_hub_username
-    password:
-      from_secret: docker_hub_password
+    username: { from_secret: docker_hub_username }
+    password: { from_secret: docker_hub_password }
 
 trigger:
-  branch:
-    - master
-  refs:
-    - refs/tags/v20??.*
-  event:
-    - push
+  events: [ tag, push ]

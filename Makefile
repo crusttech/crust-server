@@ -63,7 +63,7 @@ mailhog.up:
 
 test:
 	# Run basic unit tests
-	$(GO) test ./opt/... ./internal/... ./compose/... ./messaging/... ./system/...
+	$(GO) test ./internal/... ./compose/... ./messaging/... ./system/...
 
 integration:
 	# Run drone's integration pipeline
