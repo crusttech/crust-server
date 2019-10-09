@@ -7,6 +7,7 @@ import (
 
 func main() {
 	cfg := messaging.Configure()
+	cfg.RootCommandName = "crust-server-messaging"
 	cmd := cfg.MakeCLI(cli.Context())
 	cli.HandleError(cmd.Execute())
 }

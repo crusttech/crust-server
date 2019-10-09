@@ -7,6 +7,7 @@ import (
 
 func main() {
 	cfg := compose.Configure()
+	cfg.RootCommandName = "crust-server-compose"
 	cmd := cfg.MakeCLI(cli.Context())
 	cli.HandleError(cmd.Execute())
 }

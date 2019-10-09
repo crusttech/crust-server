@@ -7,6 +7,7 @@ import (
 
 func main() {
 	cfg := monolith.Configure()
+	cfg.RootCommandName = "crust-server"
 	cmd := cfg.MakeCLI(cli.Context())
 	cli.HandleError(cmd.Execute())
 }

@@ -7,6 +7,7 @@ import (
 
 func main() {
 	cfg := system.Configure()
+	cfg.RootCommandName = "crust-server-system"
 	cmd := cfg.MakeCLI(cli.Context())
 	cli.HandleError(cmd.Execute())
 }
