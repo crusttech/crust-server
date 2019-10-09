@@ -15,7 +15,8 @@ steps:
     GOARCH: amd64
     CI: circleci
   commands:
-    - make test
+    - echo "Disabled, no tests"
+    - echo make test
 
 - name: crust-server-system
   image: plugins/docker
@@ -26,7 +27,6 @@ steps:
     dockerfile: Dockerfile.crust-server-system
     username: { from_secret: docker_hub_username }
     password: { from_secret: docker_hub_password }
-
 
 - name: crust-server-compose
   image: plugins/docker
