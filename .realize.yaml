@@ -35,7 +35,8 @@ schema:
     paths:
       - .
       - ../../system
-      - ../../internal
+      - ../../pkg
+      - ../../cmd/system
     extensions:
     - go
     ignored_paths:
@@ -58,7 +59,8 @@ schema:
     paths:
       - .
       - ../../messaging
-      - ../../internal
+      - ../../pkg
+      - ../../cmd/messaging
     extensions:
     - go
     ignored_paths:
@@ -81,7 +83,8 @@ schema:
     paths:
       - .
       - ../../compose
-      - ../../internal
+      - ../../pkg
+      - ../../cmd/compose
     extensions:
     - go
     ignored_paths:
