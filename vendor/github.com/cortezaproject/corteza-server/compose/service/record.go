@@ -327,6 +327,12 @@ func (svc record) Create(mod *types.Record) (r *types.Record, err error) {
 		return
 	}
 
+	// We do not know what happened in the before-create script,
+	// so we must sanitize values again before we store it
+	if r.Values, err = svc.sanitizeValues(m, r.Values); err != nil {
+		return
+	}
+
 	defer func() {
 		// Run this at the end and discard the error
 		_ = svc.sr.AfterRecordCreate(svc.ctx, ns, m, r)
@@ -372,8 +378,14 @@ func (svc record) Update(mod *types.Record) (r *types.Record, err error) {
 
 	mod = nil // make sure we do not use it anymore
 
+	// Calling before-record-update scripts
 	if err = svc.sr.BeforeRecordUpdate(svc.ctx, ns, m, r); err != nil {
-		// Calling
+		return
+	}
+
+	// We do not know what happened in the before-update script,
+	// so we must sanitize values again before we store it
+	if r.Values, err = svc.sanitizeValues(m, r.Values); err != nil {
 		return
 	}
 
@@ -415,7 +427,7 @@ func (svc record) DeleteByID(namespaceID, recordID uint64) (err error) {
 		return ErrNoDeletePermissions.withStack()
 	}
 
-	if err = svc.sr.BeforeRecordCreate(svc.ctx, ns, m, r); err != nil {
+	if err = svc.sr.BeforeRecordDelete(svc.ctx, ns, m, r); err != nil {
 		// Calling
 		return
 	}

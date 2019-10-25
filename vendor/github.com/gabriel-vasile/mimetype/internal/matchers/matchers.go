@@ -10,6 +10,11 @@ func True([]byte) bool {
 	return true
 }
 
+// False is a dummy matching function used to never match input.
+func False([]byte) bool {
+	return false
+}
+
 // trimLWS trims whitespace from beginning of the input.
 func trimLWS(in []byte) []byte {
 	firstNonWS := 0

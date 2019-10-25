@@ -12,7 +12,10 @@ import (
 	"github.com/cortezaproject/corteza-server/pkg/automation/corredor"
 	"github.com/cortezaproject/corteza-server/pkg/cli/options"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
+	internalSettings "github.com/cortezaproject/corteza-server/pkg/settings"
 	"github.com/cortezaproject/corteza-server/pkg/store"
+	"github.com/cortezaproject/corteza-server/pkg/store/minio"
+	"github.com/cortezaproject/corteza-server/pkg/store/plain"
 	systemProto "github.com/cortezaproject/corteza-server/system/proto"
 )
 
@@ -39,6 +42,9 @@ var (
 	DefaultStore store.Store
 
 	DefaultLogger *zap.Logger
+
+	DefaultInternalSettings internalSettings.Service
+	DefaultSettings         SettingsService
 
 	// DefaultPermissions Retrieves & stores permissions
 	DefaultPermissions permissionServicer
@@ -76,9 +82,35 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 
 	DefaultLogger = log.Named("service")
 
+	DefaultInternalSettings = internalSettings.NewService(internalSettings.NewRepository(repository.DB(ctx), "compose_settings"))
+
 	if DefaultStore == nil {
-		DefaultStore, err = store.New(c.Storage.Path)
-		log.Info("initializing store", zap.String("path", c.Storage.Path), zap.Error(err))
+		if c.Storage.MinioEndpoint != "" {
+			if c.Storage.MinioBucket == "" {
+				c.Storage.MinioBucket = "compose"
+			}
+
+			DefaultStore, err = minio.New(c.Storage.MinioBucket, minio.Options{
+				Endpoint:        c.Storage.MinioEndpoint,
+				Secure:          c.Storage.MinioSecure,
+				Strict:          c.Storage.MinioStrict,
+				AccessKeyID:     c.Storage.MinioAccessKey,
+				SecretAccessKey: c.Storage.MinioSecretKey,
+
+				ServerSideEncryptKey: []byte(c.Storage.MinioSSECKey),
+			})
+
+			log.Info("initializing minio",
+				zap.String("bucket", c.Storage.MinioBucket),
+				zap.String("endpoint", c.Storage.MinioEndpoint),
+				zap.Error(err))
+		} else {
+			DefaultStore, err = plain.New(c.Storage.Path)
+			log.Info("initializing store",
+				zap.String("path", c.Storage.Path),
+				zap.Error(err))
+		}
+
 		if err != nil {
 			return err
 		}
@@ -86,12 +118,11 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 
 	// Permissions, access control
 	if DefaultPermissions == nil {
-		DefaultPermissions = permissions.Service(
-			ctx,
-			DefaultLogger,
-			permissions.Repository(db, "compose_permission_rules"))
+		DefaultPermissions = permissions.Service(ctx, DefaultLogger, db, "compose_permission_rules")
 	}
 	DefaultAccessControl = AccessControl(DefaultPermissions)
+
+	DefaultSettings = Settings(ctx, DefaultInternalSettings)
 
 	DefaultNamespace = Namespace()
 	DefaultModule = Module()

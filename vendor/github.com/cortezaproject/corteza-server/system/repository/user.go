@@ -8,6 +8,8 @@ import (
 	"github.com/titpetric/factory"
 	"gopkg.in/Masterminds/squirrel.v1"
 
+	"github.com/cortezaproject/corteza-server/pkg/permissions"
+	"github.com/cortezaproject/corteza-server/pkg/rh"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
 
@@ -19,7 +21,6 @@ type (
 		FindByUsername(username string) (*types.User, error)
 		FindByHandle(handle string) (*types.User, error)
 		FindByID(id uint64) (*types.User, error)
-		FindByIDs(id ...uint64) (types.UserSet, error)
 		Find(filter types.UserFilter) (set types.UserSet, f types.UserFilter, err error)
 		Total() uint
 
@@ -110,54 +111,70 @@ func (r user) FindByID(id uint64) (*types.User, error) {
 	return r.findBy("id", id)
 }
 
-func (r user) FindByIDs(IDs ...uint64) (types.UserSet, error) {
-	if len(IDs) == 0 {
-		return nil, nil
-	}
-
-	var (
-		query = r.query().Where("u.id IN (?)", IDs)
-		uu    = types.UserSet{}
-	)
-
-	return uu, r.fetchSet(&uu, query)
-}
-
 func (r user) Find(filter types.UserFilter) (set types.UserSet, f types.UserFilter, err error) {
 	f = filter
 	q := r.queryNoFilter()
 
+	// Returns user filter (flt) wrapped in IF() function with cnd as condition (when cnd != nil)
+	whereMasked := func(cnd *permissions.ResourceFilter, flt squirrel.Sqlizer) squirrel.Sqlizer {
+		if cnd != nil {
+			return rh.SquirrelFunction("IF", cnd, flt, squirrel.Expr("false"))
+		} else {
+			return flt
+		}
+	}
+
 	if !f.IncDeleted {
-		q = q.Where("u.deleted_at IS NULL")
+		q = q.Where(squirrel.Eq{"u.deleted_at": nil})
 	}
 
 	if !f.IncSuspended {
-		q = q.Where("u.suspended_at IS NULL")
+		q = q.Where(squirrel.Eq{"u.suspended_at": nil})
+	}
+
+	if len(f.UserID) > 0 {
+		q = q.Where(squirrel.Eq{"u.ID": f.UserID})
+	}
+
+	if len(f.RoleID) > 0 {
+		or := squirrel.Or{}
+		// Due to lack of support for more exotic expressions (slice of values inside subquery)
+		// we'll use set of OR expressions as a workaround
+		for _, roleID := range f.RoleID {
+			or = append(or, squirrel.Expr("u.ID IN (SELECT rel_user FROM sys_role_member WHERE rel_role IN (?))", roleID))
+		}
+
+		q = q.Where(or)
 	}
 
 	if f.Query != "" {
 		qs := f.Query + "%"
-		q = q.Where("u.username LIKE ? OR u.email LIKE ? OR u.name LIKE ?", qs, qs, qs)
+		q = q.Where(squirrel.Or{
+			squirrel.Like{"u.username": qs},
+			squirrel.Like{"u.handle": qs},
+			whereMasked(f.IsEmailUnmaskable, squirrel.Like{"u.email": qs}),
+			whereMasked(f.IsNameUnmaskable, squirrel.Like{"u.name": qs}),
+		})
 	}
 
 	if f.Email != "" {
-		q = q.Where("u.email = ?", f.Email)
+		q = q.Where(whereMasked(f.IsNameUnmaskable, squirrel.Eq{"u.name": f.Email}))
 	}
 
 	if f.Username != "" {
-		q = q.Where("u.username = ?", f.Username)
+		q = q.Where(squirrel.Eq{"u.username": f.Username})
 	}
 
 	if f.Handle != "" {
-		q = q.Where("u.handle = ?", f.Handle)
+		q = q.Where(squirrel.Eq{"u.handle": f.Handle})
 	}
 
 	if f.Kind != "" {
-		q = q.Where("u.kind = ?", f.Kind)
+		q = q.Where(squirrel.Eq{"u.kind": f.Kind})
 	}
 
-	if f.Email != "" {
-		q = q.Where("u.email = ?", f.Email)
+	if f.IsReadable != nil {
+		q = q.Where(f.IsReadable)
 	}
 
 	// @todo add support for more sophisticated sorting through ql
@@ -180,7 +197,13 @@ func (r user) Find(filter types.UserFilter) (set types.UserSet, f types.UserFilt
 		q = q.OrderBy("id")
 	}
 
-	return set, f, r.fetchPaged(&set, q, f.Page, f.PerPage)
+	db := r.db()
+
+	if f.Count, err = rh.Count(db, q); err != nil || f.Count == 0 {
+		return
+	}
+
+	return set, f, rh.FetchPaged(db, q, f.Page, f.PerPage, &set)
 }
 
 func (r user) Total() (count uint) {

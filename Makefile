@@ -75,6 +75,7 @@ realize: $(REALIZE)
 
 cdeps:
 	$(GO) get github.com/cortezaproject/corteza-server
+	$(GO) mod vendor
 
 mailhog.up:
 	docker run --rm --publish 8025:8025 --publish 1025:1025 mailhog/mailhog

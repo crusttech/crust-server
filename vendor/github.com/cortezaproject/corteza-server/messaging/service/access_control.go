@@ -17,6 +17,7 @@ type (
 		Can(context.Context, permissions.Resource, permissions.Operation, ...permissions.CheckAccessFunc) bool
 		Grant(context.Context, permissions.Whitelist, ...*permissions.Rule) error
 		FindRulesByRoleID(roleID uint64) (rr permissions.RuleSet)
+		ResourceFilter(context.Context, permissions.Resource, permissions.Operation, permissions.Access) *permissions.ResourceFilter
 	}
 
 	permissionResource interface {
@@ -36,6 +37,8 @@ func (svc accessControl) Effective(ctx context.Context) (ee permissions.Effectiv
 
 	ee.Push(types.MessagingPermissionResource, "access", svc.CanAccess(ctx))
 	ee.Push(types.MessagingPermissionResource, "grant", svc.CanGrant(ctx))
+	ee.Push(types.MessagingPermissionResource, "settings.read", svc.CanReadSettings(ctx))
+	ee.Push(types.MessagingPermissionResource, "settings.manage", svc.CanManageSettings(ctx))
 	ee.Push(types.MessagingPermissionResource, "channel.public.create", svc.CanCreatePublicChannel(ctx))
 	ee.Push(types.MessagingPermissionResource, "channel.private.create", svc.CanCreatePrivateChannel(ctx))
 	ee.Push(types.MessagingPermissionResource, "channel.group.create", svc.CanCreateGroupChannel(ctx))
@@ -49,6 +52,14 @@ func (svc accessControl) CanAccess(ctx context.Context) bool {
 
 func (svc accessControl) CanGrant(ctx context.Context) bool {
 	return svc.can(ctx, types.MessagingPermissionResource, "grant")
+}
+
+func (svc accessControl) CanReadSettings(ctx context.Context) bool {
+	return svc.can(ctx, types.MessagingPermissionResource, "settings.read")
+}
+
+func (svc accessControl) CanManageSettings(ctx context.Context) bool {
+	return svc.can(ctx, types.MessagingPermissionResource, "settings.manage")
 }
 
 func (svc accessControl) CanCreatePublicChannel(ctx context.Context) bool {
@@ -237,6 +248,8 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		types.MessagingPermissionResource,
 		"access",
 		"grant",
+		"settings.read",
+		"settings.manage",
 		"channel.public.create",
 		"channel.private.create",
 		"channel.group.create",

@@ -10,7 +10,10 @@ import (
 	"github.com/cortezaproject/corteza-server/pkg/cli/options"
 	"github.com/cortezaproject/corteza-server/pkg/http"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
+	internalSettings "github.com/cortezaproject/corteza-server/pkg/settings"
 	"github.com/cortezaproject/corteza-server/pkg/store"
+	"github.com/cortezaproject/corteza-server/pkg/store/minio"
+	"github.com/cortezaproject/corteza-server/pkg/store/plain"
 )
 
 type (
@@ -34,7 +37,9 @@ var (
 
 	DefaultLogger *zap.Logger
 
-	DefaultAccessControl *accessControl
+	DefaultInternalSettings internalSettings.Service
+	DefaultSettings         SettingsService
+	DefaultAccessControl    *accessControl
 
 	DefaultAttachment AttachmentService
 	DefaultChannel    ChannelService
@@ -47,9 +52,36 @@ var (
 func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 	DefaultLogger = log.Named("service")
 
+	DefaultInternalSettings = internalSettings.NewService(internalSettings.NewRepository(repository.DB(ctx), "messaging_settings"))
+
 	if DefaultStore == nil {
-		DefaultStore, err = store.New(c.Storage.Path)
-		log.Info("initializing store", zap.String("path", c.Storage.Path), zap.Error(err))
+		if c.Storage.MinioEndpoint != "" {
+			if c.Storage.MinioBucket == "" {
+				c.Storage.MinioBucket = "messaging"
+			}
+
+			DefaultStore, err = minio.New(c.Storage.MinioBucket, minio.Options{
+				Endpoint:        c.Storage.MinioEndpoint,
+				Secure:          c.Storage.MinioSecure,
+				Strict:          c.Storage.MinioStrict,
+				AccessKeyID:     c.Storage.MinioAccessKey,
+				SecretAccessKey: c.Storage.MinioSecretKey,
+
+				ServerSideEncryptKey: []byte(c.Storage.MinioSSECKey),
+			})
+
+			log.Info("initializing minio",
+				zap.String("bucket", c.Storage.MinioBucket),
+				zap.String("endpoint", c.Storage.MinioEndpoint),
+				zap.Error(err))
+		} else {
+			DefaultStore, err = plain.New(c.Storage.Path)
+
+			log.Info("initializing store",
+				zap.String("path", c.Storage.Path),
+				zap.Error(err))
+		}
+
 		if err != nil {
 			return err
 		}
@@ -65,10 +97,11 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 	if DefaultPermissions == nil {
 		// Do not override permissions service stored under DefaultPermissions
 		// to allow integration tests to inject own permission service
-		pRepo := permissions.Repository(repository.DB(ctx), "messaging_permission_rules")
-		DefaultPermissions = permissions.Service(ctx, DefaultLogger, pRepo)
+		DefaultPermissions = permissions.Service(ctx, DefaultLogger, repository.DB(ctx), "messaging_permission_rules")
 	}
 	DefaultAccessControl = AccessControl(DefaultPermissions)
+
+	DefaultSettings = Settings(ctx, DefaultInternalSettings)
 
 	DefaultEvent = Event(ctx)
 	DefaultChannel = Channel(ctx)

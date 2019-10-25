@@ -31,7 +31,6 @@ $ go get github.com/markbates/goth
 * Eve Online
 * Facebook
 * Fitbit
-* Gitea
 * GitHub
 * Gitlab
 * Google
@@ -42,8 +41,6 @@ $ go get github.com/markbates/goth
 * Intercom
 * Lastfm
 * Linkedin
-* LINE
-* Mailru
 * Meetup
 * MicrosoftOnline
 * Naver

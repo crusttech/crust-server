@@ -11,6 +11,7 @@ import (
 
 	internalAuth "github.com/cortezaproject/corteza-server/pkg/auth"
 	"github.com/cortezaproject/corteza-server/pkg/logger"
+	"github.com/cortezaproject/corteza-server/pkg/permissions"
 	"github.com/cortezaproject/corteza-server/system/repository"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
@@ -21,6 +22,9 @@ const (
 	ErrUserUsernameNotUnique  = serviceError("UserUsernameNotUnique")
 	ErrUserEmailNotUnique     = serviceError("UserEmailNotUnique")
 	ErrUserLocked             = serviceError("UserLocked")
+
+	maskPrivateDataEmail = "####.#######@######.###"
+	maskPrivateDataName  = "##### ##########"
 )
 
 type (
@@ -36,6 +40,11 @@ type (
 		ac          userAccessController
 		user        repository.UserRepository
 		credentials repository.CredentialsRepository
+
+		// @todo wire this with settings (privacy.mask.email)
+		privacyMaskEmail bool
+		// @todo wire this with settings (privacy.mask.name)
+		privacyMaskName bool
 	}
 
 	userAuth interface {
@@ -50,6 +59,12 @@ type (
 		CanDeleteUser(context.Context, *types.User) bool
 		CanSuspendUser(context.Context, *types.User) bool
 		CanUnsuspendUser(context.Context, *types.User) bool
+		CanUnmaskEmail(context.Context, *types.User) bool
+		CanUnmaskName(context.Context, *types.User) bool
+
+		FilterReadableUsers(ctx context.Context) *permissions.ResourceFilter
+		FilterUsersWithUnmaskableEmail(ctx context.Context) *permissions.ResourceFilter
+		FilterUsersWithUnmaskableName(ctx context.Context) *permissions.ResourceFilter
 	}
 
 	UserService interface {
@@ -59,7 +74,6 @@ type (
 		FindByEmail(email string) (*types.User, error)
 		FindByHandle(handle string) (*types.User, error)
 		FindByID(id uint64) (*types.User, error)
-		FindByIDs(id ...uint64) (types.UserSet, error)
 		Find(types.UserFilter) (types.UserSet, types.UserFilter, error)
 
 		Create(input *types.User) (*types.User, error)
@@ -101,6 +115,14 @@ func (svc user) With(ctx context.Context) UserService {
 
 		user:        repository.User(ctx, db),
 		credentials: repository.Credentials(ctx, db),
+
+		// @todo wire this with settings (privacy.mask.email)
+		//       new default value will be true!
+		privacyMaskEmail: false,
+
+		// @todo wire this with settings (privacy.mask.name)
+		//       new default value will be true!
+		privacyMaskName: false,
 	}
 }
 
@@ -109,33 +131,67 @@ func (svc user) FindByID(ID uint64) (*types.User, error) {
 		return nil, ErrInvalidID
 	}
 
-	return svc.user.FindByID(ID)
-}
-
-func (svc user) FindByIDs(userIDs ...uint64) (types.UserSet, error) {
-	return svc.user.FindByIDs(userIDs...)
+	return svc.proc(svc.user.FindByID(ID))
 }
 
 func (svc user) FindByEmail(email string) (*types.User, error) {
-	return svc.user.FindByEmail(email)
+	return svc.proc(svc.user.FindByEmail(email))
 }
 
 func (svc user) FindByUsername(username string) (*types.User, error) {
-	return svc.user.FindByUsername(username)
+	return svc.proc(svc.user.FindByUsername(username))
 }
 
 func (svc user) FindByHandle(handle string) (*types.User, error) {
-	return svc.user.FindByHandle(handle)
+	return svc.proc(svc.user.FindByHandle(handle))
+}
+
+func (svc user) proc(u *types.User, err error) (*types.User, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	svc.handlePrivateData(u)
+
+	return u, nil
 }
 
 func (svc user) Find(f types.UserFilter) (types.UserSet, types.UserFilter, error) {
 	if f.IncDeleted || f.IncSuspended {
+		// If list with deleted or suspended users is requested
+		// user must have access permissions to system (ie: is admin)
 		if !svc.ac.CanAccess(svc.ctx) {
 			return nil, f, ErrNoPermissions.withStack()
 		}
 	}
 
-	return svc.user.Find(f)
+	if svc.privacyMaskEmail {
+		// Prepare filter for email unmasking check
+		f.IsEmailUnmaskable = svc.ac.FilterUsersWithUnmaskableEmail(svc.ctx)
+
+	}
+
+	if svc.privacyMaskName {
+		// Prepare filter for name unmasking check
+		f.IsNameUnmaskable = svc.ac.FilterUsersWithUnmaskableName(svc.ctx)
+	}
+
+	f.IsReadable = svc.ac.FilterReadableUsers(svc.ctx)
+
+	return svc.procSet(svc.user.Find(f))
+}
+
+func (svc user) procSet(u types.UserSet, f types.UserFilter, err error) (types.UserSet, types.UserFilter, error) {
+	if err != nil {
+		return nil, f, err
+	}
+
+	_ = u.Walk(func(u *types.User) error {
+		svc.handlePrivateData(u)
+		return nil
+	})
+
+	return u, f, nil
 }
 
 func (svc user) Create(input *types.User) (out *types.User, err error) {
@@ -306,4 +362,15 @@ func (svc user) SetPassword(userID uint64, newPassword string) (err error) {
 
 		return nil
 	})
+}
+
+// Masks (or leaves as-is) private data on user
+func (svc user) handlePrivateData(u *types.User) {
+	if svc.privacyMaskEmail && !svc.ac.CanUnmaskEmail(svc.ctx, u) {
+		u.Email = maskPrivateDataEmail
+	}
+
+	if svc.privacyMaskName && !svc.ac.CanUnmaskEmail(svc.ctx, u) {
+		u.Name = maskPrivateDataName
+	}
 }

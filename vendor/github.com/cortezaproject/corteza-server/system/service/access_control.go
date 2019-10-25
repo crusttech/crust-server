@@ -17,6 +17,7 @@ type (
 		Can(context.Context, permissions.Resource, permissions.Operation, ...permissions.CheckAccessFunc) bool
 		Grant(context.Context, permissions.Whitelist, ...*permissions.Rule) error
 		FindRulesByRoleID(roleID uint64) (rr permissions.RuleSet)
+		ResourceFilter(context.Context, permissions.Resource, permissions.Operation, permissions.Access) *permissions.ResourceFilter
 	}
 
 	permissionResource interface {
@@ -113,6 +114,18 @@ func (svc accessControl) CanDeleteApplication(ctx context.Context, app *types.Ap
 	return svc.can(ctx, app, "delete")
 }
 
+func (svc accessControl) FilterReadableUsers(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.UserPermissionResource, "read", permissions.Deny)
+}
+
+func (svc accessControl) FilterUsersWithUnmaskableEmail(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.UserPermissionResource, "unmask.email", permissions.Deny)
+}
+
+func (svc accessControl) FilterUsersWithUnmaskableName(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.UserPermissionResource, "unmask.name", permissions.Deny)
+}
+
 func (svc accessControl) CanUpdateUser(ctx context.Context, u *types.User) bool {
 	return svc.can(ctx, u, "update")
 }
@@ -129,12 +142,20 @@ func (svc accessControl) CanDeleteUser(ctx context.Context, u *types.User) bool 
 	return svc.can(ctx, u, "delete")
 }
 
-func (svc accessControl) CanReadAnyAutomationScript(ctx context.Context) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendWildcard(), "read")
+func (svc accessControl) CanUnmaskEmail(ctx context.Context, u *types.User) bool {
+	return svc.can(ctx, u, "unmask.email")
+}
+
+func (svc accessControl) CanUnmaskName(ctx context.Context, u *types.User) bool {
+	return svc.can(ctx, u, "unmask.name")
 }
 
 func (svc accessControl) CanReadAutomationScript(ctx context.Context, r *automation.Script) bool {
 	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "read")
+}
+
+func (svc accessControl) FilterReadableScripts(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.AutomationScriptPermissionResource, "read", permissions.Deny)
 }
 
 func (svc accessControl) CanUpdateAutomationScript(ctx context.Context, r *automation.Script) bool {
@@ -225,10 +246,6 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 	wl.Set(
 		types.AutomationTriggerPermissionResource,
 		"run",
-	)
-
-	wl.Set(
-		types.ReminderPermissionResource,
 	)
 
 	return wl

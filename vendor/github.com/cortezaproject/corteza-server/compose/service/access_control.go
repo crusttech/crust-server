@@ -17,6 +17,7 @@ type (
 		Can(context.Context, permissions.Resource, permissions.Operation, ...permissions.CheckAccessFunc) bool
 		Grant(context.Context, permissions.Whitelist, ...*permissions.Rule) error
 		FindRulesByRoleID(roleID uint64) (rr permissions.RuleSet)
+		ResourceFilter(context.Context, permissions.Resource, permissions.Operation, permissions.Access) *permissions.ResourceFilter
 	}
 
 	permissionResource interface {
@@ -37,6 +38,8 @@ func (svc accessControl) Effective(ctx context.Context) (ee permissions.Effectiv
 	ee.Push(types.ComposePermissionResource, "access", svc.CanAccess(ctx))
 	ee.Push(types.ComposePermissionResource, "grant", svc.CanGrant(ctx))
 	ee.Push(types.ComposePermissionResource, "namespace.create", svc.CanCreateNamespace(ctx))
+	ee.Push(types.ComposePermissionResource, "settings.read", svc.CanReadSettings(ctx))
+	ee.Push(types.ComposePermissionResource, "settings.manage", svc.CanManageSettings(ctx))
 
 	return
 }
@@ -49,12 +52,24 @@ func (svc accessControl) CanGrant(ctx context.Context) bool {
 	return svc.can(ctx, types.ComposePermissionResource, "grant")
 }
 
+func (svc accessControl) CanReadSettings(ctx context.Context) bool {
+	return svc.can(ctx, types.ComposePermissionResource, "settings.read")
+}
+
+func (svc accessControl) CanManageSettings(ctx context.Context) bool {
+	return svc.can(ctx, types.ComposePermissionResource, "settings.manage")
+}
+
 func (svc accessControl) CanCreateNamespace(ctx context.Context) bool {
 	return svc.can(ctx, types.ComposePermissionResource, "namespace.create")
 }
 
 func (svc accessControl) CanReadNamespace(ctx context.Context, r *types.Namespace) bool {
 	return svc.can(ctx, r, "read", permissions.Allowed)
+}
+
+func (svc accessControl) FilterReadableNamespaces(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.NamespacePermissionResource, "read", permissions.Deny)
 }
 
 func (svc accessControl) CanUpdateNamespace(ctx context.Context, r *types.Namespace) bool {
@@ -79,6 +94,10 @@ func (svc accessControl) CanCreateAutomationScript(ctx context.Context, r *types
 
 func (svc accessControl) CanReadModule(ctx context.Context, r *types.Module) bool {
 	return svc.can(ctx, r, "read")
+}
+
+func (svc accessControl) FilterReadableModules(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.ModulePermissionResource, "read", permissions.Deny)
 }
 
 func (svc accessControl) CanUpdateModule(ctx context.Context, r *types.Module) bool {
@@ -125,6 +144,10 @@ func (svc accessControl) CanReadChart(ctx context.Context, r *types.Chart) bool 
 	return svc.can(ctx, r, "read")
 }
 
+func (svc accessControl) FilterReadableCharts(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.ChartPermissionResource, "read", permissions.Deny)
+}
+
 func (svc accessControl) CanUpdateChart(ctx context.Context, r *types.Chart) bool {
 	return svc.can(ctx, r, "update")
 }
@@ -142,6 +165,10 @@ func (svc accessControl) CanReadPage(ctx context.Context, r *types.Page) bool {
 	return svc.can(ctx, r, "read")
 }
 
+func (svc accessControl) FilterReadablePages(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.PagePermissionResource, "read", permissions.Deny)
+}
+
 func (svc accessControl) CanUpdatePage(ctx context.Context, r *types.Page) bool {
 	return svc.can(ctx, r, "update")
 }
@@ -150,12 +177,12 @@ func (svc accessControl) CanDeletePage(ctx context.Context, r *types.Page) bool 
 	return svc.can(ctx, r, "delete")
 }
 
-func (svc accessControl) CanReadAnyAutomationScript(ctx context.Context) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendWildcard(), "read")
-}
-
 func (svc accessControl) CanReadAutomationScript(ctx context.Context, r *automation.Script) bool {
 	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "read")
+}
+
+func (svc accessControl) FilterReadableScripts(ctx context.Context) *permissions.ResourceFilter {
+	return svc.permissions.ResourceFilter(ctx, types.AutomationScriptPermissionResource, "read", permissions.Deny)
 }
 
 func (svc accessControl) CanUpdateAutomationScript(ctx context.Context, r *automation.Script) bool {
@@ -198,6 +225,8 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"access",
 		"grant",
 		"namespace.create",
+		"settings.read",
+		"settings.manage",
 	)
 
 	wl.Set(

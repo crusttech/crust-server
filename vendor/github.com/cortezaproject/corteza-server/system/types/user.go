@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
+	"github.com/cortezaproject/corteza-server/pkg/rh"
 )
 
 type (
@@ -43,6 +44,8 @@ type (
 	}
 
 	UserFilter struct {
+		UserID       []uint64 `json:"userID"`
+		RoleID       []uint64 `json:"roleID"`
 		Query        string   `json:"query"`
 		Email        string   `json:"email"`
 		Username     string   `json:"username"`
@@ -51,10 +54,19 @@ type (
 		IncDeleted   bool     `json:"incDeleted"`
 		IncSuspended bool     `json:"incSuspended"`
 
-		Page    uint   `json:"page"`
-		PerPage uint   `json:"perPage"`
-		Sort    string `json:"sort"`
-		Count   uint   `json:"count"`
+		Sort string `json:"sort"`
+
+		// Can we use email for searching or is it supposed to be masked for the current user?
+		IsEmailUnmaskable *permissions.ResourceFilter `json:"-"`
+
+		// Can we use name for searching or is it supposed to be masked for the current user?
+		IsNameUnmaskable *permissions.ResourceFilter `json:"-"`
+
+		// Resource permission check filter
+		IsReadable *permissions.ResourceFilter `json:"-"`
+
+		// Standard paging fields & helpers
+		rh.PageFilter
 	}
 
 	UserKind string
