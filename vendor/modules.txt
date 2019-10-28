@@ -13,7 +13,7 @@ github.com/SentimensRG/ctx
 github.com/SentimensRG/ctx/sigctx
 # github.com/beorn7/perks v1.0.0
 github.com/beorn7/perks/quantile
-# github.com/cortezaproject/corteza-server v0.0.0-20191028200743-9f090f355a67 => ../corteza-server
+# github.com/cortezaproject/corteza-server v0.0.0-20191028200743-9f090f355a67
 github.com/cortezaproject/corteza-server/compose
 github.com/cortezaproject/corteza-server/pkg/cli
 github.com/cortezaproject/corteza-server/messaging

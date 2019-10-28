@@ -16,18 +16,16 @@ func main() {
 	cfg := system.Configure()
 	cfg.RootCommandName = "crust-server-system"
 
-	// initServices := cfg.InitServices
-	// cfg.InitServices = func(ctx context.Context, c *cli.Config) {
-	// 	// subscription.Check(context.Background(), "local.cortezaproject.org", "")
-	// 	initServices(ctx, c)
-	// 	subscription.Init(logger.Default(), service.DefaultIntSettings)
-	// }
-
 	cfg.ApiServerPreRun = append(
 		cfg.ApiServerPreRun,
 		func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
-			// subscription.Check(context.Background(), "local.cortezaproject.org", "")
-			subscription.Init(ctx, logger.Default(), service.DefaultIntSettings)
+			if service.CurrentSubscription != nil {
+				// Already initialized
+				return nil
+			}
+
+			subscription.Init(logger.Default(), service.DefaultIntSettings.With(ctx))
+			subscription.UpdateCurrent(subscription.Load())
 			return nil
 		},
 	)
