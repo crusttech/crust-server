@@ -18,36 +18,6 @@ steps:
     - echo "Disabled, no tests"
     - echo make test
 
-- name: crust-server-system
-  image: plugins/docker
-  depends_on: [ 'unit-tests' ]
-  settings:
-    repo: crusttech/crust-server-system
-    auto_tag: true # generate tag names automatically based on git branch and git tag
-    dockerfile: Dockerfile.crust-server-system
-    username: { from_secret: docker_hub_username }
-    password: { from_secret: docker_hub_password }
-
-- name: crust-server-compose
-  image: plugins/docker
-  depends_on: [ 'unit-tests' ]
-  settings:
-    repo: crusttech/crust-server-compose
-    auto_tag: true # generate tag names automatically based on git branch and git tag
-    dockerfile: Dockerfile.crust-server-compose
-    username: { from_secret: docker_hub_username }
-    password: { from_secret: docker_hub_password }
-
-- name: crust-server-messaging
-  depends_on: [ 'unit-tests' ]
-  image: plugins/docker
-  settings:
-    repo: crusttech/crust-server-messaging
-    auto_tag: true # generate tag names automatically based on git branch and git tag
-    dockerfile: Dockerfile.crust-server-messaging
-    username: { from_secret: docker_hub_username }
-    password: { from_secret: docker_hub_password }
-
 - name: crust-server
   image: plugins/docker
   depends_on: [ 'unit-tests' ]
@@ -58,5 +28,47 @@ steps:
     username: { from_secret: docker_hub_username }
     password: { from_secret: docker_hub_password }
 
+- name: crust-server-system
+  image: plugins/docker
+  depends_on: [ 'unit-tests' ]
+  settings:
+    repo: crusttech/crust-server-system
+    auto_tag: true # generate tag names automatically based on git branch and git tag
+    dockerfile: Dockerfile.crust-server-system
+    username: { from_secret: docker_hub_username }
+    password: { from_secret: docker_hub_password }
+  when:
+    ref: { include: [ "refs/tags/20??.*.*", "refs/heads/master" ] }
+    event: [ "push", "tag" ]
+
+- name: crust-server-compose
+  image: plugins/docker
+  depends_on: [ 'unit-tests' ]
+  settings:
+    repo: crusttech/crust-server-compose
+    auto_tag: true # generate tag names automatically based on git branch and git tag
+    dockerfile: Dockerfile.crust-server-compose
+    username: { from_secret: docker_hub_username }
+    password: { from_secret: docker_hub_password }
+  when:
+    ref: { include: [ "refs/tags/20??.*.*", "refs/heads/master" ] }
+    event: [ "push", "tag" ]
+
+- name: crust-server-messaging
+  depends_on: [ 'unit-tests' ]
+  image: plugins/docker
+  settings:
+    repo: crusttech/crust-server-messaging
+    auto_tag: true # generate tag names automatically based on git branch and git tag
+    dockerfile: Dockerfile.crust-server-messaging
+    username: { from_secret: docker_hub_username }
+    password: { from_secret: docker_hub_password }
+  when:
+    ref: { include: [ "refs/tags/20??.*.*", "refs/heads/master" ] }
+    event: [ "push", "tag" ]
+
 trigger:
-  events: [ tag, push ]
+  event:
+    # Pipeline will be executed from branch event,
+    # this ensures we do not run duplicates.
+    exclude: [ "pull_request" ]
