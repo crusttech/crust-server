@@ -24,8 +24,8 @@ func main() {
 				return nil
 			}
 
-			subscription.Init(logger.Default(), service.DefaultIntSettings.With(ctx))
-			subscription.UpdateCurrent(subscription.Load())
+			subscription.Init(logger.Default(), service.DefaultSettings)
+			subscription.UpdateCurrent(subscription.Load(ctx))
 			return nil
 		},
 	)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/cortezaproject/corteza-server/pkg/handle"
 	"github.com/cortezaproject/corteza-server/pkg/logger"
+	"github.com/cortezaproject/corteza-server/pkg/permissions"
 	"github.com/cortezaproject/corteza-server/system/repository"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
@@ -31,11 +32,15 @@ type (
 	}
 
 	roleAccessController interface {
+		CanAccess(context.Context) bool
+
 		CanCreateRole(context.Context) bool
 		CanReadRole(context.Context, *types.Role) bool
 		CanUpdateRole(context.Context, *types.Role) bool
 		CanDeleteRole(context.Context, *types.Role) bool
 		CanManageRoleMembers(context.Context, *types.Role) bool
+
+		FilterReadableRoles(ctx context.Context) *permissions.ResourceFilter
 	}
 
 	RoleService interface {
@@ -44,7 +49,7 @@ type (
 		FindByID(roleID uint64) (*types.Role, error)
 		FindByName(name string) (*types.Role, error)
 		FindByHandle(handle string) (*types.Role, error)
-		Find(filter *types.RoleFilter) ([]*types.Role, error)
+		Find(types.RoleFilter) (types.RoleSet, types.RoleFilter, error)
 
 		Create(role *types.Role) (*types.Role, error)
 		Update(role *types.Role) (*types.Role, error)
@@ -54,6 +59,7 @@ type (
 		Archive(ID uint64) error
 		Unarchive(ID uint64) error
 		Delete(ID uint64) error
+		Undelete(ID uint64) error
 
 		Membership(userID uint64) ([]*types.RoleMember, error)
 		MemberList(roleID uint64) ([]*types.RoleMember, error)
@@ -105,19 +111,21 @@ func (svc role) findByID(roleID uint64) (*types.Role, error) {
 	return role, nil
 }
 
-func (svc role) Find(filter *types.RoleFilter) ([]*types.Role, error) {
-	roles, err := svc.role.Find(filter)
-	if err != nil {
-		return nil, err
-	}
+func (svc role) Find(f types.RoleFilter) (types.RoleSet, types.RoleFilter, error) {
+	f.IsReadable = svc.ac.FilterReadableRoles(svc.ctx)
 
-	ret := []*types.Role{}
-	for _, role := range roles {
-		if svc.ac.CanReadRole(svc.ctx, role) {
-			ret = append(ret, role)
+	if f.Deleted > 0 {
+		// If list with deleted or suspended users is requested
+		// user must have access permissions to system (ie: is admin)
+		//
+		// not the best solution but ATM it allows us to have at least
+		// some kind of control over who can see deleted or archived roles
+		if !svc.ac.CanAccess(svc.ctx) {
+			return nil, f, ErrNoPermissions.withStack()
 		}
 	}
-	return ret, nil
+
+	return svc.role.Find(f)
 }
 
 func (svc role) FindByName(rolename string) (*types.Role, error) {
@@ -186,13 +194,13 @@ func (svc role) Update(mod *types.Role) (t *types.Role, err error) {
 
 func (svc role) UniqueCheck(r *types.Role) (err error) {
 	if r.Handle != "" {
-		if ex, _ := svc.role.FindByHandle(r.Handle); ex.ID > 0 && ex.ID != r.ID {
+		if ex, _ := svc.role.FindByHandle(r.Handle); ex != nil && ex.ID > 0 && ex.ID != r.ID {
 			return ErrRoleHandleNotUnique
 		}
 	}
 
 	if r.Name != "" {
-		if ex, _ := svc.role.FindByName(r.Name); ex.ID > 0 && ex.ID != r.ID {
+		if ex, _ := svc.role.FindByName(r.Name); ex != nil && ex.ID > 0 && ex.ID != r.ID {
 			return ErrRoleNameNotUnique
 		}
 	}
@@ -210,10 +218,20 @@ func (svc role) Delete(roleID uint64) error {
 		return ErrNoPermissions.withStack()
 	}
 
-	// @todo: make history unavailable
-	// @todo: notify users that role has been removed (remove from web UI)
-
 	return svc.role.DeleteByID(roleID)
+}
+
+func (svc role) Undelete(roleID uint64) error {
+	role, err := svc.findByID(roleID)
+	if err != nil {
+		return err
+	}
+
+	if !svc.ac.CanDeleteRole(svc.ctx, role) {
+		return ErrNoPermissions.withStack()
+	}
+
+	return svc.role.UndeleteByID(roleID)
 }
 
 func (svc role) Archive(roleID uint64) error {
@@ -226,8 +244,6 @@ func (svc role) Archive(roleID uint64) error {
 		return ErrNoPermissions.withStack()
 	}
 
-	// @todo: make history unavailable
-	// @todo: notify users that role has been removed (remove from web UI)
 	return svc.role.ArchiveByID(roleID)
 }
 
@@ -241,8 +257,6 @@ func (svc role) Unarchive(roleID uint64) error {
 		return ErrNoPermissions.withStack()
 	}
 
-	// @todo: make history accessible
-	// @todo: notify users that role has been unarchived
 	return svc.role.UnarchiveByID(roleID)
 }
 

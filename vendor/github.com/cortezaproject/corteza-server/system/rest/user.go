@@ -36,17 +36,27 @@ func (User) New() *User {
 
 func (ctrl User) List(ctx context.Context, r *request.UserList) (interface{}, error) {
 	f := types.UserFilter{
-		UserID:       payload.ParseUInt64s(r.UserID),
-		RoleID:       payload.ParseUInt64s(r.RoleID),
-		Query:        r.Query,
-		Email:        r.Email,
-		Username:     r.Username,
-		Handle:       r.Handle,
-		Kind:         r.Kind,
-		IncSuspended: r.IncSuspended,
-		IncDeleted:   r.IncDeleted,
+		UserID:    payload.ParseUInt64s(r.UserID),
+		RoleID:    payload.ParseUInt64s(r.RoleID),
+		Query:     r.Query,
+		Email:     r.Email,
+		Username:  r.Username,
+		Handle:    r.Handle,
+		Kind:      r.Kind,
+		Suspended: rh.FilterState(r.Suspended),
+		Deleted:   rh.FilterState(r.Deleted),
+
+		Sort: rh.NormalizeSortColumns(r.Sort),
 
 		PageFilter: rh.Paging(r.Page, r.PerPage),
+	}
+
+	if r.IncSuspended && f.Suspended == 0 {
+		f.Suspended = rh.FilterStateInclusive
+	}
+
+	if r.IncDeleted && f.Deleted == 0 {
+		f.Deleted = rh.FilterStateInclusive
 	}
 
 	set, filter, err := ctrl.user.With(ctx).Find(f)
@@ -90,6 +100,10 @@ func (ctrl User) Suspend(ctx context.Context, r *request.UserSuspend) (interface
 
 func (ctrl User) Unsuspend(ctx context.Context, r *request.UserUnsuspend) (interface{}, error) {
 	return resputil.OK(), ctrl.user.With(ctx).Unsuspend(r.UserID)
+}
+
+func (ctrl User) Undelete(ctx context.Context, r *request.UserUndelete) (interface{}, error) {
+	return resputil.OK(), ctrl.user.With(ctx).Undelete(r.UserID)
 }
 
 func (ctrl User) SetPassword(ctx context.Context, r *request.UserSetPassword) (interface{}, error) {

@@ -8,12 +8,14 @@ github.com/766b/chi-prometheus
 github.com/99designs/basicauth-go
 # github.com/DestinyWang/cronexpr v0.0.0-20140423231348-a557574d6c02
 github.com/DestinyWang/cronexpr
+# github.com/Masterminds/squirrel v1.1.1-0.20191017225151-12f2162c8d8d
+github.com/Masterminds/squirrel
 # github.com/SentimensRG/ctx v0.0.0-20180729130232-0bfd988c655d
 github.com/SentimensRG/ctx
 github.com/SentimensRG/ctx/sigctx
 # github.com/beorn7/perks v1.0.0
 github.com/beorn7/perks/quantile
-# github.com/cortezaproject/corteza-server v0.0.0-20191028200743-9f090f355a67
+# github.com/cortezaproject/corteza-server v0.0.0-20191212081655-25793a923008
 github.com/cortezaproject/corteza-server/compose
 github.com/cortezaproject/corteza-server/pkg/cli
 github.com/cortezaproject/corteza-server/messaging
@@ -51,6 +53,7 @@ github.com/cortezaproject/corteza-server/pkg/automation/mail
 github.com/cortezaproject/corteza-server/pkg/handle
 github.com/cortezaproject/corteza-server/pkg/permissions
 github.com/cortezaproject/corteza-server/pkg/rand
+github.com/cortezaproject/corteza-server/pkg/rh
 github.com/cortezaproject/corteza-server/system/proto
 github.com/cortezaproject/corteza-server/system/repository
 github.com/cortezaproject/corteza-server/system/types
@@ -71,7 +74,6 @@ github.com/cortezaproject/corteza-server/compose/rest/handlers
 github.com/cortezaproject/corteza-server/compose/rest/request
 github.com/cortezaproject/corteza-server/pkg/mime
 github.com/cortezaproject/corteza-server/pkg/payload
-github.com/cortezaproject/corteza-server/pkg/rh
 github.com/cortezaproject/corteza-server/compose/proto
 github.com/cortezaproject/corteza-server/pkg/store
 github.com/cortezaproject/corteza-server/pkg/store/minio
@@ -84,10 +86,10 @@ github.com/cortezaproject/corteza-server/messaging/rest/request
 github.com/cortezaproject/corteza-server/pkg/payload/outgoing
 github.com/cortezaproject/corteza-server/pkg/organization
 github.com/cortezaproject/corteza-server/pkg/payload/incoming
+github.com/cortezaproject/corteza-server/pkg/ql
 github.com/cortezaproject/corteza-server/system/db/mysql
 github.com/cortezaproject/corteza-server/system/rest/handlers
 github.com/cortezaproject/corteza-server/system/rest/request
-github.com/cortezaproject/corteza-server/compose/repository/ql
 github.com/cortezaproject/corteza-server/pkg/count
 # github.com/crusttech/go-oidc v0.0.0-20180918092017-982855dad3e1
 github.com/crusttech/go-oidc
@@ -309,8 +311,6 @@ google.golang.org/grpc/balancer/base
 google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/internal/syscall
-# gopkg.in/Masterminds/squirrel.v1 v1.1.0 => github.com/Masterminds/squirrel v1.1.0
-gopkg.in/Masterminds/squirrel.v1
 # gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
 gopkg.in/alexcesaro/quotedprintable.v3
 # gopkg.in/ini.v1 v1.42.0

@@ -19,7 +19,7 @@ func Import(ctx context.Context, ff ...io.Reader) (err error) {
 		aux   interface{}
 	)
 
-	roles, err = service.DefaultRole.With(ctx).Find(&types.RoleFilter{})
+	roles, _, err = service.DefaultRole.With(ctx).Find(types.RoleFilter{})
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func Import(ctx context.Context, ff ...io.Reader) (err error) {
 		ctx,
 		service.DefaultRole.With(ctx),
 		service.DefaultAccessControl,
-		service.DefaultSettings.With(ctx),
+		service.DefaultSettings,
 		roles,
 	)
 }

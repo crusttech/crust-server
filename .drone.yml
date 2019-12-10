@@ -1,7 +1,3 @@
-workspace:
-  base: /go/src
-  path: github.com/crusttech/crust
-
 kind: pipeline
 name: docker image build
 
@@ -13,10 +9,12 @@ steps:
     CGO_ENABLED: 0
     GOOS: linux
     GOARCH: amd64
-    CI: circleci
   commands:
-    - echo "Disabled, no tests"
-    - echo make test
+    # no special unit tests, just test-build all binaries
+    - go build cmd/monolith/main.go
+    - go build cmd/compose/main.go
+    - go build cmd/system/main.go
+    - go build cmd/messaging/main.go
 
 - name: crust-server
   image: plugins/docker

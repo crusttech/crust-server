@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
+	"github.com/cortezaproject/corteza-server/pkg/rh"
 )
 
 type (
@@ -19,7 +20,35 @@ type (
 	}
 
 	RoleFilter struct {
-		Query string
+		RoleID   []uint64 `json:"roleID"`
+		MemberID uint64   `json:"memberID"`
+
+		Query string `json:"query"`
+
+		Handle string `json:"handle"`
+		Name   string `json:"name"`
+
+		Deleted  rh.FilterState `json:"deleted"`
+		Archived rh.FilterState `json:"archived"`
+
+		Sort string `json:"sort"`
+
+		// Standard paging fields & helpers
+		rh.PageFilter
+
+		// Resource permission check filter
+		IsReadable *permissions.ResourceFilter `json:"-"`
+	}
+
+	RoleMetrics struct {
+		Total         uint   `json:"total"`
+		Valid         uint   `json:"valid"`
+		Deleted       uint   `json:"deleted"`
+		Archived      uint   `json:"archived"`
+		DailyCreated  []uint `json:"dailyCreated"`
+		DailyDeleted  []uint `json:"dailyDeleted"`
+		DailyUpdated  []uint `json:"dailyUpdated"`
+		DailyArchived []uint `json:"dailyArchived"`
 	}
 )
 

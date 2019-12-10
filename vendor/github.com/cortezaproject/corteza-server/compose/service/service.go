@@ -7,12 +7,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/cortezaproject/corteza-server/compose/repository"
+	"github.com/cortezaproject/corteza-server/compose/types"
 	"github.com/cortezaproject/corteza-server/pkg/auth"
 	"github.com/cortezaproject/corteza-server/pkg/automation"
 	"github.com/cortezaproject/corteza-server/pkg/automation/corredor"
 	"github.com/cortezaproject/corteza-server/pkg/cli/options"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
-	internalSettings "github.com/cortezaproject/corteza-server/pkg/settings"
+	"github.com/cortezaproject/corteza-server/pkg/settings"
 	"github.com/cortezaproject/corteza-server/pkg/store"
 	"github.com/cortezaproject/corteza-server/pkg/store/minio"
 	"github.com/cortezaproject/corteza-server/pkg/store/plain"
@@ -43,8 +44,7 @@ var (
 
 	DefaultLogger *zap.Logger
 
-	DefaultInternalSettings internalSettings.Service
-	DefaultSettings         SettingsService
+	DefaultSettings settings.Service
 
 	// DefaultPermissions Retrieves & stores permissions
 	DefaultPermissions permissionServicer
@@ -64,6 +64,9 @@ var (
 	// DefaultAutomationRunner runs automation scripts by listening to triggerManager and invoking Corredor service
 	DefaultAutomationRunner automationRunner
 
+	// CurrentSettings represents current compose settings
+	CurrentSettings = &types.Settings{}
+
 	DefaultNamespace     NamespaceService
 	DefaultImportSession ImportSessionService
 	DefaultRecord        RecordService
@@ -82,7 +85,25 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 
 	DefaultLogger = log.Named("service")
 
-	DefaultInternalSettings = internalSettings.NewService(internalSettings.NewRepository(repository.DB(ctx), "compose_settings"))
+	if DefaultPermissions == nil {
+		// Do not override permissions service stored under DefaultPermissions
+		// to allow integration tests to inject own permission service
+		DefaultPermissions = permissions.Service(ctx, DefaultLogger, db, "compose_permission_rules")
+	}
+	DefaultAccessControl = AccessControl(DefaultPermissions)
+
+	DefaultSettings = settings.NewService(
+		settings.NewRepository(repository.DB(ctx), "compose_settings"),
+		DefaultLogger,
+		DefaultAccessControl,
+		CurrentSettings,
+	)
+
+	// Run initial update of current settings with super-user credentials
+	err = DefaultSettings.UpdateCurrent(auth.SetSuperUserContext(ctx))
+	if err != nil {
+		return
+	}
 
 	if DefaultStore == nil {
 		if c.Storage.MinioEndpoint != "" {
@@ -115,14 +136,6 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 			return err
 		}
 	}
-
-	// Permissions, access control
-	if DefaultPermissions == nil {
-		DefaultPermissions = permissions.Service(ctx, DefaultLogger, db, "compose_permission_rules")
-	}
-	DefaultAccessControl = AccessControl(DefaultPermissions)
-
-	DefaultSettings = Settings(ctx, DefaultInternalSettings)
 
 	DefaultNamespace = Namespace()
 	DefaultModule = Module()

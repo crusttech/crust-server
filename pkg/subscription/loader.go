@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	"context"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -16,8 +17,8 @@ type (
 	// We are using settings backend for storing subscription key
 	//  - crust-subscription.jet
 	settingsGetterSetter interface {
-		Get(string, uint64) (*settings.Value, error)
-		Set(*settings.Value) error
+		Get(context.Context, string, uint64) (*settings.Value, error)
+		Set(context.Context, *settings.Value) error
 	}
 )
 
@@ -55,13 +56,13 @@ func Init(l *zap.Logger, ss settingsGetterSetter) {
 	settingsSvc = ss
 }
 
-func Load() *Claims {
-	if v, err := settingsSvc.Get(settingSubscriptionJwtKey, 0); err != nil {
+func Load(ctx context.Context) *Claims {
+	if v, err := settingsSvc.Get(ctx, settingSubscriptionJwtKey, 0); err != nil {
 		logger.Error("could not load subscription JWT key", zap.Error(err))
 		return nil
 	} else if v == nil || v.String() == "" {
 		logger.Info("subscription value missing", zap.String("name", settingSubscriptionJwtKey))
-		return genericTrial()
+		return genericTrial(ctx)
 	} else {
 		return parse(v.String())
 	}
@@ -101,7 +102,7 @@ func parse(subval string) *Claims {
 // trial expires
 //
 // This function is called only when no (other) subscription key setting is found
-func genericTrial() *Claims {
+func genericTrial(ctx context.Context) *Claims {
 	const expDateFormat = "2006-01-02"
 
 	var (
@@ -109,7 +110,7 @@ func genericTrial() *Claims {
 		expDate   time.Time
 	)
 
-	if v, err := settingsSvc.Get(settingSubscriptionTrialKey, 0); err != nil {
+	if v, err := settingsSvc.Get(ctx, settingSubscriptionTrialKey, 0); err != nil {
 		logger.Error("could not load subscription trial", zap.Error(err))
 		return nil
 	} else if v != nil || v.String() != "" {
@@ -134,7 +135,7 @@ func genericTrial() *Claims {
 	if saveTrial {
 		v := &settings.Value{Name: settingSubscriptionTrialKey}
 		_ = v.SetValue(expDate.Format(expDateFormat))
-		if err := settingsSvc.Set(v); err != nil {
+		if err := settingsSvc.Set(ctx, v); err != nil {
 			logger.Error("could not save subscription trial", zap.Error(err))
 			return nil
 		}

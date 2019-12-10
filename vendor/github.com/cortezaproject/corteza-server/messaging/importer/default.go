@@ -20,7 +20,7 @@ func Import(ctx context.Context, ff ...io.Reader) (err error) {
 		aux interface{}
 	)
 
-	cc, err = service.DefaultChannel.With(ctx).Find(&types.ChannelFilter{})
+	cc, _, err = service.DefaultChannel.With(ctx).Find(types.ChannelFilter{})
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func Import(ctx context.Context, ff ...io.Reader) (err error) {
 		ctx,
 		service.DefaultChannel.With(ctx),
 		service.DefaultAccessControl,
-		service.DefaultSettings.With(ctx),
+		service.DefaultSettings,
 		roles,
 	)
 }

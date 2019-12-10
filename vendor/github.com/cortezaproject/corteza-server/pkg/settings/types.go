@@ -76,6 +76,14 @@ func (v *Value) Bool() (out bool) {
 	return
 }
 
+func (v *Value) Eq(c *Value) bool {
+	return v != nil &&
+		c != nil &&
+		v.Name == c.Name &&
+		v.OwnedBy == c.OwnedBy &&
+		v.Value.String() == c.Value.String()
+}
+
 func (set ValueSet) KV() KV {
 	m := KV{}
 
@@ -133,9 +141,9 @@ func (kv KV) CutPrefix(prefix string) KV {
 	return out
 }
 
-// Decode is a helper function on KV that calls Decode() and passes on the dst
+// DecodeKV is a helper function on KV that calls DecodeKV() and passes on the dst
 func (kv KV) Decode(dst interface{}) error {
-	return Decode(kv, dst)
+	return DecodeKV(kv, dst)
 }
 
 // Replace finds and updates existing or appends new value
@@ -176,7 +184,7 @@ input:
 				continue
 			}
 
-			if s.String() == i.String() {
+			if s.Eq(i) {
 				// Value did not change, continue with next input set
 				continue input
 			}
@@ -185,8 +193,21 @@ input:
 			break
 		}
 
-		// Hande changed or missing value
+		// Handle changed or missing value
 		out = append(out, i)
+	}
+
+	return
+}
+
+// New returns all new values (that do not exist in the original set)
+func (set ValueSet) New(in ValueSet) (out ValueSet) {
+	org := set.KV()
+
+	for _, v := range in {
+		if !org.Has(v.Name) {
+			out = append(out, v)
+		}
 	}
 
 	return

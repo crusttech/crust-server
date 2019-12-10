@@ -8,16 +8,23 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
+	"github.com/cortezaproject/corteza-server/pkg/auth"
 	"github.com/cortezaproject/corteza-server/pkg/cli"
 	"github.com/cortezaproject/corteza-server/pkg/cli/options"
 	"github.com/cortezaproject/corteza-server/system/auth/external"
-	"github.com/cortezaproject/corteza-server/system/service"
+	"github.com/cortezaproject/corteza-server/system/types"
 )
 
+// Provisions OIDC providers from PROVISION_OIDC_PROVIDER env variable
+//
+// Env variable should contains space delimited pairs of providers (<name> <provider> ....)
 func oidcAutoDiscovery(ctx context.Context, cmd *cobra.Command, c *cli.Config) (err error) {
 	var provider = strings.TrimSpace(options.EnvString("", "PROVISION_OIDC_PROVIDER", ""))
 
-	c.Log.Debug("OIDC auto discovery provision", zap.String("providers", provider))
+	c.Log.Debug("OIDC auto discovery provision",
+		zap.String("envkey", "PROVISION_OIDC_PROVIDER"),
+		zap.String("providers", provider),
+	)
 
 	if len(provider) == 0 {
 		return
@@ -27,7 +34,7 @@ func oidcAutoDiscovery(ctx context.Context, cmd *cobra.Command, c *cli.Config) (
 		providers  = strings.Split(provider, " ")
 		plen       = len(providers)
 		name, purl string
-		eap        *service.AuthSettingsExternalAuthProvider
+		eap        *types.ExternalAuthProvider
 	)
 
 	if plen%2 == 1 {
@@ -82,7 +89,7 @@ func authAddExternals(ctx context.Context, cmd *cobra.Command, c *cli.Config) (e
 
 		pp []string
 
-		eap service.AuthSettingsExternalAuthProvider
+		eap *types.ExternalAuthProvider
 	)
 
 	for _, kind := range kinds {
@@ -93,7 +100,7 @@ func authAddExternals(ctx context.Context, cmd *cobra.Command, c *cli.Config) (e
 			continue
 		}
 
-		eap = service.AuthSettingsExternalAuthProvider{Enabled: true}
+		eap = &types.ExternalAuthProvider{Enabled: true}
 
 		if kind == "oidc" {
 			pp = strings.SplitN(p, " ", 4)
@@ -101,16 +108,18 @@ func authAddExternals(ctx context.Context, cmd *cobra.Command, c *cli.Config) (e
 			// Spread name, issuer-url, key and secret from provision string for OIDC provider
 			name, eap.IssuerUrl, eap.Key, eap.Secret = pp[0], pp[1], pp[2], pp[3]
 
-			name = external.OIDC_PROVIDER_PREFIX + name
+			eap.Handle = external.OIDC_PROVIDER_PREFIX + name
 		} else {
 			pp = strings.SplitN(p, " ", 2)
 
 			// Spread key and secret from provision string
 			eap.Key, eap.Secret = pp[0], pp[1]
-			name = kind
+			eap.Handle = kind
 		}
 
-		_ = external.AddProvider(name, &eap, false)
+		ctx = auth.SetSuperUserContext(ctx)
+
+		_ = external.AddProvider(ctx, eap, false)
 	}
 
 	return

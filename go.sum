@@ -18,6 +18,8 @@ github.com/DestinyWang/cronexpr v0.0.0-20140423231348-a557574d6c02 h1:RYr0de1Y6g
 github.com/DestinyWang/cronexpr v0.0.0-20140423231348-a557574d6c02/go.mod h1:MgxEIF6QMQcVlF8dU9fH1qlPpJmtNFs8aLzRgj6fs+w=
 github.com/Masterminds/squirrel v1.1.0 h1:baP1qLdoQCeTw3ifCdOq2dkYc6vGcmRdaociKLbEJXs=
 github.com/Masterminds/squirrel v1.1.0/go.mod h1:yaPeOnPG5ZRwL9oKdTsO/prlkPbXWZlRVMQ/gGlzIuA=
+github.com/Masterminds/squirrel v1.1.1-0.20191017225151-12f2162c8d8d h1:5ocAvSd8xUzrwz0ZTZrSWFLhYTwdnXBxlIJeVIkO5y8=
+github.com/Masterminds/squirrel v1.1.1-0.20191017225151-12f2162c8d8d/go.mod h1:yaPeOnPG5ZRwL9oKdTsO/prlkPbXWZlRVMQ/gGlzIuA=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PaesslerAG/gval v0.1.1/go.mod h1:y/nm5yEyTeX6av0OfKJNp9rBNj2XrGhAf5+v24IBN1I=
 github.com/PaesslerAG/gval v1.0.0/go.mod h1:y/nm5yEyTeX6av0OfKJNp9rBNj2XrGhAf5+v24IBN1I=
@@ -35,6 +37,16 @@ github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghf
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cortezaproject/corteza-server v0.0.0-20191028200743-9f090f355a67 h1:DmeHZu/ozP9pZbs0azEJTTEykMCZBY/gqN+CaB20eEY=
 github.com/cortezaproject/corteza-server v0.0.0-20191028200743-9f090f355a67/go.mod h1:MKwY/PRry0dATtD1ynPTwoKGk0cn/XXewDhjRwaW1Vs=
+github.com/cortezaproject/corteza-server v0.0.0-20191202102755-ab77e92c14a0 h1:CNQqNknO9ox1KJAbavMHomZkQPerDJw8DRhHpqs6YBs=
+github.com/cortezaproject/corteza-server v0.0.0-20191202102755-ab77e92c14a0/go.mod h1:Lk+hbAz73pdB7Xhdk81hlQmdnf162pRRnUsg92ux49Q=
+github.com/cortezaproject/corteza-server v0.0.0-20191205140802-6950a3730548 h1:qzPEKeI5GewT5Zm3AsXHWyqjp8djd7KAhMARnQCCKBI=
+github.com/cortezaproject/corteza-server v0.0.0-20191205140802-6950a3730548/go.mod h1:Lk+hbAz73pdB7Xhdk81hlQmdnf162pRRnUsg92ux49Q=
+github.com/cortezaproject/corteza-server v0.0.0-20191210173553-706b38eab584 h1:0IYYQVay9RDebHy2LAjUtkadowBsRnEXmnh4kC8Sr8c=
+github.com/cortezaproject/corteza-server v0.0.0-20191210173553-706b38eab584/go.mod h1:Lk+hbAz73pdB7Xhdk81hlQmdnf162pRRnUsg92ux49Q=
+github.com/cortezaproject/corteza-server v0.0.0-20191210230701-7b47ee0c9e72 h1:pXe/4P2mZTn0luZdkRt4fYwdSfq9MAFA3ThXWy/ro7k=
+github.com/cortezaproject/corteza-server v0.0.0-20191210230701-7b47ee0c9e72/go.mod h1:Lk+hbAz73pdB7Xhdk81hlQmdnf162pRRnUsg92ux49Q=
+github.com/cortezaproject/corteza-server v0.0.0-20191212081655-25793a923008 h1:v7w0AHsLxo4s0s6SAhaeX9lVyj7bxTV3tN5HE7ewT3U=
+github.com/cortezaproject/corteza-server v0.0.0-20191212081655-25793a923008/go.mod h1:Lk+hbAz73pdB7Xhdk81hlQmdnf162pRRnUsg92ux49Q=
 github.com/crusttech/go-oidc v0.0.0-20180918092017-982855dad3e1 h1:V2GKd4ImRY9lFUu3TclHNmqgJCADdA7muym9JuVEPlY=
 github.com/crusttech/go-oidc v0.0.0-20180918092017-982855dad3e1/go.mod h1:2LVBu240CBZgYkGOSRx733tkh9QUNcH+fIqmeAsdrds=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

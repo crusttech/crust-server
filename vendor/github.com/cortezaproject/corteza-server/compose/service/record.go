@@ -207,8 +207,6 @@ func (svc record) Report(namespaceID, moduleID uint64, metrics, dimensions, filt
 }
 
 func (svc record) Find(filter types.RecordFilter) (set types.RecordSet, f types.RecordFilter, err error) {
-	filter.PageFilter.NormalizePerPageWithDefaults()
-
 	var m *types.Module
 	if m, err = svc.loadModule(filter.NamespaceID, filter.ModuleID); err != nil {
 		return
@@ -425,6 +423,11 @@ func (svc record) DeleteByID(namespaceID, recordID uint64) (err error) {
 
 	if !svc.ac.CanDeleteRecord(svc.ctx, m) {
 		return ErrNoDeletePermissions.withStack()
+	}
+
+	// preloadValues should be pressent to load values for automation scripts
+	if err = svc.preloadValues(m, r); err != nil {
+		return
 	}
 
 	if err = svc.sr.BeforeRecordDelete(svc.ctx, ns, m, r); err != nil {

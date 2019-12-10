@@ -10,7 +10,7 @@ import (
 	"github.com/cortezaproject/corteza-server/pkg/automation/corredor"
 	"github.com/cortezaproject/corteza-server/pkg/cli/options"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
-	internalSettings "github.com/cortezaproject/corteza-server/pkg/settings"
+	"github.com/cortezaproject/corteza-server/pkg/settings"
 	"github.com/cortezaproject/corteza-server/system/repository"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
@@ -61,8 +61,8 @@ var (
 	// DefaultPermissions Retrieves & stores permissions
 	DefaultPermissions permissionServicer
 
-	DefaultIntSettings internalSettings.Service
-	DefaultSettings    SettingsService
+	// DefaultSettings controls system's settings
+	DefaultSettings settings.Service
 
 	// DefaultAccessControl Access control checking
 	DefaultAccessControl *accessControl
@@ -80,8 +80,9 @@ var (
 	DefaultAutomationRunner automationRunner
 
 	DefaultAuthNotification AuthNotificationService
-	DefaultAuthSettings     *AuthSettings
-	DefaultSystemSettings   *types.Settings
+
+	// CurrentSettings represents current system settings
+	CurrentSettings = &types.Settings{}
 
 	DefaultSink *sink
 
@@ -96,31 +97,32 @@ var (
 func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 	DefaultLogger = log.Named("service")
 
-	DefaultIntSettings = internalSettings.NewService(internalSettings.NewRepository(repository.DB(ctx), "sys_settings"))
 	if DefaultPermissions == nil {
+		// Do not override permissions service stored under DefaultPermissions
+		// to allow integration tests to inject own permission service
 		DefaultPermissions = permissions.Service(ctx, DefaultLogger, repository.DB(ctx), "sys_permission_rules")
 	}
 
 	DefaultAccessControl = AccessControl(DefaultPermissions)
 
-	DefaultSettings = Settings(ctx, DefaultIntSettings)
+	DefaultSettings = settings.NewService(
+		settings.NewRepository(repository.DB(ctx), "sys_settings"),
+		DefaultLogger,
+		DefaultAccessControl,
+		CurrentSettings,
+	)
+
+	// Run initial update of current settings with super-user credentials
+	err = DefaultSettings.UpdateCurrent(intAuth.SetSuperUserContext(ctx))
+	if err != nil {
+		return
+	}
 
 	DefaultUser = User(ctx)
 	DefaultRole = Role(ctx)
 	DefaultOrganisation = Organisation(ctx)
 	DefaultApplication = Application(ctx)
 	DefaultReminder = Reminder(ctx)
-
-	// Authentication helpers & services
-	DefaultAuthSettings, err = DefaultSettings.LoadAuthSettings()
-	if err != nil {
-		return
-	}
-
-	DefaultSystemSettings, err = DefaultSettings.LoadSystemSettings()
-	if err != nil {
-		return
-	}
 
 	DefaultAuthNotification = AuthNotification(ctx)
 	DefaultAuth = Auth(ctx)

@@ -33,7 +33,7 @@ type (
 		ctx    context.Context
 		logger *zap.Logger
 
-		settings *AuthSettings
+		settings *types.Settings
 
 		auth         userAuth
 		subscription userSubscriptionChecker
@@ -90,6 +90,7 @@ type (
 		Delete(id uint64) error
 		Suspend(id uint64) error
 		Unsuspend(id uint64) error
+		Undelete(id uint64) error
 
 		SetPassword(userID uint64, password string) error
 	}
@@ -115,7 +116,7 @@ func (svc user) With(ctx context.Context) UserService {
 		logger: svc.logger,
 
 		ac:       DefaultAccessControl,
-		settings: DefaultAuthSettings,
+		settings: CurrentSettings,
 		auth:     DefaultAuth,
 
 		subscription: CurrentSubscription,
@@ -164,9 +165,12 @@ func (svc user) proc(u *types.User, err error) (*types.User, error) {
 }
 
 func (svc user) Find(f types.UserFilter) (types.UserSet, types.UserFilter, error) {
-	if f.IncDeleted || f.IncSuspended {
-		// If list with deleted or suspended users is requested
+	if f.Deleted > 0 {
+		// If list with deleted users is requested
 		// user must have access permissions to system (ie: is admin)
+		//
+		// not the best solution but ATM it allows us to have at least
+		// some kind of control over who can see deleted users
 		if !svc.ac.CanAccess(svc.ctx) {
 			return nil, f, ErrNoPermissions.withStack()
 		}
@@ -265,19 +269,19 @@ func (svc user) Update(mod *types.User) (u *types.User, err error) {
 
 func (svc user) UniqueCheck(u *types.User) (err error) {
 	if u.Email != "" {
-		if ex, _ := svc.user.FindByEmail(u.Email); ex.ID > 0 && ex.ID != u.ID {
+		if ex, _ := svc.user.FindByEmail(u.Email); ex != nil && ex.ID > 0 && ex.ID != u.ID {
 			return ErrUserEmailNotUnique
 		}
 	}
 
 	if u.Username != "" {
-		if ex, _ := svc.user.FindByUsername(u.Username); ex.ID > 0 && ex.ID != u.ID {
+		if ex, _ := svc.user.FindByUsername(u.Username); ex != nil && ex.ID > 0 && ex.ID != u.ID {
 			return ErrUserUsernameNotUnique
 		}
 	}
 
 	if u.Handle != "" {
-		if ex, _ := svc.user.FindByHandle(u.Handle); ex.ID > 0 && ex.ID != u.ID {
+		if ex, _ := svc.user.FindByHandle(u.Handle); ex != nil && ex.ID > 0 && ex.ID != u.ID {
 			return ErrUserHandleNotUnique
 		}
 	}
@@ -306,6 +310,25 @@ func (svc user) Delete(ID uint64) (err error) {
 
 	return svc.db.Transaction(func() (err error) {
 		return svc.user.DeleteByID(ID)
+	})
+}
+
+func (svc user) Undelete(ID uint64) (err error) {
+	if ID == 0 {
+		return ErrInvalidID
+	}
+
+	var u *types.User
+	if u, err = svc.user.FindByID(ID); err != nil {
+		return
+	}
+
+	if !svc.ac.CanDeleteUser(svc.ctx, u) {
+		return ErrNoPermissions.withStack()
+	}
+
+	return svc.db.Transaction(func() (err error) {
+		return svc.user.UndeleteByID(ID)
 	})
 }
 
@@ -353,7 +376,7 @@ func (svc user) Unsuspend(ID uint64) (err error) {
 func (svc user) SetPassword(userID uint64, newPassword string) (err error) {
 	log := svc.log(svc.ctx, zap.Uint64("userID", userID))
 
-	if !svc.settings.InternalEnabled {
+	if !svc.settings.Auth.Internal.Enabled {
 		return errors.New("internal authentication disabled")
 	}
 

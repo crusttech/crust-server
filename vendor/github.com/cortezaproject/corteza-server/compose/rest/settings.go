@@ -3,20 +3,15 @@ package rest
 import (
 	"context"
 
-	"github.com/pkg/errors"
-	"github.com/titpetric/factory/resputil"
-
 	"github.com/cortezaproject/corteza-server/compose/rest/request"
 	"github.com/cortezaproject/corteza-server/compose/service"
 	"github.com/cortezaproject/corteza-server/pkg/settings"
 )
 
-var _ = errors.Wrap
-
 type (
 	Settings struct {
 		svc struct {
-			settings service.SettingsService
+			settings settings.Service
 		}
 	}
 )
@@ -29,7 +24,7 @@ func (Settings) New() *Settings {
 }
 
 func (ctrl *Settings) List(ctx context.Context, r *request.SettingsList) (interface{}, error) {
-	if vv, err := ctrl.svc.settings.With(ctx).FindByPrefix(r.Prefix); err != nil {
+	if vv, err := ctrl.svc.settings.FindByPrefix(ctx, r.Prefix); err != nil {
 		return nil, err
 	} else {
 		return vv, err
@@ -37,11 +32,7 @@ func (ctrl *Settings) List(ctx context.Context, r *request.SettingsList) (interf
 }
 
 func (ctrl *Settings) Update(ctx context.Context, r *request.SettingsUpdate) (interface{}, error) {
-	values := settings.ValueSet{}
-
-	if err := r.Values.Unmarshal(&values); err != nil {
-		return nil, err
-	} else if err := ctrl.svc.settings.With(ctx).BulkSet(values); err != nil {
+	if err := ctrl.svc.settings.BulkSet(ctx, r.Values); err != nil {
 		return nil, err
 	} else {
 		return true, nil
@@ -49,13 +40,13 @@ func (ctrl *Settings) Update(ctx context.Context, r *request.SettingsUpdate) (in
 }
 
 func (ctrl *Settings) Get(ctx context.Context, r *request.SettingsGet) (interface{}, error) {
-	if v, err := ctrl.svc.settings.With(ctx).Get(r.Key, r.OwnerID); err != nil {
+	if v, err := ctrl.svc.settings.Get(ctx, r.Key, r.OwnerID); err != nil {
 		return nil, err
 	} else {
 		return v, nil
 	}
 }
 
-func (ctrl *Settings) Set(ctx context.Context, r *request.SettingsSet) (interface{}, error) {
-	return resputil.OK(), errors.New("Not implemented: Settings.set")
+func (ctrl *Settings) Current(ctx context.Context, r *request.SettingsCurrent) (interface{}, error) {
+	return service.CurrentSettings, nil
 }

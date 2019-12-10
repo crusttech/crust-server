@@ -193,11 +193,20 @@ checkToken:
 		list = append(list, String{Value: t.literal})
 		goto next
 	case PARENTHESIS_OPEN:
+		depth := p.level
 		p.level++
 		if sub, err := p.parseExpr(p.nextToken()); err != nil {
 			return nil, err
 		} else {
 			list = append(list, sub)
+		}
+
+		// Allow parent level to continue parsing.
+		// Example: ((A) AND (B))
+		// +1 since PARENTHESIS_CLOSE decrease level
+		if (p.level + 1) != depth {
+			p.nextToken()
+			goto next
 		}
 	default:
 		return nil, fmt.Errorf("unexpected token while parsing expression (%v)", t)
@@ -217,7 +226,18 @@ func (p *Parser) parseIdent(t Token) (list ASTNode, err error) {
 		}
 	}
 
-	return p.OnIdent(Ident{Value: t.literal})
+	i := Ident{Value: t.literal}
+
+	if p.peekToken(1).Is(DOT) {
+		p.nextToken()
+		i.Value += "."
+		l2 := p.nextToken()
+		if l2.Is(IDENT) {
+			i.Value += l2.literal
+		}
+	}
+
+	return p.OnIdent(i)
 }
 
 func (p *Parser) parseSet() (list ASTSet, err error) {

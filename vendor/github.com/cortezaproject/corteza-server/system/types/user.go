@@ -44,15 +44,16 @@ type (
 	}
 
 	UserFilter struct {
-		UserID       []uint64 `json:"userID"`
-		RoleID       []uint64 `json:"roleID"`
-		Query        string   `json:"query"`
-		Email        string   `json:"email"`
-		Username     string   `json:"username"`
-		Handle       string   `json:"handle"`
-		Kind         UserKind `json:"kind"`
-		IncDeleted   bool     `json:"incDeleted"`
-		IncSuspended bool     `json:"incSuspended"`
+		UserID   []uint64 `json:"userID"`
+		RoleID   []uint64 `json:"roleID"`
+		Query    string   `json:"query"`
+		Email    string   `json:"email"`
+		Username string   `json:"username"`
+		Handle   string   `json:"handle"`
+		Kind     UserKind `json:"kind"`
+
+		Deleted   rh.FilterState `json:"deleted"`
+		Suspended rh.FilterState `json:"suspended"`
 
 		Sort string `json:"sort"`
 
@@ -70,6 +71,17 @@ type (
 	}
 
 	UserKind string
+
+	UserMetrics struct {
+		Total          uint   `json:"total"`
+		Valid          uint   `json:"valid"`
+		Deleted        uint   `json:"deleted"`
+		Suspended      uint   `json:"suspended"`
+		DailyCreated   []uint `json:"dailyCreated"`
+		DailyDeleted   []uint `json:"dailyDeleted"`
+		DailyUpdated   []uint `json:"dailyUpdated"`
+		DailySuspended []uint `json:"dailySuspended"`
+	}
 )
 
 const (
