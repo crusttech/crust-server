@@ -8,6 +8,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"go.uber.org/zap"
 
+	"github.com/cortezaproject/corteza-server/pkg/auth"
 	"github.com/cortezaproject/corteza-server/pkg/settings"
 )
 
@@ -57,6 +58,8 @@ func Init(l *zap.Logger, ss settingsGetterSetter) {
 }
 
 func Load(ctx context.Context) *Claims {
+	ctx = auth.SetSuperUserContext(ctx)
+
 	if v, err := settingsSvc.Get(ctx, settingSubscriptionJwtKey, 0); err != nil {
 		logger.Error("could not load subscription JWT key", zap.Error(err))
 		return nil
@@ -109,6 +112,8 @@ func genericTrial(ctx context.Context) *Claims {
 		saveTrial bool
 		expDate   time.Time
 	)
+
+	ctx = auth.SetSuperUserContext(ctx)
 
 	if v, err := settingsSvc.Get(ctx, settingSubscriptionTrialKey, 0); err != nil {
 		logger.Error("could not load subscription trial", zap.Error(err))
