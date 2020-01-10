@@ -47,6 +47,8 @@ github.com/cortezaproject/corteza-server v0.0.0-20191210230701-7b47ee0c9e72 h1:p
 github.com/cortezaproject/corteza-server v0.0.0-20191210230701-7b47ee0c9e72/go.mod h1:Lk+hbAz73pdB7Xhdk81hlQmdnf162pRRnUsg92ux49Q=
 github.com/cortezaproject/corteza-server v0.0.0-20191212081655-25793a923008 h1:v7w0AHsLxo4s0s6SAhaeX9lVyj7bxTV3tN5HE7ewT3U=
 github.com/cortezaproject/corteza-server v0.0.0-20191212081655-25793a923008/go.mod h1:Lk+hbAz73pdB7Xhdk81hlQmdnf162pRRnUsg92ux49Q=
+github.com/cortezaproject/corteza-server v0.0.0-20200110160908-6f0a7efb96b4 h1:nKlOcmLKnP0BLMfhTokwtNe50+iuU/sB5duF82B8WXI=
+github.com/cortezaproject/corteza-server v0.0.0-20200110160908-6f0a7efb96b4/go.mod h1:Lk+hbAz73pdB7Xhdk81hlQmdnf162pRRnUsg92ux49Q=
 github.com/crusttech/go-oidc v0.0.0-20180918092017-982855dad3e1 h1:V2GKd4ImRY9lFUu3TclHNmqgJCADdA7muym9JuVEPlY=
 github.com/crusttech/go-oidc v0.0.0-20180918092017-982855dad3e1/go.mod h1:2LVBu240CBZgYkGOSRx733tkh9QUNcH+fIqmeAsdrds=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

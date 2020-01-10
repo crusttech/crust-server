@@ -3,7 +3,7 @@ module github.com/crusttech/crust-server
 go 1.12
 
 require (
-	github.com/cortezaproject/corteza-server v0.0.0-20191212081655-25793a923008
+	github.com/cortezaproject/corteza-server v0.0.0-20200110160908-6f0a7efb96b4
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/pretty v0.1.0 // indirect
