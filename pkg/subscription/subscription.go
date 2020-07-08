@@ -49,8 +49,8 @@ const (
 	// See subscription struct's functions on how & where these strings are used
 	willExpire      = `This Crust subscription will expire on [exp-date]. Please contact [sales-email] to renew the subscription.`
 	hasExpired      = `This Crust subscription has expired. Please contact your administrator or [sales-email] to renew the subscription.`
-	trialWillExpire = `This Crust trial will expire on [exp-date]. To convert this trial in a to a subscription, please contact [sales-email].`
-	trialHasExpired = `Your Crust trial has expired. Please contact [sales-email] to learn how to convert this trial in to a Crust subscription.`
+	trialWillExpire = `This Crust trial will expire on [exp-date]. To convert this trial a to a subscription, please contact [sales-email].`
+	trialHasExpired = `Your Crust trial has expired. Please contact [sales-email] to learn how to convert this trial to a Crust subscription.`
 	invalidKey      = `Unverified or invalid subscription key. Please contact your administrator or [sales-email].`
 
 	trialAddUserError = `The Crust trial is limited to [user-limit] user(s). If you need more users, please contact us at [sales-email].`
