@@ -1,34 +1,27 @@
 package main
 
 import (
-	"context"
-
-	"github.com/spf13/cobra"
+	"github.com/cortezaproject/corteza-server/compose"
+	"github.com/cortezaproject/corteza-server/corteza"
+	"github.com/cortezaproject/corteza-server/messaging"
+	"github.com/cortezaproject/corteza-server/pkg/app"
+	"github.com/cortezaproject/corteza-server/system"
 
 	"github.com/cortezaproject/corteza-server/monolith"
-	"github.com/cortezaproject/corteza-server/pkg/cli"
 	"github.com/cortezaproject/corteza-server/pkg/logger"
-	"github.com/cortezaproject/corteza-server/system/service"
-	"github.com/crusttech/crust-server/pkg/subscription"
 )
 
 func main() {
-	cfg := monolith.Configure()
-	cfg.RootCommandName = "crust-server"
-	cfg.ApiServerPreRun = append(
-		cfg.ApiServerPreRun,
-		func(ctx context.Context, cmd *cobra.Command, c *cli.Config) error {
-			if service.CurrentSubscription != nil {
-				// Already initialized
-				return nil
-			}
+	logger.Init()
 
-			subscription.Init(logger.Default(), service.DefaultSettings)
-			subscription.UpdateCurrent(subscription.Load(ctx))
-			return nil
+	app.Run(
+		logger.Default(),
+		app.NewOptions(),
+		&corteza.App{},
+		&monolith.App{
+			System:    &system.App{},
+			Compose:   &compose.App{},
+			Messaging: &messaging.App{},
 		},
 	)
-
-	cmd := cfg.MakeCLI(cli.Context())
-	cli.HandleError(cmd.Execute())
 }

@@ -1,13 +1,19 @@
 package main
 
 import (
+	"github.com/cortezaproject/corteza-server/corteza"
 	"github.com/cortezaproject/corteza-server/messaging"
-	"github.com/cortezaproject/corteza-server/pkg/cli"
+	"github.com/cortezaproject/corteza-server/pkg/app"
+	"github.com/cortezaproject/corteza-server/pkg/logger"
 )
 
 func main() {
-	cfg := messaging.Configure()
-	cfg.RootCommandName = "crust-server-messaging"
-	cmd := cfg.MakeCLI(cli.Context())
-	cli.HandleError(cmd.Execute())
+	logger.Init()
+
+	app.Run(
+		logger.Default(),
+		app.NewOptions(messaging.SERVICE),
+		&corteza.App{},
+		&messaging.App{},
+	)
 }
