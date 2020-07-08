@@ -2,14 +2,15 @@ package rest
 
 import (
 	"context"
-
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory/resputil"
 
+	"github.com/cortezaproject/corteza-server/pkg/corredor"
 	"github.com/cortezaproject/corteza-server/pkg/payload"
 	"github.com/cortezaproject/corteza-server/pkg/rh"
 	"github.com/cortezaproject/corteza-server/system/rest/request"
 	"github.com/cortezaproject/corteza-server/system/service"
+	"github.com/cortezaproject/corteza-server/system/service/event"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
 
@@ -17,6 +18,8 @@ var _ = errors.Wrap
 
 type (
 	User struct {
+		settings *types.Settings
+
 		user service.UserService
 		role service.RoleService
 	}
@@ -29,6 +32,7 @@ type (
 
 func (User) New() *User {
 	ctrl := &User{}
+	ctrl.settings = service.CurrentSettings
 	ctrl.user = service.DefaultUser
 	ctrl.role = service.DefaultRole
 	return ctrl
@@ -48,7 +52,7 @@ func (ctrl User) List(ctx context.Context, r *request.UserList) (interface{}, er
 
 		Sort: rh.NormalizeSortColumns(r.Sort),
 
-		PageFilter: rh.Paging(r.Page, r.PerPage),
+		PageFilter: rh.Paging(r),
 	}
 
 	if r.IncSuspended && f.Suspended == 0 {
@@ -69,6 +73,10 @@ func (ctrl User) Create(ctx context.Context, r *request.UserCreate) (interface{}
 		Name:   r.Name,
 		Handle: r.Handle,
 		Kind:   r.Kind,
+
+		// consider email confirmed
+		// when creating user like this
+		EmailConfirmed: true,
 	}
 
 	return ctrl.user.With(ctx).Create(user)
@@ -128,6 +136,21 @@ func (ctrl User) MembershipAdd(ctx context.Context, r *request.UserMembershipAdd
 
 func (ctrl User) MembershipRemove(ctx context.Context, r *request.UserMembershipRemove) (interface{}, error) {
 	return resputil.OK(), ctrl.role.With(ctx).MemberRemove(r.RoleID, r.UserID)
+}
+
+func (ctrl *User) TriggerScript(ctx context.Context, r *request.UserTriggerScript) (rsp interface{}, err error) {
+	var (
+		user *types.User
+	)
+
+	if user, err = ctrl.user.With(ctx).FindByID(r.UserID); err != nil {
+		return
+	}
+
+	// @todo implement same behaviour as we have on record - user+oldUser
+	err = corredor.Service().Exec(ctx, r.Script, event.UserOnManual(user, user))
+	return user, err
+
 }
 
 func (ctrl User) makeFilterPayload(ctx context.Context, uu types.UserSet, f types.UserFilter, err error) (*userSetPayload, error) {

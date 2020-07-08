@@ -1,0 +1,64 @@
+# pkg/eventbus
+
+Package handles event dispatching and handler registration
+
+## Event
+
+Event (in context of eventbus package) contains of resource type, event type and a matcher.
+
+### Resource type
+
+Resource types are identifiers of internal resources, like user, role, request, ...
+
+### Event type
+
+Type describes direct or indirect user action or some other event in the system.
+
+#### Deferred events
+
+Deferred events (onTimestamp and onInterval) are executed by scheduler package service.
+
+#### Manual events
+
+Manual events (onManual) are a special case.
+These events are not (nor should be) dispatched directly or through event-bus.
+
+We use it to route requests and pack attributes from the API to the Corredor service
+
+### Event matcher
+
+Matcher is a function on event that helps filtering fired events.
+It decides (returns true or false) if fired event is a match for any of a registered handlers
+
+Bus has basic internal filtering for resource & event type.
+Other constraints are passed to event's matcher function.
+
+.Matcher will receive 2+ string parameters:
+ - name
+ - operator
+ - zero or more values
+
+It's matcher responsibility to handle contents of name, operator and values parameters.
+
+Constraint checker procedure will call matcher for each constraint.
+All constraints must match.
+First non-match will break constraint checking procedure.
+
+
+## Handler
+
+Handler is combination of (event matching) rules/constraints and handler callback function.
+Function is called when a event compatible with registered rules & constraints is fired.
+
+Handler can respond to multiple resource/event combinations.
+
+### Constraints
+
+Matcher function is called multiple times, once per each handler constraint.
+If any of the calls result in a non-match, check
+
+Handler without any constraints is considered a match.
+
+### Weight
+
+Weight controls order of execution.

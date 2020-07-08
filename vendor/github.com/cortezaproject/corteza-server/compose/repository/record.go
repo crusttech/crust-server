@@ -29,6 +29,7 @@ type (
 		Update(record *types.Record) (*types.Record, error)
 		Delete(record *types.Record) error
 
+		RefValueLookup(moduleID uint64, field string, ref uint64) (recordID uint64, err error)
 		LoadValues(fieldNames []string, IDs []uint64) (rvs types.RecordValueSet, err error)
 		DeleteValues(record *types.Record) error
 		UpdateValues(recordID uint64, rvs types.RecordValueSet) (err error)
@@ -76,8 +77,7 @@ func (r record) columns() []string {
 func (r record) query() squirrel.SelectBuilder {
 	return squirrel.
 		Select(r.columns()...).
-		From(r.table() + " AS r").
-		Where("r.deleted_at IS NULL")
+		From(r.table() + " AS r")
 }
 
 // @todo: update to accepted DeletedAt column semantics from Messaging
@@ -91,6 +91,7 @@ func (r record) findOneBy(namespaceID uint64, field string, value interface{}) (
 		rec = &types.Record{}
 
 		q = r.query().
+			Where("r.deleted_at IS NULL").
 			Where(squirrel.Eq{field: value, "rel_namespace": namespaceID})
 
 		err = rh.FetchOne(r.db(), q, rec)
@@ -136,15 +137,14 @@ func (r record) Find(module *types.Module, filter types.RecordFilter) (set types
 		return
 	}
 
-	return set, f, rh.FetchPaged(r.db(), query, f.Page, f.PerPage, &set)
+	return set, f, rh.FetchPaged(r.db(), query, f.PageFilter, &set)
 }
 
 // Export ignores paging and does not return filter
 //
 // @todo optimize and include value loading
 func (r record) Export(module *types.Module, filter types.RecordFilter) (set types.RecordSet, err error) {
-	filter.PerPage = 0
-	filter.Page = 0
+	filter.PageFilter = rh.PageFilter{}
 
 	query, err := r.buildQuery(module, filter)
 	if err != nil {
@@ -155,37 +155,23 @@ func (r record) Export(module *types.Module, filter types.RecordFilter) (set typ
 }
 
 func (r record) buildQuery(module *types.Module, f types.RecordFilter) (query squirrel.SelectBuilder, err error) {
-	// Create query for fetching and counting records.
-	query = r.query().
-		Where("r.module_id = ?", module.ID).
-		Where("r.rel_namespace = ?", module.NamespaceID)
-
-	var joinedFields = []string{}
-	var alreadyJoined = func(f string) bool {
-		for _, a := range joinedFields {
-			if a == f {
-				return true
+	var (
+		joinedFields  = []string{}
+		alreadyJoined = func(f string) bool {
+			for _, a := range joinedFields {
+				if a == f {
+					return true
+				}
 			}
+
+			joinedFields = append(joinedFields, f)
+			return false
 		}
 
-		joinedFields = append(joinedFields, f)
-		return false
-	}
-
-	// Parse filters.
-	if f.Filter != "" {
-		var (
-			// Filter parser
-			fp = ql.NewParser()
-
-			// Filter node
-			fn ql.ASTNode
-		)
-
-		// Make a nice wrapper that will translate module fields to subqueries
-		fp.OnIdent = func(i ql.Ident) (ql.Ident, error) {
+		identResolver = func(i ql.Ident) (ql.Ident, error) {
 			var is bool
 			if i.Value, is = isRealRecordCol(i.Value); is {
+				i.Value += " "
 				return i, nil
 			}
 
@@ -200,13 +186,48 @@ func (r record) buildQuery(module *types.Module, f types.RecordFilter) (query sq
 				), i.Value)
 			}
 
-			// @todo switch value for ref when doing Record/Owner lookup
-			i.Value = fmt.Sprintf("rv_%s.value", i.Value)
+			field := module.Fields.FindByName(i.Value)
+
+			switch true {
+			case field.IsBoolean():
+				i.Value = fmt.Sprintf("(rv_%s.value NOT IN ('', '0', 'false', 'f',  'FALSE', 'F', false))", i.Value)
+			case field.IsNumeric():
+				i.Value = fmt.Sprintf("CAST(rv_%s.value AS SIGNED)", i.Value)
+			case field.IsDateTime():
+				i.Value = fmt.Sprintf("CAST(rv_%s.value AS DATETIME)", i.Value)
+			case field.IsRef():
+				i.Value = fmt.Sprintf("rv_%s.ref ", i.Value)
+			default:
+				i.Value = fmt.Sprintf("rv_%s.value ", i.Value)
+			}
 
 			return i, nil
 		}
+	)
 
-		if fn, err = fp.ParseExpression(f.Filter); err != nil {
+	// Create query for fetching and counting records.
+	query = r.query().
+		Where("r.module_id = ?", module.ID).
+		Where("r.rel_namespace = ?", module.NamespaceID)
+
+	// Inc/exclude deleted records according to filter settings
+	query = rh.FilterNullByState(query, "r.deleted_at", f.Deleted)
+
+	// Parse filters.
+	if f.Query != "" {
+		var (
+			// Filter parser
+			fp = ql.NewParser()
+
+			// Filter node
+			fn ql.ASTNode
+		)
+
+		// Resolve all identifiers found in the query
+		// into their table/column counterparts
+		fp.OnIdent = identResolver
+
+		if fn, err = fp.ParseExpression(f.Query); err != nil {
 			return
 		} else if filterSql, filterArgs, err := fn.ToSql(); err != nil {
 			return query, err
@@ -224,43 +245,12 @@ func (r record) buildQuery(module *types.Module, f types.RecordFilter) (query sq
 			sc ql.Columns
 		)
 
-		sp.OnIdent = func(i ql.Ident) (ql.Ident, error) {
-			var is bool
-			if i.Value, is = isRealRecordCol(i.Value); is {
-				i.Value += " "
-				return i, nil
-			}
-
-			if !module.Fields.HasName(i.Value) {
-				return i, errors.Errorf("unknown field %q", i.Value)
-			}
-
-			field := module.Fields.FindByName(i.Value)
-
-			if !alreadyJoined(i.Value) {
-				query = query.LeftJoin(fmt.Sprintf(
-					"compose_record_value AS rv_%s ON (rv_%s.record_id = r.id AND rv_%s.name = ? AND rv_%s.deleted_at IS NULL)",
-					i.Value, i.Value, i.Value, i.Value,
-				), i.Value)
-			}
-
-			switch true {
-			case field.IsRef():
-				i.Value = fmt.Sprintf("rv_%s.ref ", i.Value)
-			case field.IsNumeric():
-				i.Value = fmt.Sprintf("CAST(rv_%s.value AS SIGNED)", i.Value)
-			case field.IsDateTime():
-				i.Value = fmt.Sprintf("CAST(rv_%s.value AS DATETIME)", i.Value)
-			default:
-				i.Value = fmt.Sprintf("rv_%s.value ", i.Value)
-			}
-
-			return i, nil
-		}
+		// Resolve all identifiers found in sort
+		// into their table/column counterparts
+		sp.OnIdent = identResolver
 
 		if sc, err = sp.ParseColumns(f.Sort); err != nil {
 			return
-
 		}
 
 		query = query.OrderBy(sc.Strings()...)
@@ -310,12 +300,16 @@ func (r record) DeleteValues(record *types.Record) error {
 
 func (r record) UpdateValues(recordID uint64, rvs types.RecordValueSet) (err error) {
 	// Remove all records and prepare to be updated
-	// @todo be more selective and delete only removed values
+	// @todo be more selective and delete only removed and update/insert changed/new values
 	if _, err = r.db().Exec("DELETE FROM compose_record_value WHERE record_id = ?", recordID); err != nil {
 		return errors.Wrap(err, "could not remove record values")
 	}
 
 	err = rvs.Walk(func(value *types.RecordValue) error {
+		if value.DeletedAt != nil {
+			return nil
+		}
+
 		value.RecordID = recordID
 		return r.db().Insert("compose_record_value", value)
 	})
@@ -330,7 +324,19 @@ func (r record) PartialUpdateValues(rvs ...*types.RecordValue) (err error) {
 	})
 
 	return errors.Wrap(err, "could not replace record values")
+}
 
+func (r record) RefValueLookup(moduleID uint64, field string, ref uint64) (recordID uint64, err error) {
+	var sql = "SELECT record_id" +
+		"  FROM compose_record AS r INNER JOIN compose_record_value AS v " +
+		" WHERE r.module_id = ? " +
+		"   AND v.name = ? " +
+		"   AND v.ref = ? " +
+		"   AND r.deleted_at IS NULL " +
+		"   AND v.deleted_at IS NULL " +
+		"       LIMIT 1"
+
+	return recordID, r.db().Get(&recordID, sql, moduleID, field, ref)
 }
 
 func (r record) LoadValues(fieldNames []string, IDs []uint64) (rvs types.RecordValueSet, err error) {

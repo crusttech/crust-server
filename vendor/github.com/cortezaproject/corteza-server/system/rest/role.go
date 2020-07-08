@@ -6,10 +6,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/titpetric/factory/resputil"
 
+	"github.com/cortezaproject/corteza-server/pkg/corredor"
 	"github.com/cortezaproject/corteza-server/pkg/payload"
 	"github.com/cortezaproject/corteza-server/pkg/rh"
 	"github.com/cortezaproject/corteza-server/system/rest/request"
 	"github.com/cortezaproject/corteza-server/system/service"
+	"github.com/cortezaproject/corteza-server/system/service/event"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
 
@@ -62,7 +64,7 @@ func (ctrl Role) List(ctx context.Context, r *request.RoleList) (interface{}, er
 		Deleted:  rh.FilterState(r.Deleted),
 
 		Sort:       rh.NormalizeSortColumns(r.Sort),
-		PageFilter: rh.Paging(r.Page, r.PerPage),
+		PageFilter: rh.Paging(r),
 	}
 
 	set, filter, err := ctrl.role.With(ctx).Find(f)
@@ -172,6 +174,20 @@ func (ctrl Role) MemberAdd(ctx context.Context, r *request.RoleMemberAdd) (inter
 
 func (ctrl Role) MemberRemove(ctx context.Context, r *request.RoleMemberRemove) (interface{}, error) {
 	return resputil.OK(), ctrl.role.With(ctx).MemberRemove(r.RoleID, r.UserID)
+}
+
+func (ctrl *Role) TriggerScript(ctx context.Context, r *request.RoleTriggerScript) (rsp interface{}, err error) {
+	var (
+		role *types.Role
+	)
+
+	if role, err = ctrl.role.With(ctx).FindByID(r.RoleID); err != nil {
+		return
+	}
+
+	// @todo implement same behaviour as we have on record - role+oldRole
+	err = corredor.Service().Exec(ctx, r.Script, event.RoleOnManual(role, role))
+	return role, err
 }
 
 func (ctrl Role) makePayload(ctx context.Context, m *types.Role, err error) (*rolePayload, error) {

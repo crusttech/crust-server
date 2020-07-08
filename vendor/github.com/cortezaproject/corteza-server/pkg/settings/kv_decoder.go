@@ -1,7 +1,7 @@
 package settings
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"reflect"
 	"strings"
 )
@@ -48,7 +48,10 @@ func DecodeKV(kv KV, dst interface{}, pp ...string) (err error) {
 	length := valueOf.NumField()
 
 	for i := 0; i < length; i++ {
-		var structField = valueOf.Field(i)
+		var (
+			structField = valueOf.Field(i)
+			tags        = make(map[string]bool)
+		)
 
 		if !structField.CanSet() {
 			continue
@@ -80,6 +83,7 @@ func DecodeKV(kv KV, dst interface{}, pp ...string) (err error) {
 
 			for f := 1; f < len(tagFlags); f++ {
 				// @todo resolve i18n and other flags...
+				tags[tagFlags[f]] = true
 			}
 		}
 
@@ -96,49 +100,51 @@ func DecodeKV(kv KV, dst interface{}, pp ...string) (err error) {
 			if decode, ok := decodeMethod.Interface().(func(KV, string) error); !ok {
 				panic("invalid DecodeKV() function signature")
 			} else if err = decode(kv, key); err != nil {
-				return
+				return errors.Wrapf(err, "cannot decode settings for %q", key)
 			} else {
 				continue
 			}
 		}
 
-		// Handles structs
-		//
-		// It calls DecodeKV recursively
-		if structField.Kind() == reflect.Struct {
-			if err = DecodeKV(kv.Filter(key), structValue, key); err != nil {
-				return
-			}
-
-			continue
-		}
-
-		// Handles map values
-		if structField.Kind() == reflect.Map {
-			if structField.IsNil() {
-				// allocate new map
-				structField.Set(reflect.MakeMap(structField.Type()))
-			}
-
-			// cut KV key prefix and use the rest for the map key
-			for k, val := range kv.CutPrefix(key + ".") {
-				mapValue := reflect.New(structField.Type().Elem())
-				err = val.Unmarshal(mapValue.Interface())
-				if err != nil {
+		if !tags["final"] {
+			// Handles structs
+			//
+			// It calls DecodeKV recursively
+			if structField.Kind() == reflect.Struct {
+				if err = DecodeKV(kv.Filter(key), structValue, key); err != nil {
 					return
 				}
 
-				structField.SetMapIndex(reflect.ValueOf(k), mapValue.Elem())
+				continue
 			}
 
-			continue
+			// Handles map values
+			if structField.Kind() == reflect.Map {
+				if structField.IsNil() {
+					// allocate new map
+					structField.Set(reflect.MakeMap(structField.Type()))
+				}
+
+				// cut KV key prefix and use the rest for the map key
+				for k, val := range kv.CutPrefix(key + ".") {
+					mapValue := reflect.New(structField.Type().Elem())
+					err = val.Unmarshal(mapValue.Interface())
+					if err != nil {
+						return errors.Wrapf(err, "cannot decode settings for %q", key)
+					}
+
+					structField.SetMapIndex(reflect.ValueOf(k), mapValue.Elem())
+				}
+
+				continue
+			}
 		}
 
 		// Native type
 		if val, ok := kv[key]; ok {
 			// Always use pointer to value
 			if err = val.Unmarshal(structField.Addr().Interface()); err != nil {
-				return
+				return errors.Wrapf(err, "cannot decode settings for %q", key)
 			}
 		}
 	}

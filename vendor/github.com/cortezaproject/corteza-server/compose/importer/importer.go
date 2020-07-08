@@ -3,11 +3,9 @@ package importer
 import (
 	"context"
 	"fmt"
-
 	"github.com/pkg/errors"
 
 	"github.com/cortezaproject/corteza-server/compose/types"
-	"github.com/cortezaproject/corteza-server/pkg/automation"
 	"github.com/cortezaproject/corteza-server/pkg/deinterfacer"
 	"github.com/cortezaproject/corteza-server/pkg/importer"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
@@ -19,11 +17,10 @@ type (
 	Importer struct {
 		namespaces *Namespace
 
-		namespaceFinder  namespaceFinder
-		moduleFinder     moduleFinder
-		chartFinder      chartFinder
-		pageFinder       pageFinder
-		automationFinder automationFinder
+		namespaceFinder namespaceFinder
+		moduleFinder    moduleFinder
+		chartFinder     chartFinder
+		pageFinder      pageFinder
 
 		permissions importer.PermissionImporter
 		settings    importer.SettingImporter
@@ -48,20 +45,14 @@ type (
 		Update(*types.Record) (*types.Record, error)
 		Create(*types.Record) (*types.Record, error)
 	}
-
-	automationScriptKeeper interface {
-		UpdateScript(context.Context, *automation.Script) error
-		CreateScript(context.Context, *automation.Script) error
-	}
 )
 
-func NewImporter(nsf namespaceFinder, mf moduleFinder, cf chartFinder, pf pageFinder, af automationFinder, p importer.PermissionImporter, s importer.SettingImporter) *Importer {
+func NewImporter(nsf namespaceFinder, mf moduleFinder, cf chartFinder, pf pageFinder, p importer.PermissionImporter, s importer.SettingImporter) *Importer {
 	imp := &Importer{
-		namespaceFinder:  nsf,
-		moduleFinder:     mf,
-		chartFinder:      cf,
-		pageFinder:       pf,
-		automationFinder: af,
+		namespaceFinder: nsf,
+		moduleFinder:    mf,
+		chartFinder:     cf,
+		pageFinder:      pf,
 
 		permissions: p,
 		settings:    s,
@@ -75,10 +66,6 @@ func NewImporter(nsf namespaceFinder, mf moduleFinder, cf chartFinder, pf pageFi
 
 func (imp *Importer) GetNamespaceImporter() *Namespace {
 	return imp.namespaces
-}
-
-func (imp *Importer) GetAutomationScriptImporter(handle string) *AutomationScript {
-	return imp.namespaces.scripts[handle]
 }
 
 func (imp *Importer) GetModuleImporter(handle string) *Module {
@@ -148,13 +135,12 @@ func (imp *Importer) Store(
 	cStore chartKeeper,
 	pStore pageKeeper,
 	rStore recordKeeper,
-	asStore automationScriptKeeper,
 	pk permissions.ImportKeeper,
 	sk settings.ImportKeeper,
 	roles sysTypes.RoleSet,
 ) (err error) {
 	if imp.namespaces != nil {
-		err = imp.namespaces.Store(ctx, nsStore, mStore, cStore, pStore, rStore, asStore)
+		err = imp.namespaces.Store(ctx, nsStore, mStore, cStore, pStore, rStore)
 		if err != nil {
 			return errors.Wrap(err, "could not import namespaces")
 		}

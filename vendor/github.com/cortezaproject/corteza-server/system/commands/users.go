@@ -1,21 +1,23 @@
 package commands
 
 import (
-	"context"
 	"fmt"
+	"strconv"
 	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/titpetric/factory"
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/cortezaproject/corteza-server/pkg/auth"
 	"github.com/cortezaproject/corteza-server/pkg/cli"
+	"github.com/cortezaproject/corteza-server/pkg/rh"
 	"github.com/cortezaproject/corteza-server/system/repository"
 	"github.com/cortezaproject/corteza-server/system/service"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
 
-func Users(ctx context.Context, c *cli.Config) *cobra.Command {
+func Users() *cobra.Command {
 	var (
 		flagNoPassword bool
 	)
@@ -31,23 +33,37 @@ func Users(ctx context.Context, c *cli.Config) *cobra.Command {
 		Use:   "list",
 		Short: "List users",
 		Run: func(cmd *cobra.Command, args []string) {
-			c.InitServices(ctx, c)
-
 			var (
-				db = factory.Database.MustGet("system")
+				ctx = auth.SetSuperUserContext(cli.Context())
+				db  = factory.Database.MustGet()
+
+				queryFlag = cmd.Flags().Lookup("query").Value.String()
+				limitFlag = cmd.Flags().Lookup("limit").Value.String()
+
+				limit int
+				err   error
 			)
+
+			limit, err = strconv.Atoi(limitFlag)
+			cli.HandleError(err)
 
 			userRepo := repository.User(ctx, db)
 			uf := types.UserFilter{
-				Sort: "updatedAt",
+				Sort:  "updated_at",
+				Query: queryFlag,
+				PageFilter: rh.PageFilter{
+					PerPage: uint(limit),
+				},
 			}
 
 			users, _, err := userRepo.Find(uf)
-			if err != nil {
-				cli.HandleError(err)
-			}
+			cli.HandleError(err)
 
-			fmt.Println("                     Created    Updated    EmailAddress")
+			fmt.Fprintf(
+				cmd.OutOrStdout(),
+				"                     Created    Updated    EmailAddress\n",
+			)
+
 			for _, u := range users {
 				upd := "---- -- --"
 
@@ -55,26 +71,31 @@ func Users(ctx context.Context, c *cli.Config) *cobra.Command {
 					upd = u.UpdatedAt.Format("2006-01-02")
 				}
 
-				fmt.Printf(
+				fmt.Fprintf(
+					cmd.OutOrStdout(),
 					"%20d %s %s %-100s %s\n",
 					u.ID,
 					u.CreatedAt.Format("2006-01-02"),
 					upd,
 					u.Email,
-					u.Name)
+					u.Name,
+				)
 			}
 		},
 	}
+
+	listCmd.Flags().IntP("limit", "l", 20, "How many entry to display")
+	listCmd.Flags().StringP("query", "q", "", "Query and filter by handle, email, name")
 
 	addCmd := &cobra.Command{
 		Use:   "add [email]",
 		Short: "Add new user",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			c.InitServices(ctx, c)
-
 			var (
-				db = factory.Database.MustGet("system")
+				ctx = auth.SetSuperUserContext(cli.Context())
+
+				db = factory.Database.MustGet()
 
 				userRepo = repository.User(ctx, db)
 				authSvc  = service.Auth(ctx)
@@ -85,6 +106,9 @@ func Users(ctx context.Context, c *cli.Config) *cobra.Command {
 				err      error
 				password []byte
 			)
+
+			// Update current settings to be sure that we do not have outdated values
+			cli.HandleError(service.DefaultSettings.UpdateCurrent(ctx))
 
 			if existing, _ := userRepo.FindByEmail(user.Email); existing != nil && existing.ID > 0 {
 				cmd.Printf("User already exists [%d].\n", existing.ID)
@@ -126,10 +150,9 @@ func Users(ctx context.Context, c *cli.Config) *cobra.Command {
 		Short: "Change password for user",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			c.InitServices(ctx, c)
-
 			var (
-				db = factory.Database.MustGet("system")
+				ctx = auth.SetSuperUserContext(cli.Context())
+				db  = factory.Database.MustGet()
 
 				userRepo = repository.User(ctx, db)
 				authSvc  = service.Auth(ctx)
@@ -138,6 +161,9 @@ func Users(ctx context.Context, c *cli.Config) *cobra.Command {
 				err      error
 				password []byte
 			)
+
+			// Update current settings to be sure that we do not have outdated values
+			cli.HandleError(service.DefaultSettings.UpdateCurrent(ctx))
 
 			if user, err = userRepo.FindByEmail(args[0]); err != nil {
 				cli.HandleError(err)

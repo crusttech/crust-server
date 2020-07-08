@@ -12,12 +12,13 @@ func MountRoutes(r chi.Router) {
 	NewExternalAuth().ApiServerRoutes(r)
 
 	r.Group(func(r chi.Router) {
+		handlers.NewAttachment(Attachment{}.New()).MountRoutes(r)
 		handlers.NewAuth((Auth{}).New()).MountRoutes(r)
 		handlers.NewAuthInternal((AuthInternal{}).New()).MountRoutes(r)
 
 		// A special case that, we do not add this through standard request, handlers & controllers
 		// combo but directly -- we need access to r.Body
-		r.Handle("/sink", &Sink{
+		r.Handle(service.SinkBaseURL+"*", &Sink{
 			svc:  service.DefaultSink,
 			sign: auth.DefaultSigner,
 		})
@@ -27,6 +28,7 @@ func MountRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		r.Use(auth.MiddlewareValidOnly)
 
+		handlers.NewAutomation(Automation{}.New()).MountRoutes(r)
 		handlers.NewSubscription(Subscription{}.New()).MountRoutes(r)
 		handlers.NewUser(User{}.New()).MountRoutes(r)
 		handlers.NewRole(Role{}.New()).MountRoutes(r)
@@ -35,10 +37,7 @@ func MountRoutes(r chi.Router) {
 		handlers.NewApplication(Application{}.New()).MountRoutes(r)
 		handlers.NewSettings(Settings{}.New()).MountRoutes(r)
 		handlers.NewStats(Stats{}.New()).MountRoutes(r)
-
-		handlers.NewAutomationScript(AutomationScript{}.New()).MountRoutes(r)
-		handlers.NewAutomationTrigger(AutomationTrigger{}.New()).MountRoutes(r)
-
 		handlers.NewReminder(Reminder{}.New()).MountRoutes(r)
+		handlers.NewActionlog(Actionlog{}.New()).MountRoutes(r)
 	})
 }

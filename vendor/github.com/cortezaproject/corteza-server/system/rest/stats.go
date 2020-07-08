@@ -17,13 +17,13 @@ type (
 	}
 
 	statsService interface {
-		Metrics(context.Context) (interface{}, error)
+		Metrics(context.Context) (*service.StatisticsMetricsPayload, error)
 	}
 )
 
 func (Stats) New() *Stats {
 	return &Stats{
-		svc: service.Statistics(context.Background()),
+		svc: service.DefaultStatistics,
 	}
 }
 

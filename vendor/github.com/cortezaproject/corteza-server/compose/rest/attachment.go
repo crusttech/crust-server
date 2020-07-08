@@ -54,7 +54,7 @@ func (ctrl Attachment) List(ctx context.Context, r *request.AttachmentList) (int
 		RecordID:    r.RecordID,
 		FieldName:   r.FieldName,
 
-		PageFilter: rh.Paging(r.Page, r.PerPage),
+		PageFilter: rh.Paging(r),
 	}
 
 	set, filter, err := ctrl.attachment.With(ctx).Find(f)
@@ -112,7 +112,7 @@ func (ctrl Attachment) isAccessible(namespaceID, attachmentID, userID uint64, si
 		return errors.New("missing or invalid attachment ID")
 	}
 
-	if auth.DefaultSigner.Verify(signature, userID, namespaceID, attachmentID) {
+	if !auth.DefaultSigner.Verify(signature, userID, namespaceID, attachmentID) {
 		return errors.New("missing or invalid signature")
 	}
 

@@ -22,7 +22,6 @@ func Import(ctx context.Context, ns *types.Namespace, ff ...io.Reader) (err erro
 			service.DefaultModule.With(ctx),
 			service.DefaultChart.With(ctx),
 			service.DefaultPage.With(ctx),
-			service.DefaultInternalAutomationManager,
 
 			permissions.NewImporter(service.DefaultAccessControl.Whitelist()),
 			settings.NewImporter(),
@@ -64,6 +63,9 @@ func Import(ctx context.Context, ns *types.Namespace, ff ...io.Reader) (err erro
 	// 	return
 	// }
 
+	recordService := service.DefaultRecord.With(ctx)
+	recordService.EventEmitting(false)
+
 	// Store all imported
 	return imp.Store(
 		ctx,
@@ -71,8 +73,7 @@ func Import(ctx context.Context, ns *types.Namespace, ff ...io.Reader) (err erro
 		service.DefaultModule.With(ctx),
 		service.DefaultChart.With(ctx),
 		service.DefaultPage.With(ctx),
-		service.DefaultRecord.With(ctx),
-		service.DefaultInternalAutomationManager,
+		recordService,
 		service.DefaultAccessControl,
 		service.DefaultSettings,
 		roles,

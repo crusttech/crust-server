@@ -1,24 +1,16 @@
 package commands
 
 import (
-	"context"
-	"net/url"
-	"strings"
-	"time"
-
+	"github.com/cortezaproject/corteza-server/system/service"
 	"github.com/spf13/cobra"
-
-	"github.com/cortezaproject/corteza-server/pkg/auth"
-	"github.com/cortezaproject/corteza-server/pkg/cli"
+	"time"
 )
 
 // Will perform OpenID connect auto-configuration
-func Sink(ctx context.Context, c *cli.Config) *cobra.Command {
+func Sink() *cobra.Command {
 	var (
-		expires     string
-		origin      string
-		contentType string
-		method      string
+		expires string
+		srup    = service.SinkRequestUrlParams{}
 	)
 
 	cmd := &cobra.Command{
@@ -30,44 +22,73 @@ func Sink(ctx context.Context, c *cli.Config) *cobra.Command {
 		Use:   "signature",
 		Short: "Creates signature for sink HTTP endpoint",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c.InitServices(ctx, c)
-
-			method = strings.ToUpper(method)
-
 			if expires != "" {
 				// validate expiration date if set
-				if _, err := time.Parse("2006-01-02", expires); err != nil {
+				if exp, err := time.Parse("2006-01-02", expires); err != nil {
 					return err
+				} else {
+					srup.Expires = &exp
 				}
 			}
 
-			v := url.Values{}
-			v.Set("sign", auth.DefaultSigner.Sign(0, method, "/sink", contentType, origin, expires))
-			v.Set("expires", expires)
-			v.Set("content-type", contentType)
-			v.Set("origin", origin)
-			v.Set("method", method)
+			if su, srup, err := service.DefaultSink.SignURL(srup); err != nil {
+				return err
+			} else {
+				cmd.Println(su)
 
-			// @todo add host & schema
-			cmd.Println((&url.URL{
-				Path:     "/sink",
-				RawQuery: v.Encode()}).String())
+				cmd.Println("Sink request constraints:")
+				if srup.SignatureInPath {
+					cmd.Println(" - signature should be part of path")
+				} else {
+					cmd.Println(" - signature should be part of query-string")
+				}
+
+				if srup.Method != "" {
+					cmd.Printf(" - expecting request method %q\n", srup.Method)
+
+				}
+				if srup.Expires != nil {
+					cmd.Printf(" - signature expires at: %s\n", srup.Expires)
+
+				}
+				if srup.MaxBodySize > 0 {
+					cmd.Printf(" - max request body size is %d Kb\n", srup.MaxBodySize/1024)
+
+				} else {
+					cmd.Println(" - body size is not limited")
+
+				}
+				if srup.ContentType != "" {
+					cmd.Printf(" - expecting content type to be %q\n", srup.ContentType)
+
+				}
+				if srup.Path != "" {
+					cmd.Printf(" - valid path under /sink: %q\n", srup.Path)
+
+				}
+			}
 
 			return nil
 		},
 	}
 
 	signatureCmd.Flags().StringVar(
-		&origin,
+		&srup.Origin,
 		"origin",
 		"",
 		"Origin of the request (arbitrary string, optional)")
 
 	signatureCmd.Flags().StringVar(
-		&contentType,
+		&srup.ContentType,
 		"content-type",
 		"",
 		"Content type (optional)")
+
+	signatureCmd.Flags().StringVar(
+		&srup.Path,
+		"path",
+		"",
+		"Full sink request path (do not include /sink prefix, add / for just root)")
 
 	signatureCmd.Flags().StringVar(
 		&expires,
@@ -76,10 +97,22 @@ func Sink(ctx context.Context, c *cli.Config) *cobra.Command {
 		"Date of expiration (YYYY-MM-DD, optional)")
 
 	signatureCmd.Flags().StringVar(
-		&method,
+		&srup.Method,
 		"method",
-		"GET",
-		"HTTP method that will be used")
+		"",
+		"HTTP method that will be used (optional)")
+
+	signatureCmd.Flags().Int64Var(
+		&srup.MaxBodySize,
+		"max-body-size",
+		0,
+		"Max allowed body size")
+
+	signatureCmd.Flags().BoolVar(
+		&srup.SignatureInPath,
+		"signature-in-path",
+		false,
+		"Include signature in a path instead of query string")
 
 	cmd.AddCommand(
 		signatureCmd,

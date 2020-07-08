@@ -2,6 +2,7 @@ package logger
 
 import (
 	"os"
+	"time"
 
 	// Make sure we read the ENV from .env
 	_ "github.com/joho/godotenv/autoload"
@@ -9,7 +10,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/cortezaproject/corteza-server/pkg/cli/options"
+	"github.com/cortezaproject/corteza-server/pkg/app/options"
 )
 
 var (
@@ -20,11 +21,22 @@ var (
 func MakeDebugLogger() *zap.Logger {
 	conf := zap.NewDevelopmentConfig()
 	conf.Level = DefaultLevel
+	conf.Level.SetLevel(zap.DebugLevel)
+
+	// Print log level in colors
+	conf.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+	// Shorten timestamp, we do not care about the date
+	conf.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.Format("15:04:05.000"))
+	}
 
 	logger, err := conf.Build()
 	if err != nil {
 		panic(err)
 	}
+
+	logger.Debug("full debug mode enabled (LOG_DEBUG=true), enjoy all the colors and verbosity")
 
 	return logger
 }
@@ -33,17 +45,14 @@ func Init() {
 	var (
 		err error
 
-		// Set INFO as defaut log level
-		logLevel = zapcore.InfoLevel
+		// Set WARN as default log level -- running serve-api
+		// will override this if LOG_LEVEL is not set
+		logLevel = zapcore.WarnLevel
 
 		// Do we want to enable debug logger
 		// with a bit more dev-friendly output
 		debuggingLogger = options.EnvBool("", "LOG_DEBUG", false)
 	)
-
-	if debuggingLogger {
-		logLevel = zapcore.DebugLevel
-	}
 
 	if ll, has := os.LookupEnv("LOG_LEVEL"); has {
 		_ = logLevel.Set(ll)

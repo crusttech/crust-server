@@ -7,7 +7,9 @@ import (
 
 	"github.com/cortezaproject/corteza-server/compose/rest/request"
 	"github.com/cortezaproject/corteza-server/compose/service"
+	"github.com/cortezaproject/corteza-server/compose/service/event"
 	"github.com/cortezaproject/corteza-server/compose/types"
+	"github.com/cortezaproject/corteza-server/pkg/corredor"
 	"github.com/cortezaproject/corteza-server/pkg/rh"
 )
 
@@ -15,14 +17,13 @@ type (
 	namespacePayload struct {
 		*types.Namespace
 
-		CanGrant                  bool `json:"canGrant"`
-		CanUpdateNamespace        bool `json:"canUpdateNamespace"`
-		CanDeleteNamespace        bool `json:"canDeleteNamespace"`
-		CanManageNamespace        bool `json:"canManageNamespace"`
-		CanCreateModule           bool `json:"canCreateModule"`
-		CanCreateChart            bool `json:"canCreateChart"`
-		CanCreateAutomationScript bool `json:"canCreateAutomationScript"`
-		CanCreatePage             bool `json:"canCreatePage"`
+		CanGrant           bool `json:"canGrant"`
+		CanUpdateNamespace bool `json:"canUpdateNamespace"`
+		CanDeleteNamespace bool `json:"canDeleteNamespace"`
+		CanManageNamespace bool `json:"canManageNamespace"`
+		CanCreateModule    bool `json:"canCreateModule"`
+		CanCreateChart     bool `json:"canCreateChart"`
+		CanCreatePage      bool `json:"canCreatePage"`
 	}
 
 	namespaceSetPayload struct {
@@ -44,7 +45,6 @@ type (
 
 		CanCreateModule(context.Context, *types.Namespace) bool
 		CanCreateChart(context.Context, *types.Namespace) bool
-		CanCreateAutomationScript(context.Context, *types.Namespace) bool
 		CanCreatePage(context.Context, *types.Namespace) bool
 	}
 )
@@ -63,7 +63,7 @@ func (ctrl Namespace) List(ctx context.Context, r *request.NamespaceList) (inter
 
 		Sort: r.Sort,
 
-		PageFilter: rh.Paging(r.Page, r.PerPage),
+		PageFilter: rh.Paging(r),
 	}
 
 	set, filter, err := ctrl.namespace.With(ctx).Find(f)
@@ -122,6 +122,19 @@ func (ctrl Namespace) Delete(ctx context.Context, r *request.NamespaceDelete) (i
 	return resputil.OK(), ctrl.namespace.With(ctx).DeleteByID(r.NamespaceID)
 }
 
+func (ctrl *Namespace) TriggerScript(ctx context.Context, r *request.NamespaceTriggerScript) (rsp interface{}, err error) {
+	var (
+		namespace *types.Namespace
+	)
+
+	if namespace, err = ctrl.namespace.With(ctx).FindByID(r.NamespaceID); err != nil {
+		return
+	}
+
+	err = corredor.Service().Exec(ctx, r.Script, event.NamespaceOnManual(namespace, nil))
+	return ctrl.makePayload(ctx, namespace, err)
+}
+
 func (ctrl Namespace) makePayload(ctx context.Context, ns *types.Namespace, err error) (*namespacePayload, error) {
 	if err != nil || ns == nil {
 		return nil, err
@@ -135,10 +148,9 @@ func (ctrl Namespace) makePayload(ctx context.Context, ns *types.Namespace, err 
 		CanDeleteNamespace: ctrl.ac.CanDeleteNamespace(ctx, ns),
 		CanManageNamespace: ctrl.ac.CanManageNamespace(ctx, ns),
 
-		CanCreateModule:           ctrl.ac.CanCreateModule(ctx, ns),
-		CanCreateChart:            ctrl.ac.CanCreateChart(ctx, ns),
-		CanCreateAutomationScript: ctrl.ac.CanCreateAutomationScript(ctx, ns),
-		CanCreatePage:             ctrl.ac.CanCreatePage(ctx, ns),
+		CanCreateModule: ctrl.ac.CanCreateModule(ctx, ns),
+		CanCreateChart:  ctrl.ac.CanCreateChart(ctx, ns),
+		CanCreatePage:   ctrl.ac.CanCreatePage(ctx, ns),
 	}, nil
 }
 

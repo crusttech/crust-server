@@ -7,7 +7,9 @@ import (
 
 	"github.com/cortezaproject/corteza-server/compose/rest/request"
 	"github.com/cortezaproject/corteza-server/compose/service"
+	"github.com/cortezaproject/corteza-server/compose/service/event"
 	"github.com/cortezaproject/corteza-server/compose/types"
+	"github.com/cortezaproject/corteza-server/pkg/corredor"
 	"github.com/cortezaproject/corteza-server/pkg/rh"
 )
 
@@ -41,8 +43,9 @@ type (
 	}
 
 	Module struct {
-		module service.ModuleService
-		ac     moduleAccessController
+		module    service.ModuleService
+		namespace service.NamespaceService
+		ac        moduleAccessController
 	}
 
 	moduleAccessController interface {
@@ -64,8 +67,9 @@ type (
 
 func (Module) New() *Module {
 	return &Module{
-		module: service.DefaultModule,
-		ac:     service.DefaultAccessControl,
+		module:    service.DefaultModule,
+		namespace: service.DefaultNamespace,
+		ac:        service.DefaultAccessControl,
 	}
 }
 
@@ -77,7 +81,7 @@ func (ctrl *Module) List(ctx context.Context, r *request.ModuleList) (interface{
 		Handle:      r.Handle,
 		Sort:        r.Sort,
 
-		PageFilter: rh.Paging(r.Page, r.PerPage),
+		PageFilter: rh.Paging(r),
 	}
 
 	set, filter, err := ctrl.module.With(ctx).Find(f)
@@ -130,6 +134,25 @@ func (ctrl *Module) Delete(ctx context.Context, r *request.ModuleDelete) (interf
 	}
 
 	return resputil.OK(), ctrl.module.With(ctx).DeleteByID(r.NamespaceID, r.ModuleID)
+}
+
+func (ctrl *Module) TriggerScript(ctx context.Context, r *request.ModuleTriggerScript) (rsp interface{}, err error) {
+	var (
+		module    *types.Module
+		namespace *types.Namespace
+	)
+
+	if module, err = ctrl.module.With(ctx).FindByID(r.NamespaceID, r.ModuleID); err != nil {
+		return
+	}
+
+	if namespace, err = ctrl.namespace.With(ctx).FindByID(r.NamespaceID); err != nil {
+		return
+	}
+
+	// @todo implement same behaviour as we have on record - module+oldModule
+	err = corredor.Service().Exec(ctx, r.Script, event.ModuleOnManual(module, module, namespace))
+	return ctrl.makePayload(ctx, module, err)
 }
 
 func (ctrl Module) makePayload(ctx context.Context, m *types.Module, err error) (*modulePayload, error) {

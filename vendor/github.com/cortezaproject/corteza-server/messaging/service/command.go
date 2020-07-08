@@ -3,22 +3,16 @@ package service
 import (
 	"context"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-
 	"github.com/cortezaproject/corteza-server/messaging/types"
-	"github.com/cortezaproject/corteza-server/pkg/logger"
 )
 
 type (
 	command struct {
-		ctx    context.Context
-		logger *zap.Logger
+		ctx context.Context
 	}
 
 	CommandService interface {
 		With(context.Context) CommandService
-
 		Do(channelID uint64, command, input string) (*types.Message, error)
 	}
 )
@@ -29,14 +23,8 @@ func Command(ctx context.Context) CommandService {
 
 func (svc command) With(ctx context.Context) CommandService {
 	return &command{
-		ctx:    ctx,
-		logger: DefaultLogger.Named("command"),
+		ctx: ctx,
 	}
-}
-
-// log() returns zap's logger with requestID from current context and fields.
-func (svc command) log(ctx context.Context, fields ...zapcore.Field) *zap.Logger {
-	return logger.AddRequestID(ctx, svc.logger).With(fields...)
 }
 
 func (svc command) Do(channelID uint64, command, input string) (*types.Message, error) {
@@ -69,15 +57,7 @@ func (svc command) Do(channelID uint64, command, input string) (*types.Message, 
 			msg.Message = input + " " + msg.Message
 		}
 		return DefaultMessage.With(svc.ctx).Create(msg)
-	default:
-		webhookSvc := DefaultWebhook.With(svc.ctx)
-		webhooks, err := webhookSvc.Find(&types.WebhookFilter{
-			ChannelID:       channelID,
-			OutgoingTrigger: command,
-		})
-		if err != nil || len(webhooks) == 0 {
-			return nil, err
-		}
-		return webhookSvc.Do(webhooks[0], input)
 	}
+
+	return nil, nil
 }

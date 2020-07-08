@@ -30,16 +30,23 @@ import (
 var _ = chi.URLParam
 var _ = multipart.FileHeader{}
 
-// AuthInternal login request parameters
+// AuthInternalLogin request parameters
 type AuthInternalLogin struct {
+	hasEmail bool
+	rawEmail string
 	Email    string
-	Password string
+
+	hasPassword bool
+	rawPassword string
+	Password    string
 }
 
+// NewAuthInternalLogin request
 func NewAuthInternalLogin() *AuthInternalLogin {
 	return &AuthInternalLogin{}
 }
 
+// Auditable returns all auditable/loggable parameters
 func (r AuthInternalLogin) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
@@ -49,6 +56,7 @@ func (r AuthInternalLogin) Auditable() map[string]interface{} {
 	return out
 }
 
+// Fill processes request and fills internal variables
 func (r *AuthInternalLogin) Fill(req *http.Request) (err error) {
 	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(req.Body).Decode(r)
@@ -77,9 +85,13 @@ func (r *AuthInternalLogin) Fill(req *http.Request) (err error) {
 	}
 
 	if val, ok := post["email"]; ok {
+		r.hasEmail = true
+		r.rawEmail = val
 		r.Email = val
 	}
 	if val, ok := post["password"]; ok {
+		r.hasPassword = true
+		r.rawPassword = val
 		r.Password = val
 	}
 
@@ -88,19 +100,35 @@ func (r *AuthInternalLogin) Fill(req *http.Request) (err error) {
 
 var _ RequestFiller = NewAuthInternalLogin()
 
-// AuthInternal signup request parameters
+// AuthInternalSignup request parameters
 type AuthInternalSignup struct {
+	hasEmail bool
+	rawEmail string
 	Email    string
-	Username string
-	Password string
-	Handle   string
-	Name     string
+
+	hasUsername bool
+	rawUsername string
+	Username    string
+
+	hasPassword bool
+	rawPassword string
+	Password    string
+
+	hasHandle bool
+	rawHandle string
+	Handle    string
+
+	hasName bool
+	rawName string
+	Name    string
 }
 
+// NewAuthInternalSignup request
 func NewAuthInternalSignup() *AuthInternalSignup {
 	return &AuthInternalSignup{}
 }
 
+// Auditable returns all auditable/loggable parameters
 func (r AuthInternalSignup) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
@@ -114,6 +142,7 @@ func (r AuthInternalSignup) Auditable() map[string]interface{} {
 	return out
 }
 
+// Fill processes request and fills internal variables
 func (r *AuthInternalSignup) Fill(req *http.Request) (err error) {
 	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(req.Body).Decode(r)
@@ -142,18 +171,28 @@ func (r *AuthInternalSignup) Fill(req *http.Request) (err error) {
 	}
 
 	if val, ok := post["email"]; ok {
+		r.hasEmail = true
+		r.rawEmail = val
 		r.Email = val
 	}
 	if val, ok := post["username"]; ok {
+		r.hasUsername = true
+		r.rawUsername = val
 		r.Username = val
 	}
 	if val, ok := post["password"]; ok {
+		r.hasPassword = true
+		r.rawPassword = val
 		r.Password = val
 	}
 	if val, ok := post["handle"]; ok {
+		r.hasHandle = true
+		r.rawHandle = val
 		r.Handle = val
 	}
 	if val, ok := post["name"]; ok {
+		r.hasName = true
+		r.rawName = val
 		r.Name = val
 	}
 
@@ -162,15 +201,19 @@ func (r *AuthInternalSignup) Fill(req *http.Request) (err error) {
 
 var _ RequestFiller = NewAuthInternalSignup()
 
-// AuthInternal requestPasswordReset request parameters
+// AuthInternalRequestPasswordReset request parameters
 type AuthInternalRequestPasswordReset struct {
-	Email string
+	hasEmail bool
+	rawEmail string
+	Email    string
 }
 
+// NewAuthInternalRequestPasswordReset request
 func NewAuthInternalRequestPasswordReset() *AuthInternalRequestPasswordReset {
 	return &AuthInternalRequestPasswordReset{}
 }
 
+// Auditable returns all auditable/loggable parameters
 func (r AuthInternalRequestPasswordReset) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
@@ -179,6 +222,7 @@ func (r AuthInternalRequestPasswordReset) Auditable() map[string]interface{} {
 	return out
 }
 
+// Fill processes request and fills internal variables
 func (r *AuthInternalRequestPasswordReset) Fill(req *http.Request) (err error) {
 	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(req.Body).Decode(r)
@@ -207,6 +251,8 @@ func (r *AuthInternalRequestPasswordReset) Fill(req *http.Request) (err error) {
 	}
 
 	if val, ok := post["email"]; ok {
+		r.hasEmail = true
+		r.rawEmail = val
 		r.Email = val
 	}
 
@@ -215,15 +261,19 @@ func (r *AuthInternalRequestPasswordReset) Fill(req *http.Request) (err error) {
 
 var _ RequestFiller = NewAuthInternalRequestPasswordReset()
 
-// AuthInternal exchangePasswordResetToken request parameters
+// AuthInternalExchangePasswordResetToken request parameters
 type AuthInternalExchangePasswordResetToken struct {
-	Token string
+	hasToken bool
+	rawToken string
+	Token    string
 }
 
+// NewAuthInternalExchangePasswordResetToken request
 func NewAuthInternalExchangePasswordResetToken() *AuthInternalExchangePasswordResetToken {
 	return &AuthInternalExchangePasswordResetToken{}
 }
 
+// Auditable returns all auditable/loggable parameters
 func (r AuthInternalExchangePasswordResetToken) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
@@ -232,6 +282,7 @@ func (r AuthInternalExchangePasswordResetToken) Auditable() map[string]interface
 	return out
 }
 
+// Fill processes request and fills internal variables
 func (r *AuthInternalExchangePasswordResetToken) Fill(req *http.Request) (err error) {
 	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(req.Body).Decode(r)
@@ -260,6 +311,8 @@ func (r *AuthInternalExchangePasswordResetToken) Fill(req *http.Request) (err er
 	}
 
 	if val, ok := post["token"]; ok {
+		r.hasToken = true
+		r.rawToken = val
 		r.Token = val
 	}
 
@@ -268,16 +321,23 @@ func (r *AuthInternalExchangePasswordResetToken) Fill(req *http.Request) (err er
 
 var _ RequestFiller = NewAuthInternalExchangePasswordResetToken()
 
-// AuthInternal resetPassword request parameters
+// AuthInternalResetPassword request parameters
 type AuthInternalResetPassword struct {
+	hasToken bool
+	rawToken string
 	Token    string
-	Password string
+
+	hasPassword bool
+	rawPassword string
+	Password    string
 }
 
+// NewAuthInternalResetPassword request
 func NewAuthInternalResetPassword() *AuthInternalResetPassword {
 	return &AuthInternalResetPassword{}
 }
 
+// Auditable returns all auditable/loggable parameters
 func (r AuthInternalResetPassword) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
@@ -287,6 +347,7 @@ func (r AuthInternalResetPassword) Auditable() map[string]interface{} {
 	return out
 }
 
+// Fill processes request and fills internal variables
 func (r *AuthInternalResetPassword) Fill(req *http.Request) (err error) {
 	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(req.Body).Decode(r)
@@ -315,9 +376,13 @@ func (r *AuthInternalResetPassword) Fill(req *http.Request) (err error) {
 	}
 
 	if val, ok := post["token"]; ok {
+		r.hasToken = true
+		r.rawToken = val
 		r.Token = val
 	}
 	if val, ok := post["password"]; ok {
+		r.hasPassword = true
+		r.rawPassword = val
 		r.Password = val
 	}
 
@@ -326,15 +391,19 @@ func (r *AuthInternalResetPassword) Fill(req *http.Request) (err error) {
 
 var _ RequestFiller = NewAuthInternalResetPassword()
 
-// AuthInternal confirmEmail request parameters
+// AuthInternalConfirmEmail request parameters
 type AuthInternalConfirmEmail struct {
-	Token string
+	hasToken bool
+	rawToken string
+	Token    string
 }
 
+// NewAuthInternalConfirmEmail request
 func NewAuthInternalConfirmEmail() *AuthInternalConfirmEmail {
 	return &AuthInternalConfirmEmail{}
 }
 
+// Auditable returns all auditable/loggable parameters
 func (r AuthInternalConfirmEmail) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
@@ -343,6 +412,7 @@ func (r AuthInternalConfirmEmail) Auditable() map[string]interface{} {
 	return out
 }
 
+// Fill processes request and fills internal variables
 func (r *AuthInternalConfirmEmail) Fill(req *http.Request) (err error) {
 	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(req.Body).Decode(r)
@@ -371,6 +441,8 @@ func (r *AuthInternalConfirmEmail) Fill(req *http.Request) (err error) {
 	}
 
 	if val, ok := post["token"]; ok {
+		r.hasToken = true
+		r.rawToken = val
 		r.Token = val
 	}
 
@@ -379,16 +451,23 @@ func (r *AuthInternalConfirmEmail) Fill(req *http.Request) (err error) {
 
 var _ RequestFiller = NewAuthInternalConfirmEmail()
 
-// AuthInternal changePassword request parameters
+// AuthInternalChangePassword request parameters
 type AuthInternalChangePassword struct {
-	OldPassword string
-	NewPassword string
+	hasOldPassword bool
+	rawOldPassword string
+	OldPassword    string
+
+	hasNewPassword bool
+	rawNewPassword string
+	NewPassword    string
 }
 
+// NewAuthInternalChangePassword request
 func NewAuthInternalChangePassword() *AuthInternalChangePassword {
 	return &AuthInternalChangePassword{}
 }
 
+// Auditable returns all auditable/loggable parameters
 func (r AuthInternalChangePassword) Auditable() map[string]interface{} {
 	var out = map[string]interface{}{}
 
@@ -399,6 +478,7 @@ func (r AuthInternalChangePassword) Auditable() map[string]interface{} {
 	return out
 }
 
+// Fill processes request and fills internal variables
 func (r *AuthInternalChangePassword) Fill(req *http.Request) (err error) {
 	if strings.ToLower(req.Header.Get("content-type")) == "application/json" {
 		err = json.NewDecoder(req.Body).Decode(r)
@@ -427,9 +507,13 @@ func (r *AuthInternalChangePassword) Fill(req *http.Request) (err error) {
 	}
 
 	if val, ok := post["oldPassword"]; ok {
+		r.hasOldPassword = true
+		r.rawOldPassword = val
 		r.OldPassword = val
 	}
 	if val, ok := post["newPassword"]; ok {
+		r.hasNewPassword = true
+		r.rawNewPassword = val
 		r.NewPassword = val
 	}
 
@@ -437,3 +521,213 @@ func (r *AuthInternalChangePassword) Fill(req *http.Request) (err error) {
 }
 
 var _ RequestFiller = NewAuthInternalChangePassword()
+
+// HasEmail returns true if email was set
+func (r *AuthInternalLogin) HasEmail() bool {
+	return r.hasEmail
+}
+
+// RawEmail returns raw value of email parameter
+func (r *AuthInternalLogin) RawEmail() string {
+	return r.rawEmail
+}
+
+// GetEmail returns casted value of  email parameter
+func (r *AuthInternalLogin) GetEmail() string {
+	return r.Email
+}
+
+// HasPassword returns true if password was set
+func (r *AuthInternalLogin) HasPassword() bool {
+	return r.hasPassword
+}
+
+// RawPassword returns raw value of password parameter
+func (r *AuthInternalLogin) RawPassword() string {
+	return r.rawPassword
+}
+
+// GetPassword returns casted value of  password parameter
+func (r *AuthInternalLogin) GetPassword() string {
+	return r.Password
+}
+
+// HasEmail returns true if email was set
+func (r *AuthInternalSignup) HasEmail() bool {
+	return r.hasEmail
+}
+
+// RawEmail returns raw value of email parameter
+func (r *AuthInternalSignup) RawEmail() string {
+	return r.rawEmail
+}
+
+// GetEmail returns casted value of  email parameter
+func (r *AuthInternalSignup) GetEmail() string {
+	return r.Email
+}
+
+// HasUsername returns true if username was set
+func (r *AuthInternalSignup) HasUsername() bool {
+	return r.hasUsername
+}
+
+// RawUsername returns raw value of username parameter
+func (r *AuthInternalSignup) RawUsername() string {
+	return r.rawUsername
+}
+
+// GetUsername returns casted value of  username parameter
+func (r *AuthInternalSignup) GetUsername() string {
+	return r.Username
+}
+
+// HasPassword returns true if password was set
+func (r *AuthInternalSignup) HasPassword() bool {
+	return r.hasPassword
+}
+
+// RawPassword returns raw value of password parameter
+func (r *AuthInternalSignup) RawPassword() string {
+	return r.rawPassword
+}
+
+// GetPassword returns casted value of  password parameter
+func (r *AuthInternalSignup) GetPassword() string {
+	return r.Password
+}
+
+// HasHandle returns true if handle was set
+func (r *AuthInternalSignup) HasHandle() bool {
+	return r.hasHandle
+}
+
+// RawHandle returns raw value of handle parameter
+func (r *AuthInternalSignup) RawHandle() string {
+	return r.rawHandle
+}
+
+// GetHandle returns casted value of  handle parameter
+func (r *AuthInternalSignup) GetHandle() string {
+	return r.Handle
+}
+
+// HasName returns true if name was set
+func (r *AuthInternalSignup) HasName() bool {
+	return r.hasName
+}
+
+// RawName returns raw value of name parameter
+func (r *AuthInternalSignup) RawName() string {
+	return r.rawName
+}
+
+// GetName returns casted value of  name parameter
+func (r *AuthInternalSignup) GetName() string {
+	return r.Name
+}
+
+// HasEmail returns true if email was set
+func (r *AuthInternalRequestPasswordReset) HasEmail() bool {
+	return r.hasEmail
+}
+
+// RawEmail returns raw value of email parameter
+func (r *AuthInternalRequestPasswordReset) RawEmail() string {
+	return r.rawEmail
+}
+
+// GetEmail returns casted value of  email parameter
+func (r *AuthInternalRequestPasswordReset) GetEmail() string {
+	return r.Email
+}
+
+// HasToken returns true if token was set
+func (r *AuthInternalExchangePasswordResetToken) HasToken() bool {
+	return r.hasToken
+}
+
+// RawToken returns raw value of token parameter
+func (r *AuthInternalExchangePasswordResetToken) RawToken() string {
+	return r.rawToken
+}
+
+// GetToken returns casted value of  token parameter
+func (r *AuthInternalExchangePasswordResetToken) GetToken() string {
+	return r.Token
+}
+
+// HasToken returns true if token was set
+func (r *AuthInternalResetPassword) HasToken() bool {
+	return r.hasToken
+}
+
+// RawToken returns raw value of token parameter
+func (r *AuthInternalResetPassword) RawToken() string {
+	return r.rawToken
+}
+
+// GetToken returns casted value of  token parameter
+func (r *AuthInternalResetPassword) GetToken() string {
+	return r.Token
+}
+
+// HasPassword returns true if password was set
+func (r *AuthInternalResetPassword) HasPassword() bool {
+	return r.hasPassword
+}
+
+// RawPassword returns raw value of password parameter
+func (r *AuthInternalResetPassword) RawPassword() string {
+	return r.rawPassword
+}
+
+// GetPassword returns casted value of  password parameter
+func (r *AuthInternalResetPassword) GetPassword() string {
+	return r.Password
+}
+
+// HasToken returns true if token was set
+func (r *AuthInternalConfirmEmail) HasToken() bool {
+	return r.hasToken
+}
+
+// RawToken returns raw value of token parameter
+func (r *AuthInternalConfirmEmail) RawToken() string {
+	return r.rawToken
+}
+
+// GetToken returns casted value of  token parameter
+func (r *AuthInternalConfirmEmail) GetToken() string {
+	return r.Token
+}
+
+// HasOldPassword returns true if oldPassword was set
+func (r *AuthInternalChangePassword) HasOldPassword() bool {
+	return r.hasOldPassword
+}
+
+// RawOldPassword returns raw value of oldPassword parameter
+func (r *AuthInternalChangePassword) RawOldPassword() string {
+	return r.rawOldPassword
+}
+
+// GetOldPassword returns casted value of  oldPassword parameter
+func (r *AuthInternalChangePassword) GetOldPassword() string {
+	return r.OldPassword
+}
+
+// HasNewPassword returns true if newPassword was set
+func (r *AuthInternalChangePassword) HasNewPassword() bool {
+	return r.hasNewPassword
+}
+
+// RawNewPassword returns raw value of newPassword parameter
+func (r *AuthInternalChangePassword) RawNewPassword() string {
+	return r.rawNewPassword
+}
+
+// GetNewPassword returns casted value of  newPassword parameter
+func (r *AuthInternalChangePassword) GetNewPassword() string {
+	return r.NewPassword
+}

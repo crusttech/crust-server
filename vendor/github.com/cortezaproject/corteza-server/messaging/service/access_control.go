@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cortezaproject/corteza-server/messaging/types"
+	"github.com/cortezaproject/corteza-server/pkg/actionlog"
 	"github.com/cortezaproject/corteza-server/pkg/auth"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
 )
@@ -11,6 +12,7 @@ import (
 type (
 	accessControl struct {
 		permissions accessControlPermissionServicer
+		actionlog   actionlog.Recorder
 	}
 
 	accessControlPermissionServicer interface {
@@ -28,6 +30,7 @@ type (
 func AccessControl(perm accessControlPermissionServicer) *accessControl {
 	return &accessControl{
 		permissions: perm,
+		actionlog:   DefaultActionlog,
 	}
 }
 
@@ -72,22 +75,6 @@ func (svc accessControl) CanCreatePrivateChannel(ctx context.Context) bool {
 
 func (svc accessControl) CanCreateGroupChannel(ctx context.Context) bool {
 	return svc.can(ctx, types.MessagingPermissionResource, "channel.group.create", permissions.Allowed)
-}
-
-func (svc accessControl) CanCreateWebhook(ctx context.Context) bool {
-	return svc.can(ctx, types.MessagingPermissionResource, "webhook.create")
-}
-
-func (svc accessControl) CanManageWebhooks(ctx context.Context) bool {
-	return svc.can(ctx, types.MessagingPermissionResource, "webhook.manage.all")
-}
-
-func (svc accessControl) CanManageOwnWebhooks(ctx context.Context, wh *types.Webhook) bool {
-	if wh.UserID != auth.GetIdentityFromContext(ctx).Identity() {
-		return false
-	}
-
-	return svc.can(ctx, types.MessagingPermissionResource, "webhook.manage.own")
 }
 
 func (svc accessControl) CanUpdateChannel(ctx context.Context, ch *types.Channel) bool {
@@ -227,15 +214,35 @@ func (svc accessControl) can(ctx context.Context, res permissionResource, op per
 
 func (svc accessControl) Grant(ctx context.Context, rr ...*permissions.Rule) error {
 	if !svc.CanGrant(ctx) {
-		return ErrNoGrantPermissions
+		return AccessControlErrNotAllowedToSetPermissions()
 	}
 
-	return svc.permissions.Grant(ctx, svc.Whitelist(), rr...)
+	if err := svc.permissions.Grant(ctx, svc.Whitelist(), rr...); err != nil {
+		return AccessControlErrGeneric().Wrap(err)
+	}
+
+	svc.logGrants(ctx, rr)
+
+	return nil
+}
+
+func (svc accessControl) logGrants(ctx context.Context, rr []*permissions.Rule) {
+	if svc.actionlog == nil {
+		return
+	}
+
+	for _, r := range rr {
+		g := AccessControlActionGrant(&accessControlActionProps{r})
+		g.log = r.String()
+		g.resource = r.Resource.String()
+
+		svc.actionlog.Record(ctx, g)
+	}
 }
 
 func (svc accessControl) FindRulesByRoleID(ctx context.Context, roleID uint64) (permissions.RuleSet, error) {
 	if !svc.CanGrant(ctx) {
-		return nil, ErrNoPermissions
+		return nil, AccessControlErrNotAllowedToSetPermissions()
 	}
 
 	return svc.permissions.FindRulesByRoleID(roleID), nil
@@ -253,9 +260,6 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"channel.public.create",
 		"channel.private.create",
 		"channel.group.create",
-		"webhook.create",
-		"webhook.manage.all",
-		"webhook.manage.own",
 	)
 
 	wl.Set(
@@ -269,7 +273,6 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"archive",
 		"unarchive",
 		"members.manage",
-		"webhooks.manage",
 		"attachments.manage",
 		"message.send",
 		"message.reply",

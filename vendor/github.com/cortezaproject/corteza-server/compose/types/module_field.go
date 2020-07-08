@@ -6,8 +6,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
 )
 
@@ -34,32 +32,11 @@ type (
 		UpdatedAt *time.Time `db:"updated_at" json:"updatedAt,omitempty"`
 		DeletedAt *time.Time `db:"deleted_at" json:"deletedAt,omitempty"`
 	}
-
-	ModuleFieldOptions map[string]interface{}
 )
 
 var (
 	_ sort.Interface = &ModuleFieldSet{}
 )
-
-func (mfo *ModuleFieldOptions) Scan(value interface{}) error {
-	//lint:ignore S1034 This typecast is intentional, we need to get []byte out of a []uint8
-	switch value.(type) {
-	case nil:
-		*mfo = ModuleFieldOptions{}
-	case []uint8:
-		b := value.([]byte)
-		if err := json.Unmarshal(b, mfo); err != nil {
-			return errors.Wrapf(err, "Can not scan '%v' into ModuleFieldOptions", string(b))
-		}
-	}
-
-	return nil
-}
-
-func (mfo ModuleFieldOptions) Value() (driver.Value, error) {
-	return json.Marshal(mfo)
-}
 
 // Resource returns a system resource ID for this type
 func (m ModuleField) PermissionResource() permissions.Resource {
@@ -129,9 +106,8 @@ func (set ModuleFieldSet) Swap(i, j int) {
 	set[i], set[j] = set[j], set[i]
 }
 
-// IsRef tells us if value of this field be a reference to something (another record, user)?
-func (f ModuleField) IsRef() bool {
-	return f.Kind == "Record" || f.Kind == "Owner" || f.Kind == "File"
+func (f ModuleField) IsBoolean() bool {
+	return f.Kind == "Bool"
 }
 
 func (f ModuleField) IsNumeric() bool {
@@ -140,4 +116,10 @@ func (f ModuleField) IsNumeric() bool {
 
 func (f ModuleField) IsDateTime() bool {
 	return f.Kind == "DateTime"
+}
+
+// IsRef tells us if value of this field be a reference to something
+// (another record, file , user)?
+func (f ModuleField) IsRef() bool {
+	return f.Kind == "Record" || f.Kind == "User" || f.Kind == "File"
 }

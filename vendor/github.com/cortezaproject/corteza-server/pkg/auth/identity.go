@@ -1,5 +1,9 @@
 package auth
 
+import (
+	"fmt"
+)
+
 type (
 	Identity struct {
 		id       uint64
@@ -30,10 +34,14 @@ func (i Identity) Valid() bool {
 	return i.id > 0
 }
 
+func (i Identity) String() string {
+	return fmt.Sprintf("%d", i.id)
+}
+
 func NewSuperUserIdentity() *Identity {
 	return NewIdentity(superUserID)
 }
 
 func IsSuperUser(i Identifiable) bool {
-	return superUserID == i.Identity()
+	return i != nil && superUserID == i.Identity()
 }

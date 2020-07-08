@@ -5,9 +5,11 @@ import (
 
 	"github.com/titpetric/factory/resputil"
 
+	"github.com/cortezaproject/corteza-server/pkg/corredor"
 	"github.com/cortezaproject/corteza-server/pkg/rh"
 	"github.com/cortezaproject/corteza-server/system/rest/request"
 	"github.com/cortezaproject/corteza-server/system/service"
+	"github.com/cortezaproject/corteza-server/system/service/event"
 	"github.com/cortezaproject/corteza-server/system/types"
 
 	"github.com/pkg/errors"
@@ -57,7 +59,7 @@ func (ctrl *Application) List(ctx context.Context, r *request.ApplicationList) (
 		Deleted: rh.FilterState(r.Deleted),
 
 		Sort:       rh.NormalizeSortColumns(r.Sort),
-		PageFilter: rh.Paging(r.Page, r.PerPage),
+		PageFilter: rh.Paging(r),
 	}
 
 	set, filter, err := ctrl.application.With(ctx).Find(f)
@@ -116,6 +118,20 @@ func (ctrl *Application) Delete(ctx context.Context, r *request.ApplicationDelet
 
 func (ctrl *Application) Undelete(ctx context.Context, r *request.ApplicationUndelete) (interface{}, error) {
 	return resputil.OK(), ctrl.application.With(ctx).Undelete(r.ApplicationID)
+}
+
+func (ctrl *Application) TriggerScript(ctx context.Context, r *request.ApplicationTriggerScript) (rsp interface{}, err error) {
+	var (
+		application *types.Application
+	)
+
+	if application, err = ctrl.application.With(ctx).FindByID(r.ApplicationID); err != nil {
+		return
+	}
+
+	// @todo implement same behaviour as we have on record - Application+oldApplication
+	err = corredor.Service().Exec(ctx, r.Script, event.ApplicationOnManual(application, application))
+	return application, err
 }
 
 func (ctrl Application) makePayload(ctx context.Context, m *types.Application, err error) (*applicationPayload, error) {

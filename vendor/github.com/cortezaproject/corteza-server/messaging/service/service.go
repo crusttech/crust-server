@@ -8,9 +8,10 @@ import (
 
 	"github.com/cortezaproject/corteza-server/messaging/repository"
 	"github.com/cortezaproject/corteza-server/messaging/types"
+	"github.com/cortezaproject/corteza-server/pkg/actionlog"
+	actionlogRepository "github.com/cortezaproject/corteza-server/pkg/actionlog/repository"
+	"github.com/cortezaproject/corteza-server/pkg/app/options"
 	intAuth "github.com/cortezaproject/corteza-server/pkg/auth"
-	"github.com/cortezaproject/corteza-server/pkg/cli/options"
-	"github.com/cortezaproject/corteza-server/pkg/http"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
 	"github.com/cortezaproject/corteza-server/pkg/settings"
 	"github.com/cortezaproject/corteza-server/pkg/store"
@@ -29,7 +30,8 @@ type (
 	}
 
 	Config struct {
-		Storage options.StorageOpt
+		ActionLog options.ActionLogOpt
+		Storage   options.StorageOpt
 	}
 )
 
@@ -38,6 +40,8 @@ var (
 	DefaultPermissions permissionServicer
 
 	DefaultLogger *zap.Logger
+
+	DefaultActionlog actionlog.Recorder
 
 	DefaultSettings      settings.Service
 	DefaultAccessControl *accessControl
@@ -50,11 +54,27 @@ var (
 	DefaultMessage    MessageService
 	DefaultEvent      EventService
 	DefaultCommand    CommandService
-	DefaultWebhook    WebhookService
 )
 
-func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
+func Initialize(ctx context.Context, log *zap.Logger, c Config) (err error) {
 	DefaultLogger = log.Named("service")
+
+	{
+		tee := log
+		policy := actionlog.MakeProductionPolicy()
+		if c.ActionLog.Debug {
+			tee = zap.NewNop()
+			policy = actionlog.MakeDebugPolicy()
+		}
+
+		DefaultActionlog = actionlog.NewService(
+			// will log directly to system schema for now
+			actionlogRepository.Mysql(repository.DB(ctx).Quiet(), "sys_actionlog"),
+			log,
+			tee,
+			policy,
+		)
+	}
 
 	if DefaultPermissions == nil {
 		// Do not override permissions service stored under DefaultPermissions
@@ -71,19 +91,15 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 		CurrentSettings,
 	)
 
-	// Run initial update of current settings with super-user credentials
-	err = DefaultSettings.UpdateCurrent(intAuth.SetSuperUserContext(ctx))
-	if err != nil {
-		return
-	}
-
 	if DefaultStore == nil {
+		const svcPath = "messaging"
 		if c.Storage.MinioEndpoint != "" {
-			if c.Storage.MinioBucket == "" {
-				c.Storage.MinioBucket = "messaging"
+			var bucket = svcPath
+			if c.Storage.MinioBucket != "" {
+				bucket = c.Storage.MinioBucket + "/" + svcPath
 			}
 
-			DefaultStore, err = minio.New(c.Storage.MinioBucket, minio.Options{
+			DefaultStore, err = minio.New(bucket, minio.Options{
 				Endpoint:        c.Storage.MinioEndpoint,
 				Secure:          c.Storage.MinioSecure,
 				Strict:          c.Storage.MinioStrict,
@@ -94,14 +110,15 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 			})
 
 			log.Info("initializing minio",
-				zap.String("bucket", c.Storage.MinioBucket),
+				zap.String("bucket", bucket),
 				zap.String("endpoint", c.Storage.MinioEndpoint),
 				zap.Error(err))
 		} else {
-			DefaultStore, err = plain.New(c.Storage.Path)
+			path := c.Storage.Path + "/" + svcPath
+			DefaultStore, err = plain.New(path)
 
 			log.Info("initializing store",
-				zap.String("path", c.Storage.Path),
+				zap.String("path", path),
 				zap.Error(err))
 		}
 
@@ -110,21 +127,23 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 		}
 	}
 
-	client, err := http.New(&http.Config{
-		Timeout: 10,
-	})
-	if err != nil {
-		return err
-	}
-
 	DefaultEvent = Event(ctx)
 	DefaultChannel = Channel(ctx)
 	DefaultAttachment = Attachment(ctx, DefaultStore)
 	DefaultMessage = Message(ctx)
 	DefaultCommand = Command(ctx)
-	DefaultWebhook = Webhook(ctx, client)
 
 	return nil
+}
+
+func Activate(ctx context.Context) (err error) {
+	// Run initial update of current settings with super-user credentials
+	err = DefaultSettings.UpdateCurrent(intAuth.SetSuperUserContext(ctx))
+	if err != nil {
+		return
+	}
+
+	return
 }
 
 func Watchers(ctx context.Context) {

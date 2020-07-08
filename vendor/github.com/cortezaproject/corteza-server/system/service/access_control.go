@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza-server/pkg/automation"
+	"github.com/cortezaproject/corteza-server/pkg/actionlog"
+	internalAuth "github.com/cortezaproject/corteza-server/pkg/auth"
+
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
 	"github.com/cortezaproject/corteza-server/system/types"
 )
@@ -11,6 +13,7 @@ import (
 type (
 	accessControl struct {
 		permissions accessControlPermissionServicer
+		actionlog   actionlog.Recorder
 	}
 
 	accessControlPermissionServicer interface {
@@ -28,6 +31,7 @@ type (
 func AccessControl(perm accessControlPermissionServicer) *accessControl {
 	return &accessControl{
 		permissions: perm,
+		actionlog:   DefaultActionlog,
 	}
 }
 
@@ -78,10 +82,6 @@ func (svc accessControl) CanCreateApplication(ctx context.Context) bool {
 	return svc.can(ctx, types.SystemPermissionResource, "application.create")
 }
 
-func (svc accessControl) CanCreateAutomationScript(ctx context.Context) bool {
-	return svc.can(ctx, types.SystemPermissionResource, "automation-script.create")
-}
-
 func (svc accessControl) CanAssignReminder(ctx context.Context) bool {
 	return svc.can(ctx, types.SystemPermissionResource, "reminder.assign")
 }
@@ -95,14 +95,25 @@ func (svc accessControl) FilterReadableRoles(ctx context.Context) *permissions.R
 }
 
 func (svc accessControl) CanUpdateRole(ctx context.Context, rl *types.Role) bool {
+	if rl.ID == permissions.EveryoneRoleID {
+		return false
+	}
+
 	return svc.can(ctx, rl, "update")
 }
 
 func (svc accessControl) CanDeleteRole(ctx context.Context, rl *types.Role) bool {
+	if rl.ID == permissions.EveryoneRoleID {
+		return false
+	}
+
 	return svc.can(ctx, rl, "delete")
 }
 
 func (svc accessControl) CanManageRoleMembers(ctx context.Context, rl *types.Role) bool {
+	if rl.ID == permissions.EveryoneRoleID {
+		return false
+	}
 	return svc.can(ctx, rl, "members.manage")
 }
 
@@ -151,31 +162,21 @@ func (svc accessControl) CanDeleteUser(ctx context.Context, u *types.User) bool 
 }
 
 func (svc accessControl) CanUnmaskEmail(ctx context.Context, u *types.User) bool {
+	if internalAuth.GetIdentityFromContext(ctx).Identity() == u.ID {
+		// Make an exception when users are reading their own info
+		return true
+	}
+
 	return svc.can(ctx, u, "unmask.email")
 }
 
 func (svc accessControl) CanUnmaskName(ctx context.Context, u *types.User) bool {
+	if internalAuth.GetIdentityFromContext(ctx).Identity() == u.ID {
+		// Make an exception when users are reading their own info
+		return true
+	}
+
 	return svc.can(ctx, u, "unmask.name")
-}
-
-func (svc accessControl) CanReadAutomationScript(ctx context.Context, r *automation.Script) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "read")
-}
-
-func (svc accessControl) FilterReadableScripts(ctx context.Context) *permissions.ResourceFilter {
-	return svc.permissions.ResourceFilter(ctx, types.AutomationScriptPermissionResource, "read", permissions.Deny)
-}
-
-func (svc accessControl) CanUpdateAutomationScript(ctx context.Context, r *automation.Script) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "update")
-}
-
-func (svc accessControl) CanDeleteAutomationScript(ctx context.Context, r *automation.Script) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "delete")
-}
-
-func (svc accessControl) CanRunAutomationTrigger(ctx context.Context, r *automation.Trigger) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "run", permissions.Allowed)
 }
 
 func (svc accessControl) can(ctx context.Context, res permissionResource, op permissions.Operation, ff ...permissions.CheckAccessFunc) bool {
@@ -184,15 +185,35 @@ func (svc accessControl) can(ctx context.Context, res permissionResource, op per
 
 func (svc accessControl) Grant(ctx context.Context, rr ...*permissions.Rule) error {
 	if !svc.CanGrant(ctx) {
-		return ErrNoGrantPermissions
+		return AccessControlErrNotAllowedToSetPermissions()
 	}
 
-	return svc.permissions.Grant(ctx, svc.Whitelist(), rr...)
+	if err := svc.permissions.Grant(ctx, svc.Whitelist(), rr...); err != nil {
+		return AccessControlErrGeneric().Wrap(err)
+	}
+
+	svc.logGrants(ctx, rr)
+
+	return nil
+}
+
+func (svc accessControl) logGrants(ctx context.Context, rr []*permissions.Rule) {
+	if svc.actionlog == nil {
+		return
+	}
+
+	for _, r := range rr {
+		g := AccessControlActionGrant(&accessControlActionProps{r})
+		g.log = r.String()
+		g.resource = r.Resource.String()
+
+		svc.actionlog.Record(ctx, g)
+	}
 }
 
 func (svc accessControl) FindRulesByRoleID(ctx context.Context, roleID uint64) (permissions.RuleSet, error) {
 	if !svc.CanGrant(ctx) {
-		return nil, ErrNoPermissions
+		return nil, AccessControlErrNotAllowedToSetPermissions()
 	}
 
 	return svc.permissions.FindRulesByRoleID(roleID), nil
@@ -211,7 +232,6 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"role.create",
 		"user.create",
 		"application.create",
-		"automation-script.create",
 		"reminder.assign",
 	)
 
@@ -234,6 +254,8 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"delete",
 		"suspend",
 		"unsuspend",
+		"unmask.email",
+		"unmask.name",
 	)
 
 	wl.Set(
@@ -242,18 +264,6 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"update",
 		"delete",
 		"members.manage",
-	)
-
-	wl.Set(
-		types.AutomationScriptPermissionResource,
-		"read",
-		"update",
-		"delete",
-	)
-
-	wl.Set(
-		types.AutomationTriggerPermissionResource,
-		"run",
 	)
 
 	return wl

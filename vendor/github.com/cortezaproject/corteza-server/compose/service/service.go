@@ -2,22 +2,24 @@ package service
 
 import (
 	"context"
-	"time"
-
+	"errors"
 	"go.uber.org/zap"
+	"time"
 
 	"github.com/cortezaproject/corteza-server/compose/repository"
 	"github.com/cortezaproject/corteza-server/compose/types"
+	"github.com/cortezaproject/corteza-server/pkg/actionlog"
+	actionlogRepository "github.com/cortezaproject/corteza-server/pkg/actionlog/repository"
+	"github.com/cortezaproject/corteza-server/pkg/app/options"
 	"github.com/cortezaproject/corteza-server/pkg/auth"
-	"github.com/cortezaproject/corteza-server/pkg/automation"
-	"github.com/cortezaproject/corteza-server/pkg/automation/corredor"
-	"github.com/cortezaproject/corteza-server/pkg/cli/options"
+	"github.com/cortezaproject/corteza-server/pkg/corredor"
+	"github.com/cortezaproject/corteza-server/pkg/eventbus"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
 	"github.com/cortezaproject/corteza-server/pkg/settings"
 	"github.com/cortezaproject/corteza-server/pkg/store"
 	"github.com/cortezaproject/corteza-server/pkg/store/minio"
 	"github.com/cortezaproject/corteza-server/pkg/store/plain"
-	systemProto "github.com/cortezaproject/corteza-server/system/proto"
+	systemService "github.com/cortezaproject/corteza-server/system/service"
 )
 
 type (
@@ -26,16 +28,15 @@ type (
 		Watch(ctx context.Context)
 	}
 
-	automationManager interface {
-		automationScriptManager
-		automationTriggerManager
-		automationScriptsFinder
+	Config struct {
+		ActionLog        options.ActionLogOpt
+		Storage          options.StorageOpt
+		GRPCClientSystem options.GRPCServerOpt
 	}
 
-	Config struct {
-		Storage          options.StorageOpt
-		Corredor         options.CorredorOpt
-		GRPCClientSystem options.GRPCServerOpt
+	eventDispatcher interface {
+		WaitFor(ctx context.Context, ev eventbus.Event) (err error)
+		Dispatch(ctx context.Context, ev eventbus.Event)
 	}
 )
 
@@ -44,6 +45,8 @@ var (
 
 	DefaultLogger *zap.Logger
 
+	DefaultActionlog actionlog.Recorder
+
 	DefaultSettings settings.Service
 
 	// DefaultPermissions Retrieves & stores permissions
@@ -51,18 +54,6 @@ var (
 
 	// DefaultAccessControl Access control checking
 	DefaultAccessControl *accessControl
-
-	// DefaultInternalAutomationManager manages automation scripts, triggers, runnable scripts
-	DefaultInternalAutomationManager automationManager
-
-	// DefaultAutomationScriptManager manages compose automation scripts
-	DefaultAutomationScriptManager automationScript
-
-	// DefaultAutomationTriggerManager manages compose automation triggers
-	DefaultAutomationTriggerManager automationTrigger
-
-	// DefaultAutomationRunner runs automation scripts by listening to triggerManager and invoking Corredor service
-	DefaultAutomationRunner automationRunner
 
 	// CurrentSettings represents current compose settings
 	CurrentSettings = &types.Settings{}
@@ -76,20 +67,44 @@ var (
 	DefaultAttachment    AttachmentService
 	DefaultNotification  *notification
 
-	DefaultSystemUser *systemUser
-	DefaultSystemRole *systemRole
+	// DefaultSystemUser is a bridge to users in a system service
+	// @todo this is ad-hoc solution that connects compose to system it breaks microservice
+	//       architecture and service separation and should be refactored properly
+	//       (that is, if we want to continue with microservice architecture)
+	DefaultSystemUser systemService.UserService
+	//DefaultSystemUser *systemUser
+	//DefaultSystemRole *systemRole
 )
 
-func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
+// Initializes compose-only services
+func Initialize(ctx context.Context, log *zap.Logger, c Config) (err error) {
 	var db = repository.DB(ctx)
 
 	DefaultLogger = log.Named("service")
+
+	{
+		tee := log
+		policy := actionlog.MakeProductionPolicy()
+		if c.ActionLog.Debug {
+			tee = zap.NewNop()
+			policy = actionlog.MakeDebugPolicy()
+		}
+
+		DefaultActionlog = actionlog.NewService(
+			// will log directly to system schema for now
+			actionlogRepository.Mysql(repository.DB(ctx).Quiet(), "sys_actionlog"),
+			log,
+			tee,
+			policy,
+		)
+	}
 
 	if DefaultPermissions == nil {
 		// Do not override permissions service stored under DefaultPermissions
 		// to allow integration tests to inject own permission service
 		DefaultPermissions = permissions.Service(ctx, DefaultLogger, db, "compose_permission_rules")
 	}
+
 	DefaultAccessControl = AccessControl(DefaultPermissions)
 
 	DefaultSettings = settings.NewService(
@@ -99,19 +114,15 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 		CurrentSettings,
 	)
 
-	// Run initial update of current settings with super-user credentials
-	err = DefaultSettings.UpdateCurrent(auth.SetSuperUserContext(ctx))
-	if err != nil {
-		return
-	}
-
 	if DefaultStore == nil {
+		const svcPath = "compose"
 		if c.Storage.MinioEndpoint != "" {
-			if c.Storage.MinioBucket == "" {
-				c.Storage.MinioBucket = "compose"
+			var bucket = svcPath
+			if c.Storage.MinioBucket != "" {
+				bucket = c.Storage.MinioBucket + "/" + svcPath
 			}
 
-			DefaultStore, err = minio.New(c.Storage.MinioBucket, minio.Options{
+			DefaultStore, err = minio.New(bucket, minio.Options{
 				Endpoint:        c.Storage.MinioEndpoint,
 				Secure:          c.Storage.MinioSecure,
 				Strict:          c.Storage.MinioStrict,
@@ -122,13 +133,14 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 			})
 
 			log.Info("initializing minio",
-				zap.String("bucket", c.Storage.MinioBucket),
+				zap.String("bucket", bucket),
 				zap.String("endpoint", c.Storage.MinioEndpoint),
 				zap.Error(err))
 		} else {
-			DefaultStore, err = plain.New(c.Storage.Path)
+			path := c.Storage.Path + "/" + svcPath
+			DefaultStore, err = plain.New(path)
 			log.Info("initializing store",
-				zap.String("path", c.Storage.Path),
+				zap.String("path", path),
 				zap.Error(err))
 		}
 
@@ -140,57 +152,16 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 	DefaultNamespace = Namespace()
 	DefaultModule = Module()
 
-	{
-		systemClientConn, err := NewSystemGRPCClient(ctx, c.GRPCClientSystem, DefaultLogger)
-		if err != nil {
-			return err
-		}
-
-		DefaultSystemUser = SystemUser(systemProto.NewUsersClient(systemClientConn))
-		DefaultSystemRole = SystemRole(systemProto.NewRolesClient(systemClientConn))
-	}
-
-	{
-		if DefaultInternalAutomationManager == nil {
-			// handles script & trigger management & keeping runnable scripts in internal cache
-			DefaultInternalAutomationManager = automation.Service(automation.AutomationServiceConfig{
-				Logger:        DefaultLogger,
-				DbTablePrefix: "compose",
-				DB:            db,
-				TokenMaker: func(ctx context.Context, userID uint64) (s string, e error) {
-					ctx = auth.SetSuperUserContext(ctx)
-					return DefaultSystemUser.MakeJWT(ctx, userID)
-				},
-			})
-		}
-
-		// Pass internal automation manager to compose's script & trigger managers
-		DefaultAutomationTriggerManager = AutomationTrigger(DefaultInternalAutomationManager)
-		DefaultAutomationScriptManager = AutomationScript(DefaultInternalAutomationManager)
-
-		var scriptRunnerClient corredor.ScriptRunnerClient
-
-		if c.Corredor.Enabled {
-			conn, err := corredor.NewConnection(ctx, c.Corredor, DefaultLogger)
-
-			log.Info("initializing corredor connection", zap.String("addr", c.Corredor.Addr), zap.Error(err))
-			if err != nil {
-				return err
-			}
-
-			scriptRunnerClient = corredor.NewScriptRunnerClient(conn)
-		}
-
-		DefaultAutomationRunner = AutomationRunner(
-			AutomationRunnerOpt{
-				ApiBaseURLSystem:    c.Corredor.ApiBaseURLSystem,
-				ApiBaseURLMessaging: c.Corredor.ApiBaseURLMessaging,
-				ApiBaseURLCompose:   c.Corredor.ApiBaseURLCompose,
-			},
-			DefaultInternalAutomationManager,
-			scriptRunnerClient,
-		)
-	}
+	//{
+	//	systemClientConn, err := NewSystemGRPCClient(ctx, c.GRPCClientSystem, DefaultLogger)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	DefaultSystemUser = SystemUser(systemProto.NewUsersClient(systemClientConn))
+	//	DefaultSystemRole = SystemRole(systemProto.NewRolesClient(systemClientConn))
+	//}
+	DefaultSystemUser = systemService.DefaultUser
 
 	DefaultImportSession = ImportSession()
 	DefaultRecord = Record()
@@ -199,15 +170,57 @@ func Init(ctx context.Context, log *zap.Logger, c Config) (err error) {
 	DefaultNotification = Notification()
 	DefaultAttachment = Attachment(DefaultStore)
 
+	RegisterIteratorProviders()
+
 	return nil
 }
 
-func Watchers(ctx context.Context) {
-	// Reloading automation scripts on change
-	DefaultAutomationRunner.Watch(ctx)
+func Activate(ctx context.Context) (err error) {
+	// Run initial update of current settings with super-user credentials
+	err = DefaultSettings.UpdateCurrent(auth.SetSuperUserContext(ctx))
+	if err != nil {
+		return
+	}
 
+	return
+}
+
+func Watchers(ctx context.Context) {
 	// Reloading permissions on change
 	DefaultPermissions.Watch(ctx)
+}
+
+func RegisterIteratorProviders() {
+	// Register resource finders on iterator
+	corredor.Service().RegisterIteratorProvider(
+		"compose:record",
+		func(ctx context.Context, f map[string]string, h eventbus.HandlerFn, action string) error {
+			rf := types.RecordFilter{
+				Query: f["query"],
+				Sort:  f["sort"],
+			}
+
+			rf.ParsePagination(f)
+
+			if nsLookup, has := f["namespace"]; !has {
+				return errors.New("namespace for record iteration filter not defined")
+			} else if ns, err := DefaultNamespace.With(ctx).FindByAny(nsLookup); err != nil {
+				return err
+			} else {
+				rf.NamespaceID = ns.ID
+			}
+
+			if mLookup, has := f["module"]; !has {
+				return errors.New("module for record iteration filter not defined")
+			} else if m, err := DefaultModule.With(ctx).FindByAny(rf.NamespaceID, mLookup); err != nil {
+				return err
+			} else {
+				rf.ModuleID = m.ID
+			}
+
+			return DefaultRecord.With(ctx).Iterator(rf, h, action)
+		},
+	)
 }
 
 // Data is stale when new date does not match updatedAt or createdAt (before first update)
@@ -222,4 +235,9 @@ func isStale(new *time.Time, updatedAt *time.Time, createdAt time.Time) bool {
 	}
 
 	return new.Equal(createdAt)
+}
+
+func nowPtr() *time.Time {
+	now := time.Now()
+	return &now
 }

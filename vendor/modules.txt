@@ -6,93 +6,110 @@ github.com/360EntSecGroup-Skylar/excelize/v2
 github.com/766b/chi-prometheus
 # github.com/99designs/basicauth-go v0.0.0-20160802081356-2a93ba0f464d
 github.com/99designs/basicauth-go
-# github.com/DestinyWang/cronexpr v0.0.0-20140423231348-a557574d6c02
-github.com/DestinyWang/cronexpr
+# github.com/BurntSushi/toml v0.3.1
+github.com/BurntSushi/toml
 # github.com/Masterminds/squirrel v1.1.1-0.20191017225151-12f2162c8d8d
 github.com/Masterminds/squirrel
+# github.com/PaesslerAG/gval v1.0.1
+github.com/PaesslerAG/gval
 # github.com/SentimensRG/ctx v0.0.0-20180729130232-0bfd988c655d
 github.com/SentimensRG/ctx
 github.com/SentimensRG/ctx/sigctx
 # github.com/beorn7/perks v1.0.0
 github.com/beorn7/perks/quantile
-# github.com/cortezaproject/corteza-server v0.0.0-20200110160908-6f0a7efb96b4
+# github.com/cortezaproject/corteza-server v0.0.0-20200630185829-f2b227954713
 github.com/cortezaproject/corteza-server/compose
-github.com/cortezaproject/corteza-server/pkg/cli
-github.com/cortezaproject/corteza-server/messaging
-github.com/cortezaproject/corteza-server/monolith
-github.com/cortezaproject/corteza-server/pkg/logger
-github.com/cortezaproject/corteza-server/system/service
-github.com/cortezaproject/corteza-server/system
-github.com/cortezaproject/corteza-server/pkg/settings
 github.com/cortezaproject/corteza-server/compose/commands
 github.com/cortezaproject/corteza-server/compose/db
-github.com/cortezaproject/corteza-server/compose/importer
-github.com/cortezaproject/corteza-server/compose/rest
-github.com/cortezaproject/corteza-server/compose/service
-github.com/cortezaproject/corteza-server/compose/types
-github.com/cortezaproject/corteza-server/pkg/auth
-github.com/cortezaproject/corteza-server/pkg/importer
-github.com/cortezaproject/corteza-server/provision/compose
-github.com/cortezaproject/corteza-server/pkg/api
-github.com/cortezaproject/corteza-server/pkg/cli/options
-github.com/cortezaproject/corteza-server/pkg/db
-github.com/cortezaproject/corteza-server/pkg/http
-github.com/cortezaproject/corteza-server/pkg/mail
-github.com/cortezaproject/corteza-server/pkg/sentry
-github.com/cortezaproject/corteza-server/messaging/commands
-github.com/cortezaproject/corteza-server/messaging/db
-github.com/cortezaproject/corteza-server/messaging/importer
-github.com/cortezaproject/corteza-server/messaging/rest
-github.com/cortezaproject/corteza-server/messaging/service
-github.com/cortezaproject/corteza-server/messaging/types
-github.com/cortezaproject/corteza-server/messaging/websocket
-github.com/cortezaproject/corteza-server/provision/messaging
-github.com/cortezaproject/corteza-server/pkg/automation
-github.com/cortezaproject/corteza-server/pkg/automation/corredor
-github.com/cortezaproject/corteza-server/pkg/automation/mail
-github.com/cortezaproject/corteza-server/pkg/handle
-github.com/cortezaproject/corteza-server/pkg/permissions
-github.com/cortezaproject/corteza-server/pkg/rand
-github.com/cortezaproject/corteza-server/pkg/rh
-github.com/cortezaproject/corteza-server/system/proto
-github.com/cortezaproject/corteza-server/system/repository
-github.com/cortezaproject/corteza-server/system/types
-github.com/cortezaproject/corteza-server/provision/system
-github.com/cortezaproject/corteza-server/system/auth/external
-github.com/cortezaproject/corteza-server/system/commands
-github.com/cortezaproject/corteza-server/system/db
-github.com/cortezaproject/corteza-server/system/grpc
-github.com/cortezaproject/corteza-server/system/importer
-github.com/cortezaproject/corteza-server/system/rest
-github.com/cortezaproject/corteza-server/pkg/deinterfacer
-github.com/cortezaproject/corteza-server/compose/repository
-github.com/cortezaproject/corteza-server/system/exporter
 github.com/cortezaproject/corteza-server/compose/db/mysql
 github.com/cortezaproject/corteza-server/compose/decoder
 github.com/cortezaproject/corteza-server/compose/encoder
+github.com/cortezaproject/corteza-server/compose/importer
+github.com/cortezaproject/corteza-server/compose/repository
+github.com/cortezaproject/corteza-server/compose/rest
 github.com/cortezaproject/corteza-server/compose/rest/handlers
 github.com/cortezaproject/corteza-server/compose/rest/request
+github.com/cortezaproject/corteza-server/compose/service
+github.com/cortezaproject/corteza-server/compose/service/event
+github.com/cortezaproject/corteza-server/compose/service/values
+github.com/cortezaproject/corteza-server/compose/types
+github.com/cortezaproject/corteza-server/corteza
+github.com/cortezaproject/corteza-server/messaging
+github.com/cortezaproject/corteza-server/messaging/commands
+github.com/cortezaproject/corteza-server/messaging/db
+github.com/cortezaproject/corteza-server/messaging/db/mysql
+github.com/cortezaproject/corteza-server/messaging/importer
+github.com/cortezaproject/corteza-server/messaging/repository
+github.com/cortezaproject/corteza-server/messaging/rest
+github.com/cortezaproject/corteza-server/messaging/rest/handlers
+github.com/cortezaproject/corteza-server/messaging/rest/request
+github.com/cortezaproject/corteza-server/messaging/service
+github.com/cortezaproject/corteza-server/messaging/service/event
+github.com/cortezaproject/corteza-server/messaging/types
+github.com/cortezaproject/corteza-server/messaging/websocket
+github.com/cortezaproject/corteza-server/monolith
+github.com/cortezaproject/corteza-server/pkg/actionlog
+github.com/cortezaproject/corteza-server/pkg/actionlog/repository
+github.com/cortezaproject/corteza-server/pkg/api
+github.com/cortezaproject/corteza-server/pkg/app
+github.com/cortezaproject/corteza-server/pkg/app/options
+github.com/cortezaproject/corteza-server/pkg/auth
+github.com/cortezaproject/corteza-server/pkg/automation
+github.com/cortezaproject/corteza-server/pkg/cli
+github.com/cortezaproject/corteza-server/pkg/corredor
+github.com/cortezaproject/corteza-server/pkg/count
+github.com/cortezaproject/corteza-server/pkg/db
+github.com/cortezaproject/corteza-server/pkg/deinterfacer
+github.com/cortezaproject/corteza-server/pkg/eventbus
+github.com/cortezaproject/corteza-server/pkg/grpc
+github.com/cortezaproject/corteza-server/pkg/handle
+github.com/cortezaproject/corteza-server/pkg/http
+github.com/cortezaproject/corteza-server/pkg/importer
+github.com/cortezaproject/corteza-server/pkg/logger
+github.com/cortezaproject/corteza-server/pkg/mail
 github.com/cortezaproject/corteza-server/pkg/mime
+github.com/cortezaproject/corteza-server/pkg/monitor
+github.com/cortezaproject/corteza-server/pkg/ngimporter
+github.com/cortezaproject/corteza-server/pkg/ngimporter/types
 github.com/cortezaproject/corteza-server/pkg/payload
-github.com/cortezaproject/corteza-server/compose/proto
+github.com/cortezaproject/corteza-server/pkg/payload/incoming
+github.com/cortezaproject/corteza-server/pkg/payload/outgoing
+github.com/cortezaproject/corteza-server/pkg/permissions
+github.com/cortezaproject/corteza-server/pkg/ql
+github.com/cortezaproject/corteza-server/pkg/rand
+github.com/cortezaproject/corteza-server/pkg/rh
+github.com/cortezaproject/corteza-server/pkg/scheduler
+github.com/cortezaproject/corteza-server/pkg/sentry
+github.com/cortezaproject/corteza-server/pkg/settings
+github.com/cortezaproject/corteza-server/pkg/slice
 github.com/cortezaproject/corteza-server/pkg/store
 github.com/cortezaproject/corteza-server/pkg/store/minio
 github.com/cortezaproject/corteza-server/pkg/store/plain
 github.com/cortezaproject/corteza-server/pkg/version
-github.com/cortezaproject/corteza-server/messaging/db/mysql
-github.com/cortezaproject/corteza-server/messaging/repository
-github.com/cortezaproject/corteza-server/messaging/rest/handlers
-github.com/cortezaproject/corteza-server/messaging/rest/request
-github.com/cortezaproject/corteza-server/pkg/payload/outgoing
-github.com/cortezaproject/corteza-server/pkg/organization
-github.com/cortezaproject/corteza-server/pkg/payload/incoming
-github.com/cortezaproject/corteza-server/pkg/ql
+github.com/cortezaproject/corteza-server/pkg/webapp
+github.com/cortezaproject/corteza-server/provision/compose
+github.com/cortezaproject/corteza-server/provision/messaging
+github.com/cortezaproject/corteza-server/provision/system
+github.com/cortezaproject/corteza-server/system
+github.com/cortezaproject/corteza-server/system/auth/external
+github.com/cortezaproject/corteza-server/system/commands
+github.com/cortezaproject/corteza-server/system/db
 github.com/cortezaproject/corteza-server/system/db/mysql
+github.com/cortezaproject/corteza-server/system/exporter
+github.com/cortezaproject/corteza-server/system/grpc
+github.com/cortezaproject/corteza-server/system/importer
+github.com/cortezaproject/corteza-server/system/proto
+github.com/cortezaproject/corteza-server/system/repository
+github.com/cortezaproject/corteza-server/system/rest
 github.com/cortezaproject/corteza-server/system/rest/handlers
 github.com/cortezaproject/corteza-server/system/rest/request
-github.com/cortezaproject/corteza-server/pkg/count
+github.com/cortezaproject/corteza-server/system/service
+github.com/cortezaproject/corteza-server/system/service/event
+github.com/cortezaproject/corteza-server/system/types
 # github.com/crusttech/go-oidc v0.0.0-20180918092017-982855dad3e1
 github.com/crusttech/go-oidc
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
 # github.com/disintegration/imaging v1.6.0
@@ -101,11 +118,11 @@ github.com/disintegration/imaging
 github.com/edwvee/exiffix
 # github.com/gabriel-vasile/mimetype v0.3.17
 github.com/gabriel-vasile/mimetype
-github.com/gabriel-vasile/mimetype/internal/matchers
 github.com/gabriel-vasile/mimetype/internal/json
+github.com/gabriel-vasile/mimetype/internal/matchers
 # github.com/getsentry/sentry-go v0.1.1
-github.com/getsentry/sentry-go/http
 github.com/getsentry/sentry-go
+github.com/getsentry/sentry-go/http
 # github.com/go-chi/chi v3.3.4+incompatible
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
@@ -113,17 +130,19 @@ github.com/go-chi/chi/middleware
 github.com/go-chi/cors
 # github.com/go-chi/jwtauth v0.0.0-20190109153619-47840abb19b3
 github.com/go-chi/jwtauth
-# github.com/go-sql-driver/mysql v1.4.1
+# github.com/go-sql-driver/mysql v1.5.0
 github.com/go-sql-driver/mysql
-# github.com/golang/protobuf v1.3.2
+# github.com/golang/protobuf v1.3.3
 github.com/golang/protobuf/proto
-github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
+github.com/golang/protobuf/ptypes/timestamp
 # github.com/gomodule/redigo v2.0.0+incompatible
-github.com/gomodule/redigo/redis
 github.com/gomodule/redigo/internal
+github.com/gomodule/redigo/redis
+# github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
+github.com/gorhill/cronexpr
 # github.com/gorilla/context v1.1.1
 github.com/gorilla/context
 # github.com/gorilla/mux v1.7.1
@@ -139,12 +158,12 @@ github.com/goware/statik/fs
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/jmoiron/sqlx v1.2.0
-github.com/jmoiron/sqlx/types
 github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
+github.com/jmoiron/sqlx/types
 # github.com/joho/godotenv v1.3.0
-github.com/joho/godotenv/autoload
 github.com/joho/godotenv
+github.com/joho/godotenv/autoload
 # github.com/lann/builder v0.0.0-20180802200727-47ae307949d0
 github.com/lann/builder
 # github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0
@@ -165,13 +184,15 @@ github.com/markbates/goth/providers/openidConnect
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/minio/minio-go/v6 v6.0.39
 github.com/minio/minio-go/v6
-github.com/minio/minio-go/v6/pkg/encrypt
-github.com/minio/minio-go/v6/pkg/s3utils
 github.com/minio/minio-go/v6/pkg/credentials
+github.com/minio/minio-go/v6/pkg/encrypt
 github.com/minio/minio-go/v6/pkg/s3signer
+github.com/minio/minio-go/v6/pkg/s3utils
 github.com/minio/minio-go/v6/pkg/set
 # github.com/minio/sha256-simd v0.1.1
 github.com/minio/sha256-simd
+# github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
+github.com/mitchellh/colorstring
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
 # github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
@@ -182,21 +203,23 @@ github.com/pkg/errors
 github.com/pquerna/cachecontrol
 github.com/pquerna/cachecontrol/cacheobject
 # github.com/prometheus/client_golang v0.9.3
-github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
-# github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
+github.com/prometheus/client_golang/prometheus/promhttp
+# github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.4.0
 github.com/prometheus/common/expfmt
-github.com/prometheus/common/model
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
+github.com/prometheus/common/model
 # github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 # github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 github.com/rwcarlsen/goexif/exif
 github.com/rwcarlsen/goexif/tiff
+# github.com/schollz/progressbar/v2 v2.15.0
+github.com/schollz/progressbar/v2
 # github.com/sony/sonyflake v0.0.0-20181109022403-6d5bd6181009
 github.com/sony/sonyflake
 # github.com/spf13/afero v1.2.2
@@ -208,112 +231,138 @@ github.com/spf13/cast
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# github.com/titpetric/factory v0.0.0-20190806200833-ae4b02b9e034
+# github.com/titpetric/factory v0.0.0-20190828134837-8466c9bef13f
 github.com/titpetric/factory
-github.com/titpetric/factory/resputil
 github.com/titpetric/factory/logger
-# go.uber.org/atomic v1.4.0
+github.com/titpetric/factory/resputil
+# go.uber.org/atomic v1.5.0
 go.uber.org/atomic
-# go.uber.org/multierr v1.1.0
+# go.uber.org/multierr v1.3.0
 go.uber.org/multierr
-# go.uber.org/zap v1.10.0
+# go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee
+go.uber.org/tools/update-license
+# go.uber.org/zap v1.13.0
 go.uber.org/zap
-go.uber.org/zap/zapcore
-go.uber.org/zap/internal/bufferpool
-go.uber.org/zap/zapgrpc
 go.uber.org/zap/buffer
+go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
+go.uber.org/zap/zapcore
+go.uber.org/zap/zapgrpc
 # golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
-golang.org/x/crypto/bcrypt
-golang.org/x/crypto/blowfish
-golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/argon2
-golang.org/x/crypto/ed25519
-golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blake2b
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
+golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/ssh/terminal
 # golang.org/x/image v0.0.0-20190910094157-69e4b8554b2a
 golang.org/x/image/bmp
-golang.org/x/image/tiff
 golang.org/x/image/ccitt
+golang.org/x/image/tiff
 golang.org/x/image/tiff/lzw
+# golang.org/x/lint v0.0.0-20190930215403-16217165b5de
+golang.org/x/lint
+golang.org/x/lint/golint
 # golang.org/x/net v0.0.0-20190620200207-3b0461eec859
-golang.org/x/net/trace
-golang.org/x/net/internal/timeseries
+golang.org/x/net/context
+golang.org/x/net/context/ctxhttp
+golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
-golang.org/x/net/http/httpguts
-golang.org/x/net/publicsuffix
-golang.org/x/net/context/ctxhttp
 golang.org/x/net/idna
-golang.org/x/net/context
+golang.org/x/net/internal/timeseries
+golang.org/x/net/publicsuffix
+golang.org/x/net/trace
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
-golang.org/x/oauth2/internal
 golang.org/x/oauth2/google
+golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sys v0.0.0-20190624142023-c5567b49c5d0
+golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-golang.org/x/sys/cpu
 # golang.org/x/text v0.3.2
-golang.org/x/text/transform
-golang.org/x/text/unicode/norm
 golang.org/x/text/secure/bidirule
+golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+# golang.org/x/tools v0.0.0-20191029190741-b9c20aec41a5
+golang.org/x/tools/go/analysis
+golang.org/x/tools/go/analysis/passes/inspect
+golang.org/x/tools/go/ast/astutil
+golang.org/x/tools/go/ast/inspector
+golang.org/x/tools/go/buildutil
+golang.org/x/tools/go/gcexportdata
+golang.org/x/tools/go/internal/gcimporter
+golang.org/x/tools/go/internal/packagesdriver
+golang.org/x/tools/go/packages
+golang.org/x/tools/go/types/objectpath
+golang.org/x/tools/go/types/typeutil
+golang.org/x/tools/internal/fastwalk
+golang.org/x/tools/internal/gopathwalk
+golang.org/x/tools/internal/semver
+golang.org/x/tools/internal/span
 # google.golang.org/appengine v1.6.1
-google.golang.org/appengine/cloudsql
-google.golang.org/appengine/urlfetch
 google.golang.org/appengine
 google.golang.org/appengine/internal
-google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/internal/app_identity
-google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
+google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
-# google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/urlfetch
+# google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.22.1
+# google.golang.org/grpc v1.29.1
 google.golang.org/grpc
-google.golang.org/grpc/codes
-google.golang.org/grpc/status
-google.golang.org/grpc/grpclog
-google.golang.org/grpc/metadata
+google.golang.org/grpc/attributes
+google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
+google.golang.org/grpc/balancer/base
 google.golang.org/grpc/balancer/roundrobin
+google.golang.org/grpc/binarylog/grpc_binarylog_v1
+google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
+google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
+google.golang.org/grpc/grpclog
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
+google.golang.org/grpc/internal/buffer
 google.golang.org/grpc/internal/channelz
 google.golang.org/grpc/internal/envconfig
+google.golang.org/grpc/internal/grpclog
 google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
+google.golang.org/grpc/internal/grpcutil
+google.golang.org/grpc/internal/resolver/dns
+google.golang.org/grpc/internal/resolver/passthrough
+google.golang.org/grpc/internal/status
+google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
+google.golang.org/grpc/metadata
 google.golang.org/grpc/naming
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
-google.golang.org/grpc/resolver/dns
-google.golang.org/grpc/resolver/passthrough
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
+google.golang.org/grpc/status
 google.golang.org/grpc/tap
-google.golang.org/grpc/balancer/base
-google.golang.org/grpc/credentials/internal
-google.golang.org/grpc/binarylog/grpc_binarylog_v1
-google.golang.org/grpc/internal/syscall
 # gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
 gopkg.in/alexcesaro/quotedprintable.v3
-# gopkg.in/ini.v1 v1.42.0
+# gopkg.in/ini.v1 v1.51.0
 gopkg.in/ini.v1
 # gopkg.in/mail.v2 v2.3.1
 gopkg.in/mail.v2
@@ -321,5 +370,31 @@ gopkg.in/mail.v2
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher
 gopkg.in/square/go-jose.v2/json
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
+# honnef.co/go/tools v0.0.1-2019.2.3
+honnef.co/go/tools/arg
+honnef.co/go/tools/cmd/staticcheck
+honnef.co/go/tools/config
+honnef.co/go/tools/deprecated
+honnef.co/go/tools/facts
+honnef.co/go/tools/functions
+honnef.co/go/tools/go/types/typeutil
+honnef.co/go/tools/internal/cache
+honnef.co/go/tools/internal/passes/buildssa
+honnef.co/go/tools/internal/renameio
+honnef.co/go/tools/internal/sharedcheck
+honnef.co/go/tools/lint
+honnef.co/go/tools/lint/lintdsl
+honnef.co/go/tools/lint/lintutil
+honnef.co/go/tools/lint/lintutil/format
+honnef.co/go/tools/loader
+honnef.co/go/tools/printf
+honnef.co/go/tools/simple
+honnef.co/go/tools/ssa
+honnef.co/go/tools/ssautil
+honnef.co/go/tools/staticcheck
+honnef.co/go/tools/staticcheck/vrp
+honnef.co/go/tools/stylecheck
+honnef.co/go/tools/unused
+honnef.co/go/tools/version

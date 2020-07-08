@@ -4,13 +4,14 @@ import (
 	"context"
 
 	"github.com/cortezaproject/corteza-server/compose/types"
-	"github.com/cortezaproject/corteza-server/pkg/automation"
+	"github.com/cortezaproject/corteza-server/pkg/actionlog"
 	"github.com/cortezaproject/corteza-server/pkg/permissions"
 )
 
 type (
 	accessControl struct {
 		permissions accessControlPermissionServicer
+		actionlog   actionlog.Recorder
 	}
 
 	accessControlPermissionServicer interface {
@@ -28,6 +29,7 @@ type (
 func AccessControl(perm accessControlPermissionServicer) *accessControl {
 	return &accessControl{
 		permissions: perm,
+		actionlog:   DefaultActionlog,
 	}
 }
 
@@ -86,10 +88,6 @@ func (svc accessControl) CanManageNamespace(ctx context.Context, r *types.Namesp
 
 func (svc accessControl) CanCreateModule(ctx context.Context, r *types.Namespace) bool {
 	return svc.can(ctx, r, "module.create")
-}
-
-func (svc accessControl) CanCreateAutomationScript(ctx context.Context, r *types.Namespace) bool {
-	return svc.can(ctx, r, "automation-script.create")
 }
 
 func (svc accessControl) CanReadModule(ctx context.Context, r *types.Module) bool {
@@ -177,41 +175,41 @@ func (svc accessControl) CanDeletePage(ctx context.Context, r *types.Page) bool 
 	return svc.can(ctx, r, "delete")
 }
 
-func (svc accessControl) CanReadAutomationScript(ctx context.Context, r *automation.Script) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "read")
-}
-
-func (svc accessControl) FilterReadableScripts(ctx context.Context) *permissions.ResourceFilter {
-	return svc.permissions.ResourceFilter(ctx, types.AutomationScriptPermissionResource, "read", permissions.Deny)
-}
-
-func (svc accessControl) CanUpdateAutomationScript(ctx context.Context, r *automation.Script) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "update")
-}
-
-func (svc accessControl) CanDeleteAutomationScript(ctx context.Context, r *automation.Script) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "delete")
-}
-
-func (svc accessControl) CanRunAutomationTrigger(ctx context.Context, r *automation.Trigger) bool {
-	return svc.can(ctx, types.AutomationScriptPermissionResource.AppendID(r.ID), "run", permissions.Allowed)
-}
-
 func (svc accessControl) can(ctx context.Context, res permissionResource, op permissions.Operation, ff ...permissions.CheckAccessFunc) bool {
 	return svc.permissions.Can(ctx, res.PermissionResource(), op, ff...)
 }
 
 func (svc accessControl) Grant(ctx context.Context, rr ...*permissions.Rule) error {
 	if !svc.CanGrant(ctx) {
-		return ErrNoGrantPermissions
+		return AccessControlErrNotAllowedToSetPermissions()
 	}
 
-	return svc.permissions.Grant(ctx, svc.Whitelist(), rr...)
+	if err := svc.permissions.Grant(ctx, svc.Whitelist(), rr...); err != nil {
+		return AccessControlErrGeneric().Wrap(err)
+	}
+
+	svc.logGrants(ctx, rr)
+
+	return nil
+}
+
+func (svc accessControl) logGrants(ctx context.Context, rr []*permissions.Rule) {
+	if svc.actionlog == nil {
+		return
+	}
+
+	for _, r := range rr {
+		g := AccessControlActionGrant(&accessControlActionProps{r})
+		g.log = r.String()
+		g.resource = r.Resource.String()
+
+		svc.actionlog.Record(ctx, g)
+	}
 }
 
 func (svc accessControl) FindRulesByRoleID(ctx context.Context, roleID uint64) (permissions.RuleSet, error) {
 	if !svc.CanGrant(ctx) {
-		return nil, ErrNoPermissions
+		return nil, AccessControlErrNotAllowedToSetPermissions()
 	}
 
 	return svc.permissions.FindRulesByRoleID(roleID), nil
@@ -238,7 +236,6 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"module.create",
 		"chart.create",
 		"page.create",
-		"automation-script.create",
 	)
 
 	wl.Set(
@@ -250,7 +247,6 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"record.read",
 		"record.update",
 		"record.delete",
-		"automation-trigger.manage",
 	)
 
 	wl.Set(
@@ -271,18 +267,6 @@ func (svc accessControl) Whitelist() permissions.Whitelist {
 		"read",
 		"update",
 		"delete",
-	)
-
-	wl.Set(
-		types.AutomationScriptPermissionResource,
-		"read",
-		"update",
-		"delete",
-	)
-
-	wl.Set(
-		types.AutomationTriggerPermissionResource,
-		"run",
 	)
 
 	return wl
