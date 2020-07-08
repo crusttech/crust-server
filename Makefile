@@ -1,71 +1,71 @@
-.PHONY: help docker docker-push realize dep dep.update test test.messaging test.compose qa critic vet codegen integration
-
-PKG       = "github.com/$(shell cat .project)"
+.PHONY: build release upload realize cdeps
 
 GO        = go
 GOGET     = $(GO) get -u
 GOTEST    ?= go test
+GOFLAGS   ?= -mod=vendor
 
-BASEPKGS = system compose messaging
-IMAGES   = corteza-server-system corteza-server-compose corteza-server-messaging corteza-server
-TESTABLE = messaging system compose pkg internal
+export GOFLAGS
 
-# Run watcher with a different event-trigger delay, eg:
-# $> WATCH_DELAY=5s make watch.test.integration
-WATCH_DELAY ?= 1s
+BUILD_FLAVOUR         ?= crust
+BUILD_APPS            ?= system compose messaging monolith
+BUILD_TIME            ?= $(shell date +%FT%T%z)
+BUILD_VERSION         ?= $(shell git describe --tags --abbrev=0)
+BUILD_ARCH            ?= $(shell go env GOARCH)
+BUILD_OS              ?= $(shell go env GOOS)
+BUILD_OS_is_windows    = $(filter windows,$(BUILD_OS))
+BUILD_DEST_DIR        ?= build
+BUILD_NAME             = $(BUILD_FLAVOUR)-server-$*-$(BUILD_VERSION)-$(BUILD_OS)-$(BUILD_ARCH)
+BUILD_BIN_NAME         = $(BUILD_NAME)$(if $(BUILD_OS_is_windows),.exe,)
 
-# Run go test cmd with flags, eg:
-# $> TEST_FLAGS="-v" make test.integration
-# $> TEST_FLAGS="-v -run SpecialTest" make test.integration
-TEST_FLAGS ?=
+RELEASE_BASEDIR        = $(BUILD_DEST_DIR)/pkg/$(BUILD_FLAVOUR)-server-$*
+RELEASE_NAME           = $(BUILD_NAME).tar.gz
+RELEASE_EXTRA_FILES   ?= README.md LICENSE CONTRIBUTING.md DCO .env.example
+RELEASE_PKEY          ?= .upload-rsa
 
-# Cover package maps for tests tasks
-COVER_PKGS_messaging   = ./messaging/...
-COVER_PKGS_system      = ./system/...
-COVER_PKGS_compose     = ./compose/...
-COVER_PKGS_pkg         = ./pkg/...
-COVER_PKGS_all         = $(COVER_PKGS_pkg),$(COVER_PKGS_messaging),$(COVER_PKGS_system),$(COVER_PKGS_compose)
-COVER_PKGS_integration = $(COVER_PKGS_all)
-
-TEST_SUITE_pkg         = ./pkg/...
-TEST_SUITE_services    = ./compose/... ./messaging/... ./system/...
-TEST_SUITE_unit        = $(TEST_SUITE_pkg) $(TEST_SUITE_services)
-TEST_SUITE_integration = ./tests/...
-TEST_SUITE_all         = $(TEST_SUITE_unit) $(TEST_SUITE_integration)
-
+LDFLAGS_BUILD_TIME     = -X github.com/cortezaproject/corteza-server/pkg/version.BuildTime=$(BUILD_TIME)
+LDFLAGS_VERSION        = -X github.com/cortezaproject/corteza-server/pkg/version.Version=$(BUILD_VERSION)
+LDFLAGS_EXTRA         ?=
+LDFLAGS                = -ldflags "$(LDFLAGS_BUILD_TIME) $(LDFLAGS_GIT_TAG) $(LDFLAGS_EXTRA)"
 
 ########################################################################################################################
-# Tool bins
-REALIZE     = ${GOPATH}/bin/realize
-GOTEST      = ${GOPATH}/bin/gotest
-GOCRITIC    = ${GOPATH}/bin/gocritic
-MOCKGEN     = ${GOPATH}/bin/mockgen
-STATICCHECK = ${GOPATH}/bin/staticcheck
 
 help:
 	@echo
 	@echo Usage: make [target]
 	@echo
-	@echo - docker-images: builds docker images locally
-	@echo - docker-push:   push built images
-	@echo
-	@echo - vet - run go vet on all code
-	@echo - critic - run go critic on all code
-	@echo - test - run all available unit tests
-	@echo - qa - run vet, critic and test on code
+	@echo - build             build all apps
+	@echo - build.<app>       build a specific app
+	@echo - release           release all apps
+	@echo - release.<app>     release a specific app
 	@echo
 
+########################################################################################################################
+# Building & packing
 
-docker-images: $(IMAGES:%=docker-image.%)
+build: $(addprefix build., $(BUILD_APPS))
 
-docker-image.%: Dockerfile.%
-	@ docker build --no-cache --rm -f Dockerfile.$* -t crusttech/$*:latest .
+build.%: cmd/%
+	GOOS=$(BUILD_OS) GOARCH=$(BUILD_ARCH) go build $(LDFLAGS) -o $(BUILD_DEST_DIR)/$(BUILD_BIN_NAME) cmd/$*/main.go
 
-docker-push: $(IMAGES:%=docker-push.%)
+release.%: $(addprefix build., %)
+	@ mkdir -p $(RELEASE_BASEDIR) $(RELEASE_BASEDIR)/bin
+	@ cp $(RELEASE_EXTRA_FILES) $(RELEASE_BASEDIR)/
+	@ cp $(BUILD_DEST_DIR)/$(BUILD_BIN_NAME) $(RELEASE_BASEDIR)/bin/$(BUILD_FLAVOUR)-server-$*
+	@ tar -C $(dir $(RELEASE_BASEDIR)) -czf $(BUILD_DEST_DIR)/$(RELEASE_NAME) $(notdir $(RELEASE_BASEDIR))
 
-docker-push.%: Dockerfile.%
-	@ docker push crusttech/$*:latest
+release: $(addprefix release.,$(BUILD_APPS))
 
+release-clean:
+	@ rm -rf $(RELEASE_BASEDIR)
+
+upload: $(RELEASE_PKEY)
+	@ echo "put $(BUILD_DEST_DIR)/*.tar.gz" | sftp -q -i $(RELEASE_PKEY) $(RELEASE_SFTP_URI)
+	@ rm -f $(RELEASE_PKEY)
+
+$(RELEASE_PKEY):
+	@ echo $(RELEASE_SFTP_KEY) | base64 -d > $(RELEASE_PKEY)
+	@ chmod 0400 $@
 
 ########################################################################################################################
 # Development
@@ -77,78 +77,3 @@ cdeps:
 	$(GO) get github.com/cortezaproject/corteza-server
 	$(GO) mod vendor
 
-mailhog.up:
-	docker run --rm --publish 8025:8025 --publish 1025:1025 mailhog/mailhog
-
-watch.test.%: $(NODEMON)
-	# Development helper - watches for file
-	# changes & reruns  tests
-	$(WATCHER) "make test.$* || exit 0"
-
-########################################################################################################################
-# Quality Assurance
-
-# Adds -coverprofile flag to test flags
-# and executes test.cover... task
-test.coverprofile.%:
-	@ TEST_FLAGS="$(TEST_FLAGS) -coverprofile=$(COVER_PROFILE)" make test.cover.$*
-
-# Adds -coverpkg flag
-test.cover.%:
-	@ TEST_FLAGS="$(TEST_FLAGS) -coverpkg=$(COVER_PKGS_$*)" make test.$*
-
-# Runs integration tests
-test.integration:
-	$(GOTEST) $(TEST_FLAGS) $(TEST_SUITE_integration)
-
-# Runs one suite from integration tests
-test.integration.%:
-	$(GOTEST) $(TEST_FLAGS) ./tests/$*/...
-
-# Runs ALL tests
-test.all:
-	$(GOTEST) $(TEST_FLAGS) $(TEST_SUITE_all)
-
-# Unit testing testing messaging, system or compose
-test.unit.%:
-	$(GOTEST) $(TEST_FLAGS) ./$*/...
-
-# Runs ALL tests
-test.unit:
-	$(GOTEST) $(TEST_FLAGS) $(TEST_SUITE_unit)
-
-# Testing pkg
-test.pkg:
-	$(GOTEST) $(TEST_FLAGS) $(TEST_SUITE_pkg)
-
-test: test.unit
-
-vet:
-	$(GO) vet ./...
-
-critic: $(GOCRITIC)
-	$(GOCRITIC) check-project .
-
-qa: vet critic test
-
-########################################################################################################################
-# Toolset
-
-$(GOTEST):
-	$(GOGET) github.com/rakyll/gotest
-
-$(REALIZE):
-	$(GOGET) github.com/tockins/realize
-
-$(GOCRITIC):
-	$(GOGET) github.com/go-critic/go-critic/...
-
-$(MOCKGEN):
-	$(GOGET) github.com/golang/mock/gomock
-	$(GOGET) github.com/golang/mock/mockgen
-
-$(STATICCHECK):
-	$(GOGET) honnef.co/go/tools/cmd/staticcheck
-
-clean:
-	rm -f $(REALIZE) $(GOCRITIC) $(GOTEST)

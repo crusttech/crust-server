@@ -1,72 +1,34 @@
 kind: pipeline
-name: docker image build
+name: Build
+type: docker
 
 steps:
-- name: unit-tests
-  image: cortezaproject/corteza-server-builder:latest
-  pull: always
-  environment:
-    CGO_ENABLED: 0
-    GOOS: linux
-    GOARCH: amd64
-  commands:
-    # no special unit tests, just test-build all binaries
-    - go build cmd/monolith/main.go
-    - go build cmd/compose/main.go
-    - go build cmd/system/main.go
-    - go build cmd/messaging/main.go
+  - name: "Build release (tag)"
+    image: cortezaproject/corteza-server-builder:latest
+    environment:
+      RELEASE_SFTP_KEY: { from_secret: RELEASE_SFTP_KEY }
+      RELEASE_SFTP_URI: { from_secret: RELEASE_SFTP_URI }
+    commands:
+    - make release-clean release -j4 BUILD_OS=linux BUILDARCH=amd64 BUILD_VERSION=${DRONE_TAG}
+#    - make release-clean release -j4 BUILD_OS=darwin BUILDARCH=amd64 BUILD_VERSION=${DRONE_TAG}
+#    - make release-clean release -j4 BUILD_OS=windows BUILDARCH=amd64 BUILD_VERSION=${DRONE_TAG}
+    - make upload
+    when:
+      event: [ tag ]
+      ref:
+      - refs/tags/20??.3.*
+      - refs/tags/20??.6.*
+      - refs/tags/20??.9.*
+      - refs/tags/20??.12.*
 
-- name: crust-server
-  image: plugins/docker
-  depends_on: [ 'unit-tests' ]
-  settings:
-    repo: crusttech/crust-server
-    auto_tag: true # generate tag names automatically based on git branch and git tag
-    dockerfile: Dockerfile.crust-server
-    username: { from_secret: docker_hub_username }
-    password: { from_secret: docker_hub_password }
-
-- name: crust-server-system
-  image: plugins/docker
-  depends_on: [ 'unit-tests' ]
-  settings:
-    repo: crusttech/crust-server-system
-    auto_tag: true # generate tag names automatically based on git branch and git tag
-    dockerfile: Dockerfile.crust-server-system
-    username: { from_secret: docker_hub_username }
-    password: { from_secret: docker_hub_password }
-  when:
-    ref: { include: [ "refs/tags/20??.*.*", "refs/heads/master" ] }
-    event: [ "push", "tag" ]
-
-- name: crust-server-compose
-  image: plugins/docker
-  depends_on: [ 'unit-tests' ]
-  settings:
-    repo: crusttech/crust-server-compose
-    auto_tag: true # generate tag names automatically based on git branch and git tag
-    dockerfile: Dockerfile.crust-server-compose
-    username: { from_secret: docker_hub_username }
-    password: { from_secret: docker_hub_password }
-  when:
-    ref: { include: [ "refs/tags/20??.*.*", "refs/heads/master" ] }
-    event: [ "push", "tag" ]
-
-- name: crust-server-messaging
-  depends_on: [ 'unit-tests' ]
-  image: plugins/docker
-  settings:
-    repo: crusttech/crust-server-messaging
-    auto_tag: true # generate tag names automatically based on git branch and git tag
-    dockerfile: Dockerfile.crust-server-messaging
-    username: { from_secret: docker_hub_username }
-    password: { from_secret: docker_hub_password }
-  when:
-    ref: { include: [ "refs/tags/20??.*.*", "refs/heads/master" ] }
-    event: [ "push", "tag" ]
-
-trigger:
-  event:
-    # Pipeline will be executed from branch event,
-    # this ensures we do not run duplicates.
-    exclude: [ "pull_request" ]
+  - name: "Build unstable release (develop)"
+    image: cortezaproject/corteza-server-builder:latest
+    environment:
+      RELEASE_SFTP_KEY: { from_secret: RELEASE_SFTP_KEY }
+      RELEASE_SFTP_URI: { from_secret: RELEASE_SFTP_URI }
+    commands:
+    - make release-clean release -j4 BUILD_OS=linux BUILDARCH=amd64 BUILD_VERSION=unstable
+    - make upload
+    when:
+      event: [ push ]
+      branch: [ develop ]
