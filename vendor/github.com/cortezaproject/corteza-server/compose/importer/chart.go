@@ -130,7 +130,8 @@ func (cImp *Chart) castConfig(chart *types.Chart, def interface{}) (types.ChartC
 		switch key {
 		case "reports":
 			cfg.Reports, err = cImp.castConfigReports(chart, val)
-
+		case "colorScheme":
+			cfg.ColorScheme = deinterfacer.ToString(val)
 		default:
 			return fmt.Errorf("unexpected key %q for chart %q config", key, chart.Handle)
 
@@ -158,6 +159,10 @@ func (cImp *Chart) castConfigReports(chart *types.Chart, def interface{}) ([]*ty
 				r.Metrics = deinterfacer.ToSliceOfStringToInterfaceMap(val)
 			case "dimensions":
 				r.Dimensions = deinterfacer.ToSliceOfStringToInterfaceMap(val)
+			case "yAxis":
+				if YAxis, ok := deinterfacer.Simplify(val).(map[string]interface{}); ok {
+					r.YAxis = YAxis
+				}
 			case "renderer":
 				// @todo implement renderer decoding
 				// r.Renderer.Version
